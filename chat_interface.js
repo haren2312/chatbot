@@ -1,5 +1,7 @@
 <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-storage-compat.js"></script>
 
+
+
 const storage = firebase.storage();
 
 
@@ -126,47 +128,94 @@ if (sid === selectedSessionId) {
 }
 
 // Main handler when user clicks Send button or presses Enter
-function handleUserMessage() {
-  const input = document.getElementById('user-msg');
-  const msg = input.value.trim();
-  if (!msg) return;
+
+function handleUserMessage(message) {
+  appendMessage(message, "user");
+  userInput.value = "";
+  inputLocked = true;
 
   if (chatStep === 0) {
-    // User just entered their name
-    userData.name = msg;
-    appendMessage(`Hi ${msg}! Can you please provide your email?`, 'bot', 500);
+    userData.name = message;
+    appendMessage("Nice to meet you, " + userData.name + "! What's your email?", 'bot', 800);
     chatStep = 1;
   } else if (chatStep === 1) {
-    // Validate and save email
-    if (!validateEmail(msg)) {
-      appendMessage("That doesn't look like a valid email. Please enter a correct email.", 'bot', 500);
-    } else {
-      userData.email = msg;
-      appendMessage("Thanks! Now, please share your live location by clicking the button below.", 'bot', 500);
-      showLocationButton();
-      chatStep = 2;
-    }
-  } else if (chatStep === 2) {
-    // Waiting for user to share location via button
-    appendMessage("Please click the location button to share your live location.", 'bot', 500);
+    userData.email = message;
+    appendMessage("Can I access your location to serve you better?", 'bot', 800);
+    
+    const btn = document.createElement("button");
+    btn.innerText = "Share Location";
+    btn.className = "location-button";
+    btn.onclick = requestLocation; // Attach location handler
+    chatMessages.appendChild(btn);
+    
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+    chatStep = 2;
   } else {
-    // Normal chat flow after onboarding info collected
-    appendMessage(msg, 'user');
-    if (!liveMode) {
-      handleBotReply(msg.toLowerCase());
-    } else {
-      sendToAdmin(msg);
-    }
+    // Proceed with normal chat or bot logic
+    getBotResponse(message);
   }
-
-  input.value = '';
 }
+
+function requestLocation() {
+  if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(function (position) {
+      const latitude = position.coords.latitude;
+      const longitude = position.coords.longitude;
+
+      userData.location = { latitude, longitude };
+
+      // Store in Firebase
+      db.ref("userData/" + sessionId).set({
+        name: userData.name,
+        email: userData.email,
+        latitude,
+        longitude,
+      });
+
+      // Send to PHP backend
+      fetch("save_user.php", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ sessionId, ...userData })
+      });
+
+      appendMessage("Thanks for sharing your location! How can I assist you today?", 'bot', 800);
+      renderSuggestions();
+      chatStep = 3;
+    });
+  } else {
+    appendMessage("Geolocation is not supported by your browser.", 'bot', 500);
+  }
+}
+
+
 
 // Basic email format validation regex
 function validateEmail(email) {
   const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   return re.test(email);
 }
+
+document.getElementById("imageInput").addEventListener("change", function () {
+    const formData = new FormData();
+    formData.append("image", this.files[0]);
+
+    fetch("upload_image.php", {
+        method: "POST",
+        body: formData
+    }).then(res => res.json())
+      .then(data => {
+          if (data.success) {
+              let img = document.createElement("img");
+              img.src = data.image;
+              img.className = "chat-image";
+              document.getElementById("chatMessages").appendChild(img);
+          } else {
+              alert("Image upload failed: " + data.error);
+          }
+      });
+});
+
 
 // Show "Share My Location" button during location step
 function showLocationButton() {
@@ -181,34 +230,42 @@ function showLocationButton() {
   btn.style.background = '#f1f1f1';
   btn.style.cursor = 'pointer';
 
-  btn.onclick = () => {
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        position => {
-          const loc = {
-            lat: position.coords.latitude,
-            lng: position.coords.longitude
-          };
-          userData.location = loc;
-          appendMessage("Location received! Thank you.", 'bot', 500);
+btn.onclick = () => {
+  if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(function (position) {
+      const latitude = position.coords.latitude;
+      const longitude = position.coords.longitude;
 
-          // Send collected user info to backend
-          saveUserInfoToBackend(userData);
+      // USE collected data from earlier steps
+      const userInfo = {
+        name: userData.name,
+        email: userData.email,
+        latitude: latitude,
+        longitude: longitude
+      };
 
-          // Clear location button & show normal suggestions
-          chatSuggestions.innerHTML = '';
-          renderSuggestions();
+      userData.location = { latitude, longitude };
 
-          chatStep = 3; // Proceed to normal chat
-        },
-        error => {
-          appendMessage("Couldn't get your location. Please try again or type your address.", 'bot', 500);
-        }
-      );
-    } else {
-      appendMessage("Geolocation is not supported by your browser.", 'bot', 500);
-    }
-  };
+      // Save to Firebase
+      firebase.database().ref("userData/" + sessionId).set(userInfo);
+
+      // Save to backend
+      fetch("save_user.php", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ sessionId: sessionId, ...userInfo })
+      });
+
+      // Continue the chat
+      appendMessage("Thanks for sharing your location! How can I assist you today?", 'bot', 800);
+      renderSuggestions(); // show quick replies
+      chatStep = 3;
+    });
+  } else {
+    appendMessage("Geolocation is not supported by your browser.", 'bot', 500);
+  }
+};
+
 
   chatSuggestions.appendChild(btn);
 }
@@ -297,3 +354,4 @@ renderSuggestions();
 
 // Start conversation by asking for user name
 appendMessage("Hello! What is your name?", 'bot', 500);
+

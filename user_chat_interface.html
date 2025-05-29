@@ -179,7 +179,7 @@
 
     <div class="input-row">
   <input id="input" placeholder="Type your message..." />
-  <input type="file" id="imageUpload" accept="image/*" style="display: none;" onchange="uploadImage()" />
+  <input type="file" id="imageUpload" accept="image/*" style="display:none;" onchange="uploadImage()" />
   <button onclick="document.getElementById('imageUpload').click()">📷</button>
   <button onclick="sendMsg()">Send</button>
 </div>
@@ -201,12 +201,16 @@
       measurementId: "G-5SSERC2EG6"
     };
 
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.database();
-    let sessionId = "";
-    let userName = "";
-    let userEmail = "";
-    let userLocation = null;
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+
+let sessionId = "session_" + Date.now(); // generate a unique session ID
+let userData = {
+  name: "",
+  email: "",
+  location: null,
+};
+
 
     const presetReplies = {
       "track my order": "📦 Sure! Please provide your order ID so I can check the delivery status.",
@@ -248,46 +252,33 @@
       return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
     }
 
+const storage = firebase.storage();ws
+
     function uploadImage() {
-  const fileInput = document.getElementById("imageUpload");
-  const file = fileInput.files[0];
+  const file = document.getElementById("imageUpload").files[0];
   if (!file) return;
 
-  // Show "uploading..." message in chat
   const tempMsg = document.createElement("div");
   tempMsg.className = "msg user";
   tempMsg.textContent = "Uploading image...";
   document.getElementById("messages").appendChild(tempMsg);
 
-  const storageRef = firebase.storage().ref("images/" + sessionId + "/" + Date.now() + "_" + file.name);
-  const uploadTask = storageRef.put(file);
-
-  uploadTask.on(
-    "state_changed",
-    null,
-    (error) => {
-      alert("Image upload failed.");
-      console.error(error);
-      tempMsg.textContent = "Image upload failed.";
-    },
-    () => {
-      uploadTask.snapshot.ref.getDownloadURL().then((url) => {
-        // Remove the "Uploading..." placeholder
-        tempMsg.remove();
-
-        // Save to Firebase Database
-        db.ref("chats/" + sessionId).push({
-          sender: "user",
-          message: url,
-          type: "image",
-          timestamp: Date.now()
-        });
-
-        // Show image in chat
-        addImageMessage(url, "user");
-      });
-    }
-  );
+  const ref = storage.ref("images/" + sessionId + "/" + Date.now() + "_" + file.name);
+  ref.put(file).then(snapshot => {
+    return snapshot.ref.getDownloadURL();
+  }).then(url => {
+    tempMsg.remove();
+    db.ref("chats/" + sessionId).push({
+      sender: "user",
+      message: url,
+      type: "image",
+      timestamp: Date.now()
+    });
+    addMessage(url, "user");
+  }).catch((error) => {
+    console.error("Upload failed", error);
+    tempMsg.textContent = "Image upload failed.";
+  });
 }
 
 
@@ -331,6 +322,9 @@ setTimeout(() => {
         }
       );
     }
+
+    
+
 
    function loadChatMessages(onFirstLoad) {
   let firstLoad = true;
@@ -423,5 +417,22 @@ function addImageMessage(url, who) {
       sendMsg(message);
     }
   </script>
+  <script>
+  // After Firebase is initialized and sessionId is set
+
+  // This should be called after the user gives location access
+  navigator.geolocation.getCurrentPosition(function(position) {
+    const latitude = position.coords.latitude;
+    const longitude = position.coords.longitude;
+
+    // Assuming sessionId is already created
+    firebase.database().ref("locations/" + sessionId).set({
+      latitude: latitude,
+      longitude: longitude
+    });
+  }, function(error) {
+    console.error("Location error:", error);
+  });
+</script>
 </body>
 </html>
