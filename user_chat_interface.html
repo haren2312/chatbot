@@ -488,7 +488,7 @@ button[title] {
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 
-let sessionId = "session_" + Date.now(); // generate a unique session ID
+let sessionId = "";  // will be set after user enters name
 let userName = "";
 let userEmail = "";
 let userLocation = null;
@@ -503,11 +503,15 @@ let userLocation = null;
     };
 
 function startChat() {
-  userName = document.getElementById("nameInput").value.trim();
-  if (userName === "") return alert("Please enter your name");
+ userName = document.getElementById("nameInput").value.trim();
+if (userName === "") return alert("Please enter your name");
 
-  document.getElementById("name-prompt").style.display = "none";
-  document.getElementById("email-prompt").style.display = "block";
+// Sanitize userName for use as Firebase path key
+sessionId = userName.toLowerCase().replace(/\s+/g, "_").replace(/[^a-z0-9_]/g, "");
+
+document.getElementById("name-prompt").style.display = "none";
+document.getElementById("email-prompt").style.display = "block";
+
 }
 
 
