@@ -2,186 +2,341 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Chat with Support</title>
+  <title>Floating Seva Bot</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <style>
     :root {
-  --primary: #3b82f6;
-  --bot-color: #10b981;
-  --agent-color: #f59e0b;
-  --user-color: #2563eb;
-  --background: #111827;
-  --text: #f9fafb;
-  --card: #1f2937;
-  --input-bg: #374151;
-  --border-color: #4b5563;
-  --hover: #2563eb;
-  --preset-bg: #2563eb;
-  --preset-hover: #1d4ed8;
-}
+      --primary: #3b82f6;
+      --bot-color: #10b981;
+      --agent-color: #f59e0b;
+      --user-color: #2563eb;
+      --background: #111827;
+      --text: #f9fafb;
+      --card: #1f2937;
+      --input-bg: #374151;
+      --border-color: #4b5563;
+      --hover: #2563eb;
+      --preset-bg: #2563eb;
+      --preset-hover: #1d4ed8;
+    }
 
-* {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-}
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
 
-body {
-  font-family: 'Segoe UI', Tahoma, sans-serif;
-  background: var(--background);
-  color: var(--text);
-  padding: 20px;
+    body {
+      font-family: 'Segoe UI', Tahoma, sans-serif;
+      background: var(--background);
+      color: var(--text);
+    }
+
+    #chatbot-toggle {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background: var(--primary);
+      color: white;
+      border: none;
+      border-radius: 50%;
+      width: 70px;
+      height: 70px;
+      font-size: 30px;
+      cursor: pointer;
+      z-index: 999;
+    }
+
+    #chat-container {
+      position: fixed;
+      bottom: 90px;
+      right: 20px;
+      width: 100%;
+      max-width: 420px;
+      background: var(--card);
+      border-radius: 12px;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.6);
+      display: none;
+      flex-direction: column;
+      gap: 12px;
+      z-index: 998;
+      padding: 20px;
+    }
+
+    h3 {
+      text-align: center;
+      color: var(--primary);
+      font-size: 20px;
+      margin-bottom: 10px;
+    }
+
+    #messages {
+      height: 320px;
+      overflow-y: auto;
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 12px;
+      background: #1e293b;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .msg {
+      max-width: 80%;
+      padding: 10px 14px;
+      border-radius: 16px;
+      font-size: 14px;
+      animation: fadeIn 0.3s ease;
+      word-wrap: break-word;
+    }
+
+    .user {
+      align-self: flex-end;
+      background: var(--user-color);
+      color: white;
+      border-bottom-right-radius: 0;
+    }
+
+    .bot {
+      align-self: flex-start;
+      background: var(--bot-color);
+      color: white;
+      border-bottom-left-radius: 0;
+    }
+
+    .agent {
+      align-self: flex-start;
+      background: var(--agent-color);
+      color: white;
+      border-bottom-left-radius: 0;
+    }
+
+    #input {
+      flex-grow: 1;
+      padding: 10px;
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      font-size: 14px;
+      outline: none;
+      background: var(--input-bg);
+      color: white;
+    }
+
+    button {
+      background: var(--primary);
+      color: white;
+      border: none;
+      padding: 10px 16px;
+      border-radius: 8px;
+      font-size: 14px;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+
+    button:hover {
+      background: var(--hover);
+    }
+
+    .preset-btn {
+      flex-grow: 1;
+      padding: 8px;
+      font-size: 13px;
+      background: var(--preset-bg);
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background 0.2s;
+      color: white;
+    }
+
+    .preset-btn:hover {
+      background: var(--preset-hover);
+    }
+
+    .presets {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .input-row {
+      display: flex;
+      gap: 10px;
+    }
+
+    input[type="text"],
+    input[type="email"] {
+      padding: 8px;
+      border-radius: 6px;
+      border: 1px solid var(--border-color);
+      background: var(--input-bg);
+      color: white;
+      width: 70%;
+      margin-top: 8px;
+    }
+
+    #name-prompt,
+    #email-prompt,
+    #location-prompt {
+      background: var(--card);
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.6);
+    }
+
+    #location-status {
+      margin-top: 10px;
+      font-size: 14px;
+      color: var(--primary);
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(5px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    img {
+      border-radius: 10px;
+      max-width: 200px;
+    }
+
+    .chat-header {
   display: flex;
-  justify-content: center;
   align-items: center;
-  height: 100vh;
-}
-
-#chat {
-  width: 100%;
-  max-width: 420px;
-  background: var(--card);
-  padding: 20px;
-  border-radius: 12px;
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.6);
-  display: none;
-  flex-direction: column;
   gap: 12px;
+  padding: 12px;
+  background: var(--card);
+  border-radius: 10px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
 }
 
-h3 {
-  text-align: center;
+.bot-avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  border: 2px solid var(--primary);
+  object-fit: cover;
+}
+
+.bot-title {
+  margin: 0;
+  font-size: 18px;
   color: var(--primary);
-  font-size: 20px;
-  margin-bottom: 10px;
 }
 
-#messages {
+.bot-subtitle {
+  margin: 0;
+  font-size: 13px;
+  color: var(--border-color);
+}
+
+.chat-messages {
   height: 320px;
   overflow-y: auto;
   border: 1px solid var(--border-color);
-  border-radius: 8px;
-  padding: 12px;
+  border-radius: 10px;
+  padding: 14px;
   background: #1e293b;
   display: flex;
   flex-direction: column;
   gap: 10px;
 }
 
-.msg {
-  max-width: 80%;
+.input-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 0 0 0;
+}
+
+button[title] {
   padding: 10px 14px;
-  border-radius: 16px;
   font-size: 14px;
-  animation: fadeIn 0.3s ease;
-  word-wrap: break-word;
-}
-
-.user {
-  align-self: flex-end;
-  background: var(--user-color);
-  color: white;
-  border-bottom-right-radius: 0;
-}
-
-.bot {
-  align-self: flex-start;
-  background: var(--bot-color);
-  color: white;
-  border-bottom-left-radius: 0;
-}
-
-.agent {
-  align-self: flex-start;
-  background: var(--agent-color);
-  color: white;
-  border-bottom-left-radius: 0;
-}
-
-#input {
-  flex-grow: 1;
-  padding: 10px;
-  border: 1px solid var(--border-color);
   border-radius: 8px;
+}
+
+.prompt-box {
+  background: var(--card);
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.5);
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.prompt-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.prompt-title {
+  font-size: 20px;
+  color: var(--primary);
+  margin: 0;
+}
+
+.prompt-subtitle {
+  font-size: 13px;
+  color: var(--border-color);
+  margin-top: 4px;
+}
+
+.prompt-content {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  text-align: left;
+}
+
+.prompt-label {
   font-size: 14px;
-  outline: none;
+  color: var(--text);
+}
+
+.prompt-content input {
+  padding: 10px;
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
   background: var(--input-bg);
   color: white;
+  font-size: 14px;
+  outline: none;
 }
 
-button {
+.prompt-content button {
   background: var(--primary);
   color: white;
   border: none;
   padding: 10px 16px;
-  border-radius: 8px;
   font-size: 14px;
+  border-radius: 8px;
   cursor: pointer;
-  transition: background 0.3s;
+  transition: background 0.3s ease;
 }
 
-button:hover {
+.prompt-content button:hover {
   background: var(--hover);
 }
 
-.preset-btn {
-  flex-grow: 1;
-  padding: 8px;
-  font-size: 13px;
-  background: var(--preset-bg);
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  transition: background 0.2s;
-  color: white;
+.prompt-box {
+  transition: all 0.4s ease;
+  animation: fadeInUp 0.4s ease both;
 }
 
-.preset-btn:hover {
-  background: var(--preset-hover);
-}
-
-.presets {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-top: 10px;
-}
-
-.input-row {
-  display: flex;
-  gap: 10px;
-}
-
-input[type="text"],
-input[type="email"] {
-  padding: 8px;
-  border-radius: 6px;
-  border: 1px solid var(--border-color);
-  background: var(--input-bg);
-  color: white;
-  width: 70%;
-  margin-top: 8px;
-}
-
-#name-prompt,
-#email-prompt,
-#location-prompt {
-  background: var(--card);
-  padding: 20px;
-  border-radius: 12px;
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.6);
-}
-
-#location-status {
-  margin-top: 10px;
-  font-size: 14px;
-  color: var(--primary);
-}
-
-@keyframes fadeIn {
+@keyframes fadeInUp {
   from {
     opacity: 0;
-    transform: translateY(5px);
+    transform: translateY(20px);
   }
   to {
     opacity: 1;
@@ -189,62 +344,137 @@ input[type="email"] {
   }
 }
 
-img {
-  border-radius: 10px;
-  max-width: 200px;
+@media screen and (max-width: 768px) {
+  #chat-container {
+    bottom: 80px;
+    right: 10px;
+    left: 10px;
+    max-width: none;
+    width: auto;
+    height: 80%;
+    overflow: hidden;
+  }
+
+  .chat-messages {
+    height: 50vh;
+  }
+
+  .input-row input[type="text"],
+  .input-row input[type="email"] {
+    width: 100%;
+  }
+
+  .presets {
+    flex-direction: column;
+  }
+
+  .prompt-box {
+    padding: 16px;
+  }
+
+  .bot-avatar {
+    width: 40px;
+    height: 40px;
+  }
+
+  .chat-header {
+    flex-direction: row;
+    align-items: center;
+  }
+
+  .prompt-content input {
+    width: 100%;
+  }
 }
+
+@media screen and (max-width: 480px) {
+  #chatbot-toggle {
+    width: 60px;
+    height: 60px;
+    font-size: 24px;
+  }
+
+  .prompt-title {
+    font-size: 18px;
+  }
+
+  .prompt-subtitle {
+    font-size: 12px;
+  }
+}
+
+
 
   </style>
 </head>
 <body>
-  <div id="name-prompt" style="text-align:center;">
-    <h3>Welcome to Seva Bot</h3>
-    <p>Please enter your name to start chatting:</p>
-    <input id="nameInput" placeholder="Your name..." style="padding: 8px; border: 1px solid #ccc; border-radius: 6px;" />
+
+<button id="chatbot-toggle">💬</button>
+
+<div id="chat-container">
+  <div id="name-prompt" class="prompt-box">
+  <div class="prompt-header">
+    <img src="bot-avatar.png" class="bot-avatar" alt="Bot Avatar">
+    <div>
+      <h3 class="prompt-title">Welcome to Seva Bot</h3>
+      <p class="prompt-subtitle">Your Virtual Assistant</p>
+    </div>
+  </div>
+  <div class="prompt-content">
+    <label for="nameInput" class="prompt-label">What's your name?</label>
+    <input id="nameInput" placeholder="Enter your name..." />
     <button onclick="startChat()">Start Chat</button>
   </div>
+</div>
+
 
   <div id="email-prompt" style="text-align:center; display:none;">
     <p>Please enter your email:</p>
-    <input id="emailInput" placeholder="Your email..." type="email" style="padding: 8px; border: 1px solid #ccc; border-radius: 6px;" />
+    <input id="emailInput" placeholder="Your email..." type="email" />
     <button onclick="submitEmail()">Submit Email</button>
   </div>
 
   <div id="location-prompt" style="text-align:center; display:none;">
     <p>Please share your live location:</p>
     <button onclick="getLocation()">Share Location</button>
-    <p id="location-status" style="margin-top: 10px; font-size: 14px; color: var(--primary);"></p>
+    <p id="location-status"></p>
   </div>
 
-  <div id="chat">
-    <div style="display: flex; align-items: center; gap: 10px; padding-bottom: 10px;">
-      <img src="bot-avatar.png" alt="Bot" style="width: 50px; height: 50px; border-radius: 12px; border: 2px solid var(--primary);" />
-      <h3 style="margin: 0; font-size: 20px; color: var(--primary);">Seva Bot</h3>
+ <div id="chat" style="display:none; flex-direction: column; gap: 12px;">
+  <div class="chat-header">
+    <img src="bot-avatar.png" alt="Bot Avatar" class="bot-avatar" />
+    <div>
+      <h3 class="bot-title">Seva Bot</h3>
+      <p class="bot-subtitle">Your Virtual Assistant</p>
     </div>
+  </div>
 
-    <div id="messages"></div>
-    <!-- Preset Buttons -->
-    <div class="presets">
-      <button class="preset-btn" onclick="presetClick('Track my order')">📦 Track Order</button>
-      <button class="preset-btn" onclick="presetClick('Return product')">🔁 Return Product</button>
-      <button class="preset-btn" onclick="presetClick('Refund status')">💸 Refund Status</button>
-      <button class="preset-btn" onclick="presetClick('Talk to agent')">👤 Talk to Agent</button>
-    </div>
+  <div id="messages" class="chat-messages"></div>
 
-    <div class="input-row">
-  <input id="input" placeholder="Type your message..." />
-  <input type="file" id="imageUpload" accept="image/*" style="display:none;" onchange="uploadImage()" />
-  <button onclick="document.getElementById('imageUpload').click()">📷</button>
-  <button onclick="sendMsg()">Send</button>
+  <div class="presets">
+    <button class="preset-btn" onclick="presetClick('Track my order')">📦 Track Order</button>
+    <button class="preset-btn" onclick="presetClick('Return product')">🔁 Return Product</button>
+    <button class="preset-btn" onclick="presetClick('Refund status')">💸 Refund Status</button>
+    <button class="preset-btn" onclick="presetClick('Talk to agent')">👤 Talk to Agent</button>
+  </div>
+
+  <div class="input-row">
+    <input id="input" placeholder="Type your message..." />
+    <input type="file" id="imageUpload" accept="image/*" style="display:none;" onchange="uploadImage()" />
+    <button onclick="document.getElementById('imageUpload').click()" title="Upload Image">📷</button>
+    <button onclick="sendMsg()" title="Send Message">➤</button>
+  </div>
 </div>
 
-  </div>
+
+<!-- Firebase SDK -->
 <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-storage-compat.js"></script>
 
-  <script>
-    const firebaseConfig = {
+<!-- Your full logic script here (unchanged from original) -->
+<script>
+     const firebaseConfig = {
       apiKey: "AIzaSyCuzXtnMzjJ76N8PH-I4ZND5NnyVfD3XjE",
       authDomain: "chatbot-0405.firebaseapp.com",
       databaseURL: "https://chatbot-0405-default-rtdb.firebaseio.com",
@@ -259,11 +489,10 @@ firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 
 let sessionId = "session_" + Date.now(); // generate a unique session ID
-let userData = {
-  name: "",
-  email: "",
-  location: null,
-};
+let userName = "";
+let userEmail = "";
+let userLocation = null;
+
 
 
     const presetReplies = {
@@ -273,16 +502,14 @@ let userData = {
       "talk to agent": "👤 Please wait. Connecting you to a real support agent..."
     };
 
-    function startChat() {
-      userName = document.getElementById("nameInput").value.trim();
-      if (!userName) return alert("Please enter your name");
+function startChat() {
+  userName = document.getElementById("nameInput").value.trim();
+  if (userName === "") return alert("Please enter your name");
 
-      sessionId = userName.toLowerCase().replace(/\s+/g, "_");
+  document.getElementById("name-prompt").style.display = "none";
+  document.getElementById("email-prompt").style.display = "block";
+}
 
-      // Hide name prompt, show email prompt
-      document.getElementById("name-prompt").style.display = "none";
-      document.getElementById("email-prompt").style.display = "block";
-    }
 
     function submitEmail() {
       userEmail = document.getElementById("emailInput").value.trim();
@@ -306,7 +533,8 @@ let userData = {
       return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
     }
 
-const storage = firebase.storage();ws
+const storage = firebase.storage();
+
 
     function uploadImage() {
   const file = document.getElementById("imageUpload").files[0];
@@ -442,6 +670,22 @@ function addImageMessage(url, who) {
   addMessage(url, who); // Reuse the same logic
 }
 
+function presetClick(text) {
+  addMessage(text, "user");
+  db.ref("chats/" + sessionId).push({
+    sender: "user",
+    message: text,
+    type: "text",
+    timestamp: Date.now()
+  });
+
+  const response = presetReplies[text.toLowerCase()];
+  if (response) {
+    botMessage(response);
+  }
+}
+
+
 
     function botMessage(text) {
       addMessage(text, "bot");
@@ -487,6 +731,12 @@ function addImageMessage(url, who) {
   }, function(error) {
     console.error("Location error:", error);
   });
+
+  document.getElementById("chatbot-toggle").onclick = () => {
+    const chatContainer = document.getElementById("chat-container");
+    chatContainer.style.display = chatContainer.style.display === "none" ? "flex" : "none";
+  };
 </script>
+
 </body>
 </html>
