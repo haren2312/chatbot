@@ -750,7 +750,8 @@ function addMessage(text, sender, name) {
   contentDiv.appendChild(nameSpan);
 
   // 💬 Handle text or image
-  if (typeof text === 'string' && text.match(/^https?:\/\/.*\.(jpeg|jpg|png|gif|webp)(\?.*)?$/i)) {
+  if (typeof text === 'string' && (text.match(/^https?:\/\/.*\.(jpeg|jpg|png|gif|webp)(\?.*)?$/i) || text.match(/^uploads\/.*\.(jpeg|jpg|png|gif|webp)$/i))) {
+
     const img = document.createElement("img");
     img.src = text;
     img.className = "image-in-message";
@@ -776,6 +777,21 @@ function addMessage(text, sender, name) {
   messagesContainer.appendChild(msgDiv);
   messagesContainer.scrollTop = messagesContainer.scrollHeight;
 }
+
+function sendMessage(message, type = "text") {
+  if (!db || !sessionId || !message) return;
+
+  const newMsgRef = db.ref("chats/" + sessionId).push();
+  newMsgRef.set({
+    message,
+    sender: "user",
+    type,
+    timestamp: Date.now()
+  });
+
+  addMessage(message, "user", userName);
+}
+
 
 
 function addImageMessage(url, sender) {
@@ -845,62 +861,38 @@ function presetClick(message) {
 }
 
 function uploadImage() {
-  const file = document.getElementById("imageUpload").files[0];
-  if (!file) return;
+  const fileInput = document.getElementById("imageUpload");
+  const file = fileInput.files[0];
 
-  // Validate file type
-  if (!file.type.startsWith('image/')) {
-    showError("Please select a valid image file");
+  if (!file || !sessionId) {
+    alert("Please select an image.");
     return;
   }
 
-  // Validate file size (5MB limit)
-  if (file.size > 5 * 1024 * 1024) {
-    showError("Image size should be less than 5MB");
-    return;
-  }
+  const formData = new FormData();
+  formData.append("image", file);
+  formData.append("sessionId", sessionId);
 
-  const tempMsg = document.createElement("div");
-  tempMsg.className = "msg user";
-  tempMsg.textContent = "Uploading image...";
-  document.getElementById("messages").appendChild(tempMsg);
-
-  if (storage && sessionId) {
-    const ref = storage.ref("images/" + sessionId + "/" + Date.now() + "_" + file.name);
-    
-    ref.put(file).then(snapshot => {
-      return snapshot.ref.getDownloadURL();
-    }).then(url => {
-      tempMsg.remove();
-      
-      // Save image message to Firebase
-      db.ref("chats/" + sessionId).push({
-        sender: "user",
-        message: url,
-        type: "image",
-        timestamp: Date.now()
-      });
-      
-      addImageMessage(url, "user");
-      
-      // Bot response for image
-      setTimeout(() => {
-        botMessage("I can see your image! How can I help you with this? 📸");
-      }, 500);
-      
-    }).catch((error) => {
-      console.error("Upload failed:", error);
-      tempMsg.textContent = "Image upload failed. Please try again.";
-      setTimeout(() => tempMsg.remove(), 3000);
+  fetch("upload.php", {
+    method: "POST",
+    body: formData
+  })
+    .then((response) => response.json())
+    .then((data) => {
+      if (data.success) {
+        sendMessage(data.url, "image");
+      } else {
+        alert("Upload failed: " + data.error);
+      }
+    })
+    .catch((error) => {
+      console.error("Error uploading image:", error);
+      alert("An error occurred.");
     });
-  } else {
-    tempMsg.textContent = "Image upload not available";
-    setTimeout(() => tempMsg.remove(), 3000);
-  }
-  
-  // Clear file input
-  document.getElementById("imageUpload").value = "";
 }
+
+
+
 
 // Event Listeners
 document.addEventListener("DOMContentLoaded", function() {
