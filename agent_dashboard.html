@@ -303,6 +303,69 @@
     .emoji-picker span:hover {
       background-color: #2b3c4d;
     }
+
+    .edit-modal {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: #1e1e1e;
+  padding: 20px;
+  border-radius: 12px;
+  z-index: 9999;
+  color: white;
+  width: 300px;
+  display: none;
+  box-shadow: 0 0 10px #00d4ff;
+}
+.edit-modal input {
+  width: 100%;
+  padding: 8px;
+  margin: 6px 0;
+  border: none;
+  border-radius: 6px;
+}
+.edit-modal button {
+  margin-top: 10px;
+  padding: 6px 12px;
+  border: none;
+  border-radius: 6px;
+  background-color: #00d4ff;
+  color: #000;
+  cursor: pointer;
+}
+.modal-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0,0,0,0.6);
+  z-index: 9998;
+  display: none;
+}
+
+#modalBackdrop {
+  display: none;
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0, 0, 0, 0.4);
+  z-index: 998;
+}
+
+.edit-modal {
+  display: none;
+  position: fixed;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  background: #fff;
+  padding: 20px;
+  border-radius: 10px;
+  z-index: 999;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+}
+
+
   </style>
 </head>
 <body>
@@ -323,6 +386,8 @@
 
   <div class="chat-area">
     <div id="user-info-list" class="user-info-section"></div>
+
+    
     
     <div class="chat-box" id="chatBox">
       <div class="empty-state">
@@ -338,12 +403,30 @@
       <button id="uploadBtn" title="Send Image 📷">📷</button>
       <button id="sendBtn">Send</button>
     </div>
+
+    
     
     <div class="emoji-picker" id="emojiPicker">
       <span>😊</span><span>😂</span><span>😍</span><span>🤔</span><span>👍</span><span>❤️</span><span>🔥</span><span>✨</span>
     </div>
   </div>
 </div>
+
+<button onclick="closeEditModal()" style="float:right;">✖️</button>
+
+
+<div class="modal-backdrop" id="modalBackdrop"></div>
+<div class="edit-modal" id="editModal">
+  <h3>Edit User Info</h3>
+  <input type="text" id="editName" placeholder="Name">
+  <input type="email" id="editEmail" placeholder="Email">
+  <input type="text" id="editLat" placeholder="Latitude">
+  <input type="text" id="editLng" placeholder="Longitude">
+  <button onclick="saveUserEdit()">Save</button>
+</div>
+
+
+
 
 <!-- Firebase SDK -->
 <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
@@ -385,6 +468,13 @@
   const searchInput = document.getElementById("searchInput");
   const emojiBtn = document.getElementById("emojiBtn");
   const emojiPicker = document.getElementById("emojiPicker");
+
+
+  function closeEditModal() {
+  document.getElementById("editModal").style.display = "none";
+  document.getElementById("modalBackdrop").style.display = "none";
+}
+
 
   // Initialize the application
   function initializeApp() {
@@ -489,32 +579,31 @@ fileInput.onchange = () => {
   // Render user information
  function renderUserInfo(data) {
   const userInfoList = document.getElementById("user-info-list");
-  
+
   if (!data || Object.keys(data).length === 0) {
     userInfoList.innerHTML = '<div class="user-info-section"><h3>Users</h3><p>No user data available</p></div>';
     return;
   }
 
-  const firstUserId = Object.keys(data)[0]; // Choose first user or any specific logic
-  userInfoList.id = `user-info-${escapeHtml(firstUserId)}`;
-
   let output = "<h3>Users</h3>";
   for (let sessionId in data) {
     const user = data[sessionId];
-    const locationLink = (user.latitude && user.longitude) 
-      ? `<a href="https://maps.google.com/?q=${user.latitude},${user.longitude}" target="_blank">📍 View Location</a>`
-      : '<span style="color: #666;">📍 Location not available</span>';
-    
+    const locationLink = (user.latitude && user.longitude)
+      ? `<a href="https://maps.google.com/?q=${user.latitude},${user.longitude}" target="_blank">📍</a>`
+      : '<span style="color: #666;">📍 N/A</span>';
+
     output += `
       <div class="user-card">
-        <strong>${escapeHtml(user.name || 'Unknown User')}</strong>
-        📧 ${escapeHtml(user.email || 'No email provided')}<br>
+        <strong>${escapeHtml(user.name || 'Unknown')}</strong>
+        📧 ${escapeHtml(user.email || 'No email')}<br>
         ${locationLink}
+        <button style="margin-left:10px;" onclick="openEditModal('${sessionId}')">✏️ Edit</button>
       </div>
     `;
   }
   userInfoList.innerHTML = output;
 }
+
 
 
 
@@ -670,6 +759,79 @@ messageDiv.innerHTML = `
 }
 
 
+// Open edit modal and load user data
+function openEditModal(sessionId) {
+  if (!sessionId) return;
+  currentEditSessionId = sessionId;
+
+  // Set session ID on modal for saving later
+  const editModal = document.getElementById("editModal");
+  editModal.setAttribute("data-session-id", sessionId);
+
+  // Fetch user data from Firebase userData node
+  db.ref("userData/" + sessionId).once("value").then((snapshot) => {
+    const data = snapshot.val() || {};
+    document.getElementById("editName").value = data.name || "";
+    document.getElementById("editEmail").value = data.email || "";
+    document.getElementById("editLat").value = data.latitude || "";
+    document.getElementById("editLng").value = data.longitude || "";
+
+    // Show modal and backdrop
+    editModal.style.display = "block";
+    document.getElementById("modalBackdrop").style.display = "block";
+  }).catch((error) => {
+    alert("Failed to load user data: " + error.message);
+  });
+}
+
+// Save edits back to Firebase
+function saveUserEdit() {
+  const sessionId = document.getElementById("editModal").getAttribute("data-session-id");
+  if (!sessionId) {
+    alert("No session selected.");
+    return;
+  }
+
+  const name = document.getElementById("editName").value.trim();
+  const email = document.getElementById("editEmail").value.trim();
+  const latitude = document.getElementById("editLat").value.trim();
+  const longitude = document.getElementById("editLng").value.trim();
+
+  // Basic validation (optional)
+  if (!name || !email) {
+    alert("Name and email cannot be empty.");
+    return;
+  }
+
+  const updatedData = {
+    name,
+    email,
+    latitude,
+    longitude,
+  };
+
+  db.ref("userData/" + sessionId).update(updatedData)
+    .then(() => {
+      alert("User info updated successfully!");
+      closeEditModal();
+      // Optionally, reload user info list
+      db.ref("userData").once("value").then(snapshot => {
+        renderUserInfo(snapshot.val());
+      });
+    })
+    .catch((error) => {
+      alert("Failed to update user info: " + error.message);
+    });
+}
+
+// Close modal function
+function closeEditModal() {
+  document.getElementById("editModal").style.display = "none";
+  document.getElementById("modalBackdrop").style.display = "none";
+}
+
+
+
 
   // Event listeners
   sendBtn.onclick = sendMessage;
@@ -699,6 +861,60 @@ messageDiv.innerHTML = `
       emojiPicker.style.display = "none";
     }
   });
+
+  let currentEditSessionId = "";
+
+function openEditModal(sessionId) {
+  currentEditSessionId = sessionId;
+  const user = db.ref("userData/" + sessionId);
+  user.once("value").then((snapshot) => {
+    const data = snapshot.val() || {};
+    document.getElementById("editName").value = data.name || "";
+    document.getElementById("editEmail").value = data.email || "";
+    document.getElementById("editLat").value = data.latitude || "";
+    document.getElementById("editLng").value = data.longitude || "";
+    document.getElementById("editModal").style.display = "block";
+    document.getElementById("modalBackdrop").style.display = "block";
+  });
+}
+
+function saveUserEdit() {
+  const sessionId = document.getElementById("editModal").getAttribute("data-session-id");
+  const name = document.getElementById("editName").value.trim();
+  const email = document.getElementById("editEmail").value.trim();
+  const latitude = document.getElementById("editLat").value.trim();
+  const longitude = document.getElementById("editLng").value.trim();
+
+  if (!sessionId || !db) {
+    alert("Invalid session or database not initialized.");
+    return;
+  }
+
+  const userData = {
+    name,
+    email,
+    latitude,
+    longitude
+  };
+
+  // Update userData
+  db.ref("userData/" + sessionId).update(userData)
+    .then(() => {
+      // Hide modal after save
+      document.getElementById("editModal").style.display = "none";
+      document.getElementById("modalBackdrop").style.display = "none";
+    })
+    .catch((err) => {
+      alert("Failed to update user data: " + err.message);
+    });
+}
+
+
+function closeModal() {
+  document.getElementById("editModal").style.display = "none";
+  document.getElementById("modalBackdrop").style.display = "none";
+}
+
 
   // Utility functions
   function escapeHtml(text) {
@@ -740,6 +956,9 @@ messageDiv.innerHTML = `
     }
   });
 </script>
+
+
+
 
 </body>
 </html>
