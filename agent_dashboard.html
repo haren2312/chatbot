@@ -288,7 +288,7 @@
       sessionBtn.className = "session-item";
       sessionBtn.innerHTML = `<div style="display:flex;justify-content:space-between;align-items:center;">
   <span>${sid}</span>
-  <span id="loc-${sid}" style="font-size:0.8rem; color:#aaa;"></span>
+  <span id="loc-${sid}" style="font-size:0.8rem; color:#aaa;"></span> 
 </div>`;
 
 db.ref("locations/" + sid).once("value").then(snap => {
