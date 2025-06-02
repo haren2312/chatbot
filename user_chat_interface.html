@@ -68,7 +68,7 @@
       gap: 12px;
       z-index: 998;
       padding: 20px;
-      max-height: 80vh;
+      max-height: 110vh;
       overflow: hidden;
     }
 
@@ -389,6 +389,15 @@
         height: 250px;
       }
     }
+
+    .timestamp {
+  display: block;
+  font-size: 0.7rem;
+  color: #999;
+  margin-top: 4px;
+  text-align: right;
+}
+
   </style>
 </head>
 <body>
@@ -467,7 +476,7 @@
     <div class="input-row">
       <input id="input" type="text" placeholder="Type your message..." />
       <input type="file" id="imageUpload" accept="image/*" style="display:none;" onchange="uploadImage()" />
-      <button class="upload-button" onclick="document.getElementById('imageUpload').click()" title="Upload Image">📷</button>
+      <button class="upload-button" onclick="document.getElementById('imageUpload').click()" title="Upload Image">🔗</button>
       <button class="send-button" onclick="sendMsg()" title="Send Message">➤</button>
     </div>
   </div>
@@ -725,28 +734,49 @@ function loadChatMessages(callback) {
   });
 }
 
-function addMessage(text, sender) {
+function addMessage(text, sender, name) {
   const messagesContainer = document.getElementById("messages");
+
   const msgDiv = document.createElement("div");
   msgDiv.className = `msg ${sender}`;
 
-  // Check if it's an image URL
+  const contentDiv = document.createElement("div");
+  contentDiv.className = "message-content";
+
+  // 🧾 Add sender name at the top
+  const nameSpan = document.createElement("div");
+  nameSpan.className = "sender-name";
+  nameSpan.textContent = name;
+  contentDiv.appendChild(nameSpan);
+
+  // 💬 Handle text or image
   if (typeof text === 'string' && text.match(/^https?:\/\/.*\.(jpeg|jpg|png|gif|webp)(\?.*)?$/i)) {
     const img = document.createElement("img");
     img.src = text;
     img.className = "image-in-message";
     img.alt = "Sent image";
     img.onerror = () => {
-      msgDiv.textContent = "Image failed to load";
+      contentDiv.textContent = "Image failed to load";
     };
-    msgDiv.appendChild(img);
+    contentDiv.appendChild(img);
   } else {
-    msgDiv.textContent = text;
+    const msgText = document.createElement("div");
+    msgText.textContent = text;
+    contentDiv.appendChild(msgText);
   }
 
+  // 🕒 Add timestamp
+  const timeSpan = document.createElement("span");
+  timeSpan.className = "timestamp";
+  const now = new Date();
+  timeSpan.textContent = now.toLocaleString(); // or .toLocaleTimeString() if only time
+  contentDiv.appendChild(timeSpan);
+
+  msgDiv.appendChild(contentDiv);
   messagesContainer.appendChild(msgDiv);
   messagesContainer.scrollTop = messagesContainer.scrollHeight;
 }
+
 
 function addImageMessage(url, sender) {
   addMessage(url, sender);

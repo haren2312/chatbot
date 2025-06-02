@@ -425,31 +425,36 @@
   }
 
   // Render user information
-  function renderUserInfo(data) {
-    const userInfoList = document.getElementById("user-info-list");
-    
-    if (!data || Object.keys(data).length === 0) {
-      userInfoList.innerHTML = '<div class="user-info-section"><h3>Users</h3><p>No user data available</p></div>';
-      return;
-    }
-
-    let output = "<h3>Users</h3>";
-    for (let sessionId in data) {
-      const user = data[sessionId];
-      const locationLink = (user.latitude && user.longitude) 
-        ? `<a href="https://maps.google.com/?q=${user.latitude},${user.longitude}" target="_blank">📍 View Location</a>`
-        : '<span style="color: #666;">📍 Location not available</span>';
-      
-      output += `
-        <div class="user-card">
-          <strong>${escapeHtml(user.name || 'Unknown User')}</strong>
-          📧 ${escapeHtml(user.email || 'No email provided')}<br>
-          ${locationLink}
-        </div>
-      `;
-    }
-    userInfoList.innerHTML = output;
+ function renderUserInfo(data) {
+  const userInfoList = document.getElementById("user-info-list");
+  
+  if (!data || Object.keys(data).length === 0) {
+    userInfoList.innerHTML = '<div class="user-info-section"><h3>Users</h3><p>No user data available</p></div>';
+    return;
   }
+
+  const firstUserId = Object.keys(data)[0]; // Choose first user or any specific logic
+  userInfoList.id = `user-info-${escapeHtml(firstUserId)}`;
+
+  let output = "<h3>Users</h3>";
+  for (let sessionId in data) {
+    const user = data[sessionId];
+    const locationLink = (user.latitude && user.longitude) 
+      ? `<a href="https://maps.google.com/?q=${user.latitude},${user.longitude}" target="_blank">📍 View Location</a>`
+      : '<span style="color: #666;">📍 Location not available</span>';
+    
+    output += `
+      <div class="user-card">
+        <strong>${escapeHtml(user.name || 'Unknown User')}</strong>
+        📧 ${escapeHtml(user.email || 'No email provided')}<br>
+        ${locationLink}
+      </div>
+    `;
+  }
+  userInfoList.innerHTML = output;
+}
+
+
 
   // Search functionality
   searchInput.addEventListener("input", () => {
@@ -624,10 +629,16 @@
 
   // Utility functions
   function escapeHtml(text) {
-    const div = document.createElement('div');
-    div.textContent = text;
-    return div.innerHTML;
-  }
+  return text.replace(/[&<>"']/g, function (m) {
+    return ({
+      '&': '&amp;',
+      '<': '&lt;',
+      '>': '&gt;',
+      '"': '&quot;',
+      "'": '&#39;'
+    })[m];
+  });
+}
 
   function showError(message) {
     const errorDiv = document.createElement('div');
