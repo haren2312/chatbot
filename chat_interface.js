@@ -1,357 +1,573 @@
-<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-storage-compat.js"></script>
+// Firebase initialization
+let db = null;
+let storage = null;
 
-
-
-const storage = firebase.storage();
-
-
-let chatStep = 0;  // 0 = ask name, 1 = ask email, 2 = ask location, 3 = normal chat
-let userData = {
-  name: '',
-  email: '',
-  location: null
-};
-
-// Create chatbot UI container and inject into #chatbot-widget element
-const chatbotBox = document.createElement('div');
-chatbotBox.id = 'chatbot-box';
-chatbotBox.innerHTML = `
-  <div id="chat-header">Seva Bot</div>
-  <div id="chat-body"></div>
-  <div id="chat-suggestions" style="padding: 5px; display: flex; flex-wrap: wrap; gap: 5px;"></div>
-  <div id="chat-input">
-    <input type="text" id="user-msg" placeholder="Type your message..." />
-    <button onclick="handleUserMessage()">Send</button>
-  </div>
-`;
-document.getElementById('chatbot-widget').appendChild(chatbotBox);
-
-let senderId = 1;     // Customer user ID
-let receiverId = 2;   // Admin ID or bot ID
-let liveMode = false; // If true, messages go directly to admin
-
-// Predefined quick-reply suggestions shown after user shares info
-const suggestions = [
-  "Where is my order?",
-  "How do I return an item?",
-  "I want a refund",
-  "Talk to a human",
-  "Help me with payment",
-  "Cancel my order"
-];
-
-// Show suggestions buttons (except during location-sharing step)
-function renderSuggestions() {
-  const container = document.getElementById('chat-suggestions');
-  container.innerHTML = '';
-  if (liveMode) return; // Hide suggestions when live mode active
-
-  suggestions.forEach(text => {
-    const btn = document.createElement('button');
-    btn.textContent = text;
-    btn.style.padding = '6px 10px';
-    btn.style.border = '1px solid #ccc';
-    btn.style.borderRadius = '15px';
-    btn.style.background = '#f1f1f1';
-    btn.style.cursor = 'pointer';
-    btn.onclick = () => {
-      appendMessage(text, 'user');
-      handleBotReply(text.toLowerCase());
-    };
-    container.appendChild(btn);
-  });
+// Initialize Firebase if config is available
+try {
+    if (typeof firebase !== 'undefined') {
+        db = firebase.database();
+        storage = firebase.storage();
+    }
+} catch (error) {
+    console.warn('Firebase not initialized:', error);
 }
 
-db.ref("chats/" + sessionId).push({
-  sender: "user",
-  message: url,
-  type: "image",
-  timestamp: Date.now()
-});
+// Global variables
+let chatStep = 0; // 0 = ask name, 1 = ask email, 2 = ask location, 3 = normal chat
+let userData = {
+    name: '',
+    email: '',
+    location: null
+};
+let sessionId = 'session_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+let senderId = 1;
+let receiverId = 2;
+let liveMode = false;
+let inputLocked = false;
 
-// Append a chat message to the chat body area
-// sender: 'bot' or 'user', delay in ms for bot typing simulation
-function appendMessage(text, sender = 'bot', delay = 0) {
-  const chatBody = document.getElementById('chat-body');
+// Predefined quick-reply suggestions
+const suggestions = [
+    "Where is my order?",
+    "How do I return an item?",
+    "I want a refund",
+    "Talk to a human",
+    "Help me with payment",
+    "Cancel my order"
+];
 
-  if (delay > 0 && sender === 'bot') {
-    // Show "typing..." indicator for delay duration
-    const typingDiv = document.createElement('div');
-    typingDiv.id = 'typing-indicator';
-    typingDiv.textContent = 'Seva Bot is typing...';
-    chatBody.appendChild(typingDiv);
-    chatBody.scrollTop = chatBody.scrollHeight;
+// Create and initialize chatbot UI
+function initializeChatbot() {
+    const chatbotWidget = document.getElementById('chatbot-widget');
+    if (!chatbotWidget) {
+        console.error('Chatbot widget container not found');
+        return;
+    }
 
+    const chatbotBox = document.createElement('div');
+    chatbotBox.id = 'chatbot-box';
+    chatbotBox.innerHTML = `
+        <div id="chat-header">Seva Bot</div>
+        <div id="chat-body"></div>
+        <div id="chat-suggestions"></div>
+        <div id="chat-input">
+            <input type="text" id="user-msg" placeholder="Type your message..." />
+            <button id="send-btn" onclick="handleSendMessage()">Send</button>
+        </div>
+    `;
+    
+    chatbotWidget.appendChild(chatbotBox);
+    setupEventListeners();
+    startConversation();
+}
+
+// Setup event listeners
+function setupEventListeners() {
+    const userInput = document.getElementById('user-msg');
+    
+    if (userInput) {
+        userInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter' && !inputLocked) {
+                handleSendMessage();
+            }
+        });
+    }
+
+    // Image upload handler if element exists
+    const imageInput = document.getElementById('imageInput');
+    if (imageInput) {
+        imageInput.addEventListener('change', handleImageUpload);
+    }
+}
+
+// Main message handler
+function handleSendMessage() {
+    const userInput = document.getElementById('user-msg');
+    if (!userInput) return;
+    
+    const message = userInput.value.trim();
+    if (!message || inputLocked) return;
+
+    appendMessage(message, 'user');
+    userInput.value = '';
+    inputLocked = true;
+
+    // Process message after short delay
     setTimeout(() => {
-      typingDiv.remove();
+        processUserMessage(message);
+        inputLocked = false;
+    }, 300);
+}
 
-      const div = createMessageDiv(text, sender);
-      chatBody.appendChild(div);
-      chatBody.scrollTop = chatBody.scrollHeight;
-    }, delay);
-  } else {
-    // Instant message (no delay)
+// Process user message based on chat step
+function processUserMessage(message) {
+    switch(chatStep) {
+        case 0: // Asking for name
+            if (message.length < 2) {
+                appendMessage("Please enter a valid name (at least 2 characters).", 'bot', 800);
+                return;
+            }
+            userData.name = message;
+            appendMessage(`Nice to meet you, ${userData.name}! What's your email address?`, 'bot', 800);
+            chatStep = 1;
+            break;
+
+        case 1: // Asking for email
+            if (!validateEmail(message)) {
+                appendMessage("Please enter a valid email address.", 'bot', 800);
+                return;
+            }
+            userData.email = message;
+            appendMessage("Can I access your location to serve you better?", 'bot', 800);
+            showLocationButton();
+            chatStep = 2;
+            break;
+
+        case 2: // Location step (handled by button)
+            appendMessage("Please use the 'Share My Location' button above to continue.", 'bot', 500);
+            break;
+
+        case 3: // Normal chat mode
+            if (liveMode) {
+                sendToAdmin(message);
+            } else {
+                handleBotReply(message.toLowerCase());
+            }
+            break;
+    }
+}
+
+// Append message to chat with optional delay
+function appendMessage(text, sender = 'bot', delay = 0) {
+    const chatBody = document.getElementById('chat-body');
+    if (!chatBody) return;
+
+    if (delay > 0 && sender === 'bot') {
+        showTypingIndicator();
+        setTimeout(() => {
+            hideTypingIndicator();
+            addMessageToDOM(text, sender);
+        }, delay);
+    } else {
+        addMessageToDOM(text, sender);
+    }
+}
+
+// Add message to DOM
+function addMessageToDOM(text, sender) {
+    const chatBody = document.getElementById('chat-body');
     const div = createMessageDiv(text, sender);
     chatBody.appendChild(div);
     chatBody.scrollTop = chatBody.scrollHeight;
-  }
 }
 
-// Helper: create a chat message div styled for bot or user
+// Create message div element
 function createMessageDiv(text, sender) {
-  const div = document.createElement('div');
-  div.classList.add('animated-message');
-  div.style.background = sender === 'bot' ? '#eeeeee' : '#cce5ff';
-  div.style.padding = '10px 14px';
-  div.style.margin = '6px';
-  div.style.borderRadius = '18px';
-  div.style.maxWidth = '75%';
+    const div = document.createElement('div');
+    div.classList.add('animated-message');
+    div.style.background = sender === 'bot' ? '#eeeeee' : '#007bff';
+    div.style.color = sender === 'user' ? 'white' : 'black';
+    div.style.padding = '10px 14px';
+    div.style.margin = '6px';
+    div.style.borderRadius = '18px';
+    div.style.maxWidth = '75%';
+    div.style.wordWrap = 'break-word';
+    
+    if (sender === 'user') {
+        div.style.marginLeft = 'auto';
+        div.style.textAlign = 'right';
+    }
 
-  if (sender === 'bot') {
-    div.innerHTML = `
-      <div style="display: flex; align-items: flex-start;">
-        <img src="bot-avatar.png" alt="Bot" style="width: 28px; height: 28px; border-radius: 50%; margin-right: 8px;" />
-        <span>${text}</span>
-      </div>
-    `;
-  } else {
     div.textContent = text;
-    div.style.textAlign = 'right';
-  }
-
-  return div;
+    return div;
 }
 
-sessionBtn.classList.add("session-item");
-if (sid === selectedSessionId) {
-  sessionBtn.classList.add("selected");
-}
+// Show typing indicator
+function showTypingIndicator() {
+    const chatBody = document.getElementById('chat-body');
+    if (!chatBody || document.getElementById('typing-indicator')) return;
 
-// Main handler when user clicks Send button or presses Enter
-
-function handleUserMessage(message) {
-  appendMessage(message, "user");
-  userInput.value = "";
-  inputLocked = true;
-
-  if (chatStep === 0) {
-    userData.name = message;
-    appendMessage("Nice to meet you, " + userData.name + "! What's your email?", 'bot', 800);
-    chatStep = 1;
-  } else if (chatStep === 1) {
-    userData.email = message;
-    appendMessage("Can I access your location to serve you better?", 'bot', 800);
+    const typingDiv = document.createElement('div');
+    typingDiv.id = 'typing-indicator';
+    typingDiv.textContent = 'Seva Bot is typing...';
+    typingDiv.style.fontStyle = 'italic';
+    typingDiv.style.color = '#666';
+    typingDiv.style.padding = '10px';
     
-    const btn = document.createElement("button");
-    btn.innerText = "Share Location";
-    btn.className = "location-button";
-    btn.onclick = requestLocation; // Attach location handler
-    chatMessages.appendChild(btn);
-    
-    chatMessages.scrollTop = chatMessages.scrollHeight;
-    chatStep = 2;
-  } else {
-    // Proceed with normal chat or bot logic
-    getBotResponse(message);
-  }
+    chatBody.appendChild(typingDiv);
+    chatBody.scrollTop = chatBody.scrollHeight;
 }
 
+// Hide typing indicator
+function hideTypingIndicator() {
+    const typingIndicator = document.getElementById('typing-indicator');
+    if (typingIndicator) {
+        typingIndicator.remove();
+    }
+}
+
+// Show location sharing button
+function showLocationButton() {
+    const chatSuggestions = document.getElementById('chat-suggestions');
+    if (!chatSuggestions) return;
+
+    chatSuggestions.innerHTML = '';
+    const btn = document.createElement('button');
+    btn.textContent = 'Share My Location 📍';
+    btn.style.padding = '8px 15px';
+    btn.style.border = '1px solid #ccc';
+    btn.style.borderRadius = '20px';
+    btn.style.background = '#ff9800';
+    btn.style.color = 'white';
+    btn.style.cursor = 'pointer';
+    btn.style.margin = '5px';
+    
+    btn.onclick = requestLocation;
+    chatSuggestions.appendChild(btn);
+}
+
+// Request user location
 function requestLocation() {
-  if (navigator.geolocation) {
-    navigator.geolocation.getCurrentPosition(function (position) {
-      const latitude = position.coords.latitude;
-      const longitude = position.coords.longitude;
+    if (!navigator.geolocation) {
+        appendMessage("Geolocation is not supported by your browser. You can still continue chatting!", 'bot', 500);
+        finalizeChatSetup();
+        return;
+    }
 
-      userData.location = { latitude, longitude };
+    appendMessage("Getting your location...", 'bot', 300);
 
-      // Store in Firebase
-      db.ref("userData/" + sessionId).set({
+    navigator.geolocation.getCurrentPosition(
+        function(position) {
+            const latitude = position.coords.latitude;
+            const longitude = position.coords.longitude;
+            
+            userData.location = { latitude, longitude };
+            saveUserData();
+            
+            appendMessage("Thanks for sharing your location! How can I assist you today?", 'bot', 800);
+            finalizeChatSetup();
+        },
+        function(error) {
+            let errorMsg = "Unable to get location: ";
+            switch(error.code) {
+                case error.PERMISSION_DENIED:
+                    errorMsg += "Permission denied.";
+                    break;
+                case error.POSITION_UNAVAILABLE:
+                    errorMsg += "Position unavailable.";
+                    break;
+                case error.TIMEOUT:
+                    errorMsg += "Request timed out.";
+                    break;
+                default:
+                    errorMsg += "Unknown error.";
+            }
+            appendMessage(errorMsg + " You can still continue!", 'bot', 800);
+            finalizeChatSetup();
+        },
+        {
+            timeout: 10000,
+            enableHighAccuracy: false,
+            maximumAge: 300000
+        }
+    );
+}
+
+// Finalize chat setup and show suggestions
+function finalizeChatSetup() {
+    renderSuggestions();
+    chatStep = 3;
+}
+
+// Save user data to backend and Firebase
+function saveUserData() {
+    const userInfo = {
+        sessionId: sessionId,
         name: userData.name,
         email: userData.email,
-        latitude,
-        longitude,
-      });
+        latitude: userData.location?.latitude || null,
+        longitude: userData.location?.longitude || null,
+        timestamp: Date.now()
+    };
 
-      // Send to PHP backend
-      fetch("save_user.php", {
+    // Save to Firebase if available
+    if (db) {
+        try {
+            db.ref("userData/" + sessionId).set(userInfo);
+            if (userData.location) {
+                db.ref("chats/" + sessionId).push({
+                    sender: "system",
+                    message: "User location shared",
+                    type: "location",
+                    timestamp: Date.now()
+                });
+            }
+        } catch (error) {
+            console.error('Firebase save error:', error);
+        }
+    }
+
+    // Save to PHP backend
+    fetch("save_user.php", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ sessionId, ...userData })
-      });
-
-      appendMessage("Thanks for sharing your location! How can I assist you today?", 'bot', 800);
-      renderSuggestions();
-      chatStep = 3;
+        body: JSON.stringify(userInfo)
+    }).catch(error => {
+        console.error('Backend save error:', error);
     });
-  } else {
-    appendMessage("Geolocation is not supported by your browser.", 'bot', 500);
-  }
 }
 
+// Render suggestion buttons
+function renderSuggestions() {
+    const container = document.getElementById('chat-suggestions');
+    if (!container || liveMode || chatStep !== 3) return;
 
-
-// Basic email format validation regex
-function validateEmail(email) {
-  const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  return re.test(email);
+    container.innerHTML = '';
+    suggestions.forEach(text => {
+        const btn = document.createElement('button');
+        btn.textContent = text;
+        btn.style.padding = '6px 10px';
+        btn.style.border = '1px solid #ccc';
+        btn.style.borderRadius = '15px';
+        btn.style.background = '#f1f1f1';
+        btn.style.cursor = 'pointer';
+        btn.style.margin = '2px';
+        btn.style.fontSize = '12px';
+        
+        btn.onclick = () => {
+            appendMessage(text, 'user');
+            setTimeout(() => {
+                handleBotReply(text.toLowerCase());
+            }, 500);
+        };
+        
+        container.appendChild(btn);
+    });
 }
 
-document.getElementById("imageInput").addEventListener("change", function () {
+// Handle bot replies with improved responses
+function handleBotReply(msg) {
+    let reply = "";
+    let delay = 1000;
+
+    // Order tracking
+    if ((msg.includes("order") || msg.includes("where")) && (msg.includes("status") || msg.includes("track"))) {
+        reply = "Please provide your order ID (6-8 digits) to check the status.";
+    } 
+    // Order ID provided
+    else if (msg.match(/\b\d{6,8}\b/)) {
+        reply = "Your order is in transit and will be delivered in 2-3 business days. You'll receive SMS and email updates with tracking details.";
+        delay = 1200;
+    }
+    // Returns
+    else if (msg.includes("return")) {
+        reply = "To return an item:\n1. Go to 'My Orders'\n2. Select 'Return Item'\n3. Choose reason and schedule pickup\n\nYou have 7 days from delivery date.";
+    }
+    // Refunds
+    else if (msg.includes("refund")) {
+        reply = "Refunds are processed within 5-7 working days after we receive your returned item. Is there a specific order you're asking about?";
+    }
+    // Cancel order
+    else if (msg.includes("cancel")) {
+        reply = "To cancel your order:\n• Visit 'My Orders'\n• Click 'Cancel Order' (if not yet shipped)\n• If shipped, you can return it after delivery.";
+    }
+    // Payment help
+    else if (msg.includes("payment")) {
+        reply = "We accept multiple payment methods:\n• UPI (Google Pay, PhonePe, Paytm)\n• Net Banking\n• Credit/Debit Cards\n• Digital Wallets\n• Cash on Delivery\n\nAll payments are 100% secure!";
+        delay = 1200;
+    }
+    // Talk to human
+    else if (msg.includes("human") || msg.includes("agent") || msg.includes("talk")) {
+        reply = "I'm connecting you to our support team. Please hold on while I transfer your chat...";
+        liveMode = true;
+        delay = 1500;
+        // Hide suggestions when in live mode
+        setTimeout(() => {
+            const suggestions = document.getElementById('chat-suggestions');
+            if (suggestions) suggestions.innerHTML = '';
+        }, 2000);
+    }
+    // Greetings
+    else if (msg.includes("hello") || msg.includes("hi") || msg.includes("hey")) {
+        reply = userData.name ? 
+            `Hello ${userData.name}! I'm here to help with your orders and questions. What can I do for you?` :
+            "Hello! I'm Seva Bot, your shopping assistant. How can I help you today?";
+    }
+    // Products/recommendations
+    else if (msg.includes("product") || msg.includes("recommend") || msg.includes("deal")) {
+        reply = "Here are today's top deals:\n🔥 iPhone 15 - ₹79,999\n📱 Samsung Galaxy M14 - ₹12,499\n⚡ Realme Narzo - ₹10,999\n🎧 Boat Airdopes - ₹999\n\nType any product name for more details!";
+        delay = 1200;
+    }
+    // Damage/defect
+    else if (msg.includes("damage") || msg.includes("broken") || msg.includes("defect") || msg.includes("wrong")) {
+        reply = "I'm sorry to hear about the issue! Please:\n1. Take clear photos of the item\n2. Go to 'My Orders' > 'Report Issue'\n3. Upload photos and describe the problem\n\nWe'll resolve this quickly for you!";
+    }
+    // Thanks
+    else if (msg.includes("thank")) {
+        reply = "You're very welcome! Is there anything else I can help you with today?";
+        delay = 800;
+    }
+    // Default response
+    else {
+        reply = "I want to make sure I help you properly. Could you please clarify what you need help with, or would you like me to connect you with a human agent?";
+    }
+
+    appendMessage(reply, 'bot', delay);
+}
+
+// Send message to admin (live chat mode)
+function sendToAdmin(msg) {
+    const messageData = {
+        sender: senderId,
+        receiver: receiverId,
+        message: msg,
+        sessionId: sessionId,
+        timestamp: Date.now()
+    };
+
+    // Save to Firebase if available
+    if (db) {
+        try {
+            db.ref("chats/" + sessionId).push({
+                sender: "user",
+                message: msg,
+                type: "text",
+                timestamp: Date.now()
+            });
+        } catch (error) {
+            console.error('Firebase chat save error:', error);
+        }
+    }
+
+    // Send to backend
+    fetch('send_message.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(messageData)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            appendMessage("Your message has been sent to our support team. They'll respond shortly.", 'bot', 800);
+        } else {
+            appendMessage("Sorry, there was an issue sending your message. Please try again.", 'bot', 500);
+        }
+    })
+    .catch(error => {
+        console.error('Send message error:', error);
+        appendMessage("Connection error. Please check your internet and try again.", 'bot', 500);
+    });
+}
+
+// Handle image upload
+function handleImageUpload(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+        appendMessage("Please upload a valid image file.", 'bot', 500);
+        return;
+    }
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+        appendMessage("Image size should be less than 5MB.", 'bot', 500);
+        return;
+    }
+
     const formData = new FormData();
-    formData.append("image", this.files[0]);
+    formData.append("image", file);
+    formData.append("sessionId", sessionId);
+
+    appendMessage("Uploading image...", 'bot', 300);
 
     fetch("upload_image.php", {
         method: "POST",
         body: formData
-    }).then(res => res.json())
-      .then(data => {
-          if (data.success) {
-              let img = document.createElement("img");
-              img.src = data.image;
-              img.className = "chat-image";
-              document.getElementById("chatMessages").appendChild(img);
-          } else {
-              alert("Image upload failed: " + data.error);
-          }
-      });
-});
-
-
-// Show "Share My Location" button during location step
-function showLocationButton() {
-  const chatSuggestions = document.getElementById('chat-suggestions');
-  chatSuggestions.innerHTML = ''; // Clear existing suggestions
-
-  const btn = document.createElement('button');
-  btn.textContent = 'Share My Location 📍';
-  btn.style.padding = '6px 10px';
-  btn.style.border = '1px solid #ccc';
-  btn.style.borderRadius = '15px';
-  btn.style.background = '#f1f1f1';
-  btn.style.cursor = 'pointer';
-
-btn.onclick = () => {
-  if (navigator.geolocation) {
-    navigator.geolocation.getCurrentPosition(function (position) {
-      const latitude = position.coords.latitude;
-      const longitude = position.coords.longitude;
-
-      // USE collected data from earlier steps
-      const userInfo = {
-        name: userData.name,
-        email: userData.email,
-        latitude: latitude,
-        longitude: longitude
-      };
-
-      userData.location = { latitude, longitude };
-
-      // Save to Firebase
-      firebase.database().ref("userData/" + sessionId).set(userInfo);
-
-      // Save to backend
-      fetch("save_user.php", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ sessionId: sessionId, ...userInfo })
-      });
-
-      // Continue the chat
-      appendMessage("Thanks for sharing your location! How can I assist you today?", 'bot', 800);
-      renderSuggestions(); // show quick replies
-      chatStep = 3;
-    });
-  } else {
-    appendMessage("Geolocation is not supported by your browser.", 'bot', 500);
-  }
-};
-
-
-  chatSuggestions.appendChild(btn);
-}
-
-// Send user info (name, email, location) to backend PHP endpoint via POST JSON
-function saveUserInfoToBackend(data) {
-  fetch('save_user_info.php', {
-    method: 'POST',
-    headers: {'Content-Type': 'application/json'},
-    body: JSON.stringify(data)
-  })
-  .then(res => res.json())
-  .then(response => {
-    if (response.success) {
-      appendMessage("Your details have been saved successfully!", 'bot', 500);
-    } else {
-      appendMessage("Oops! Something went wrong saving your details.", 'bot', 500);
-    }
-  })
-  .catch(() => {
-    appendMessage("Network error while saving your details.", 'bot', 500);
-  });
-}
-
-// Example bot reply handler with some common queries
-function handleBotReply(msg) {
-  if (msg.includes("order status") || msg.includes("track order")) {
-    appendMessage("Please enter your order ID to check the current status.", 'bot', 1000);
-  } else if (msg.match(/order[\s:-]*\d{5,}/)) {
-    appendMessage("Order is in transit and will be delivered in 2-3 days. You’ll get updates via SMS and email.", 'bot', 1200);
-  } else if (msg.includes("return")) {
-    appendMessage("Want to return an item? Go to 'Orders' > 'Return Item'. You have 7 days from delivery date.", 'bot', 1000);
-  } else if (msg.includes("refund")) {
-    appendMessage("Refunds are usually processed within 5–7 working days. Let me know if it's delayed.", 'bot', 1000);
-  } else if (msg.includes("cancel")) {
-    appendMessage("To cancel your order, visit 'My Orders' and click on 'Cancel'.", 'bot', 1000);
-  } else if (msg.includes("payment")) {
-    appendMessage("We support UPI, NetBanking, Cards, Wallets & Cash on Delivery. Safe & secure!", 'bot', 1000);
-  } else if (msg.includes("product") || msg.includes("iphone") || msg.includes("laptop")) {
-    appendMessage("Here are some products you might like:\n1. iPhone 15 - ₹79,999\n2. Realme Narzo - ₹10,999\n3. Samsung M14 - ₹12,499\n(Type the product name for more info!)", 'bot', 1200);
-  } else if (msg.includes("hello") || msg.includes("hi") || msg.includes("hey")) {
-    appendMessage("Hello! I'm your shopping assistant. How can I help you today?", 'bot', 800);
-  } else if (msg.includes("how are you")) {
-    appendMessage("I'm always great! I’m here 24/7 to help you with your orders.", 'bot', 1000);
-  } else if (msg.includes("your name")) {
-    appendMessage("I’m Seva Bot — your AI assistant for shopping & support!", 'bot', 1000);
-  } else if (msg.includes("recommend") || msg.includes("suggestion")) {
-    appendMessage("Today’s top deals:\n- Redmi Note 12: ₹13,499\n- Noise Smartwatch: ₹1,799\n- Boat Airdopes: ₹999", 'bot', 1000);
-  } else if (msg.includes("thank")) {
-    appendMessage("You're welcome! Let me know if you need anything else.", 'bot', 800);
-  } else if (msg.includes("agent") || msg.includes("human") || msg.includes("talk")) {
-    appendMessage("Connecting you to a human agent... please wait a moment.", 'bot', 1200);
-  } else if (msg.includes("damage") || msg.includes("broken") || msg.includes("defect") || msg.includes("wrong item")) {
-    appendMessage("Oh no! Please upload a clear photo of the item you received so we can assist you better.", 'bot', 1000);
-  } else {
-    appendMessage("I'm not sure I understand. Would you like to speak with a support agent?", 'bot', 1000);
-  }
-}
-
-// Send message to admin endpoint (for live chat mode)
-function sendToAdmin(msg) {
-  fetch('send_message.php', {
-    method: 'POST',
-    headers: {'Content-Type': 'application/x-www-form-urlencoded'},
-    body: `sender=${senderId}&receiver=${receiverId}&message=${encodeURIComponent(msg)}`
-  }).then(() => {
-    loadMessages();
-  });
-}
-
-// Load chat messages between sender and receiver (admin/customer)
-function loadMessages() {
-  fetch(`get_messages.php?sender=${senderId}&receiver=${receiverId}`)
-    .then(res => res.json())
+    })
+    .then(response => response.json())
     .then(data => {
-      const chatBody = document.getElementById('chat-body');
-      chatBody.innerHTML = '';
-      data.forEach(msg => {
-        appendMessage(msg.message, msg.sender_id == senderId ? 'user' : 'bot');
-      });
+        if (data.success) {
+            // Create image element
+            const img = document.createElement("img");
+            img.src = data.imageUrl;
+            img.style.maxWidth = "200px";
+            img.style.borderRadius = "10px";
+            img.style.margin = "5px 0";
+            
+            const chatBody = document.getElementById('chat-body');
+            chatBody.appendChild(img);
+            chatBody.scrollTop = chatBody.scrollHeight;
+            
+            // Save to Firebase
+            if (db) {
+                db.ref("chats/" + sessionId).push({
+                    sender: "user",
+                    message: data.imageUrl,
+                    type: "image",
+                    timestamp: Date.now()
+                });
+            }
+            
+            appendMessage("Image uploaded successfully! Our team will review it and respond accordingly.", 'bot', 800);
+        } else {
+            appendMessage("Failed to upload image: " + (data.error || "Unknown error"), 'bot', 500);
+        }
+    })
+    .catch(error => {
+        console.error('Image upload error:', error);
+        appendMessage("Error uploading image. Please try again.", 'bot', 500);
     });
 }
 
-// Initialize suggestions on load
-renderSuggestions();
+// Load messages from backend (for live chat)
+function loadMessages() {
+    if (!liveMode) return;
+    
+    fetch(`get_messages.php?sender=${senderId}&receiver=${receiverId}&sessionId=${sessionId}`)
+        .then(response => response.json())
+        .then(data => {
+            const chatBody = document.getElementById('chat-body');
+            if (data && data.length > 0) {
+                // Only add new messages to avoid duplicates
+                data.forEach(msg => {
+                    if (!document.querySelector(`[data-msg-id="${msg.id}"]`)) {
+                        const messageDiv = createMessageDiv(msg.message, msg.sender_id == senderId ? 'user' : 'bot');
+                        messageDiv.setAttribute('data-msg-id', msg.id);
+                        chatBody.appendChild(messageDiv);
+                    }
+                });
+                chatBody.scrollTop = chatBody.scrollHeight;
+            }
+        })
+        .catch(error => {
+            console.error('Load messages error:', error);
+        });
+}
 
-// Start conversation by asking for user name
-appendMessage("Hello! What is your name?", 'bot', 500);
+// Email validation
+function validateEmail(email) {
+    const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return re.test(email.trim());
+}
 
+// Start conversation
+function startConversation() {
+    setTimeout(() => {
+        appendMessage("Hello! Welcome to Seva Bot 👋 I'm here to help with your shopping needs. What's your name?", 'bot', 1000);
+    }, 500);
+}
+
+// Auto-load messages in live mode (polling every 3 seconds)
+setInterval(() => {
+    if (liveMode) {
+        loadMessages();
+    }
+}, 3000);
+
+// Initialize chatbot when DOM is ready
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initializeChatbot);
+} else {
+    initializeChatbot();
+}
