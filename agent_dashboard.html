@@ -334,6 +334,8 @@
     <div class="input-group" id="inputGroup" style="display: none;">
       <button id="emojiBtn">😊</button>
       <input type="text" id="msgInput" placeholder="Type your message..." maxlength="500">
+      <input type="file" id="fileInput" accept="image/*" style="display:none;" />
+      <button id="uploadBtn" title="Send Image 📷">📷</button>
       <button id="sendBtn">Send</button>
     </div>
     
@@ -423,6 +425,66 @@
       }
     });
   }
+
+  const fileInput = document.getElementById('fileInput');
+const uploadBtn = document.getElementById('uploadBtn');
+
+uploadBtn.onclick = () => {
+  fileInput.click();
+};
+
+fileInput.onchange = () => {
+  const file = fileInput.files[0];
+  if (!file) return;
+
+  if (!selectedSessionId || !db) {
+    alert("Please select a chat session first.");
+    return;
+  }
+
+  if (!file.type.startsWith('image/')) {
+    alert("Only image files are allowed.");
+    return;
+  }
+
+  const formData = new FormData();
+  formData.append('image', file);
+
+  // Show loading or disable UI during upload
+  uploadBtn.disabled = true;
+
+  fetch('image_upload_handler.php', {
+  method: 'POST',
+  body: formData,
+})
+
+  .then(res => res.json())
+  .then(data => {
+    uploadBtn.disabled = false;
+    if (data.success && data.url) {
+      // Send chat message with image URL
+      const messageData = {
+        sender: "agent",
+        message: data.url, // Store image URL as message
+        type: "image",
+        timestamp: Date.now()
+      };
+
+      return db.ref("chats/" + selectedSessionId).push(messageData);
+    } else {
+      alert("Upload failed: " + (data.error || 'Unknown error'));
+    }
+  })
+  .catch(err => {
+    console.error("Upload error:", err);
+    alert("Failed to upload image");
+    uploadBtn.disabled = false;
+  })
+  .finally(() => {
+    fileInput.value = ""; // Reset file input
+  });
+};
+
 
   // Render user information
  function renderUserInfo(data) {
@@ -565,12 +627,20 @@
       
       const timestamp = msg.timestamp ? new Date(msg.timestamp).toLocaleTimeString() : '';
       const sender = escapeHtml(msg.sender || 'Unknown');
-      const message = escapeHtml(msg.message || '');
-      
-      messageDiv.innerHTML = `
-        <b>${sender}:</b> ${message}
-        ${timestamp ? `<small style="color: #666; margin-left: 10px;">${timestamp}</small>` : ''}
-      `;
+
+let messageContent = '';
+if (msg.type === 'image' && msg.message) {
+  // Render image tag with max width/height
+  messageContent = `<img src="${escapeHtml(msg.message)}" alt="image" style="max-width:200px;max-height:200px;border-radius:8px;cursor:pointer;" onclick="window.open('${escapeHtml(msg.message)}','_blank')"/>`;
+} else {
+  messageContent = escapeHtml(msg.message || '');
+}
+
+messageDiv.innerHTML = `
+  <b>${sender}:</b> ${messageContent}
+  ${timestamp ? `<small style="color: #666; margin-left: 10px;">${timestamp}</small>` : ''}
+`;
+
       chatBox.appendChild(messageDiv);
     });
     
@@ -579,24 +649,27 @@
 
   // Send message function
   function sendMessage() {
-    const msg = msgInput.value.trim();
-    if (!msg || !selectedSessionId || !db) return;
-    
-    const messageData = {
-      sender: "agent",
-      message: msg,
-      timestamp: Date.now()
-    };
-    
-    db.ref("chats/" + selectedSessionId).push(messageData)
-      .then(() => {
-        msgInput.value = "";
-      })
-      .catch((error) => {
-        console.error("Error sending message:", error);
-        showError("Failed to send message");
-      });
-  }
+  const msg = msgInput.value.trim();
+  if (!msg || !selectedSessionId || !db) return;
+
+  const messageData = {
+    sender: "agent",
+    message: msg,
+    type: "text",    // add this
+    timestamp: Date.now()
+  };
+
+  db.ref("chats/" + selectedSessionId).push(messageData)
+    .then(() => {
+      msgInput.value = "";
+    })
+    .catch((error) => {
+      console.error("Error sending message:", error);
+      showError("Failed to send message");
+    });
+}
+
+
 
   // Event listeners
   sendBtn.onclick = sendMessage;
