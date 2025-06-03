@@ -68,7 +68,7 @@
       gap: 12px;
       z-index: 998;
       padding: 10px;
-      max-height: 110vh;
+      max-height: 90vh;
       overflow: hidden;
     }
 
@@ -104,24 +104,26 @@
 
     .user {
       align-self: flex-end;
-      background: var(--user-color);
-      color: white;
-      border-bottom-right-radius: 4px;
-    }
+    background: #ffffff;
+    color: #000000;
+    border-bottom-right-radius: 4px;
+    border: solid #3b82f6 3px;
+}
 
     .bot {
-      align-self: flex-start;
-      background: var(--bot-color);
-      color: white;
-      border-bottom-left-radius: 4px;
-    }
+    align-self: flex-start;
+    background: #3b82f6;
+    color: white;
+    border-bottom-left-radius: 4px;
+}
 
     .agent {
-      align-self: flex-start;
-      background: var(--agent-color);
-      color: white;
-      border-bottom-left-radius: 4px;
-    }
+    align-self: flex-start;
+    background: #81C784;
+    color: #ffffff;
+    border-bottom-left-radius: 4px;
+    border: solid black 1px;
+}
 
     #input {
       flex-grow: 1;
@@ -142,7 +144,7 @@
     button {
       background: var(--primary);
       color: white;
-      border: none;
+      border: solid white 2px;
       padding: 10px 16px;
       border-radius: 8px;
       font-size: 14px;
@@ -229,10 +231,10 @@
       width: 48px;
       height: 48px;
       border-radius: 12px;
-      border: 2px solid var(--primary);
+      border: 3px solid var(--primary);
       object-fit: cover;
       background: var(--primary);
-      display: flex;
+      display: block;
       align-items: center;
       justify-content: center;
       font-size: 24px;
@@ -272,15 +274,15 @@
     }
 
     .bot-title {
-      margin: 0;
+      margin-left: 10px;
       font-size: 18px;
       color: var(--primary);
     }
 
     .bot-subtitle {
-      margin: 0;
+      margin-left: 10px;
       font-size: 13px;
-      color: var(--border-color);
+      color: gray;
     }
 
     .chat-messages {
@@ -343,7 +345,7 @@
         left: 10px;
         max-width: none;
         width: auto;
-        max-height: 85vh;
+        max-height: 80vh;
       }
 
       .chat-messages, #messages {
@@ -394,16 +396,15 @@
       }
     }
 
-    .timestamp {
-  display: block;
-  font-size: 0.7rem;
-  color: #999;
-  margin-top: 4px;
-  text-align: right;
+.timestamp {
+    display: block;
+    font-size: 0.6rem;
+    margin-top: 1px;
+    text-align: right;
 }
 
  #chat-container {
-    max-height: 100vh;
+    max-height: 90vh;
     overflow-y: auto;
     scroll-behavior: smooth;
   }
@@ -482,7 +483,7 @@
     <div class="chat-header">
       <div class="bot-avatar"><img src="bot-avatar.png" alt="Bot Avatar" class="bot-avatar" /></div>
       <div>
-        <h3 class="bot-title">Seva Bot</h3>
+        <h3 class="bot-title">Welcome to Seva Bot</h3>
         <p class="bot-subtitle">Your Virtual Assistant</p>
       </div>
     </div>
@@ -668,17 +669,19 @@ function getLocation() {
         timestamp: Date.now()
       };
 
-      // Save location to Firebase
+      // Save location to Firebase under users path, NOT chats path
       if (db && sessionId) {
         db.ref("users/" + sessionId + "/location").set(userLocation).catch((error) => {
           console.error("Error saving location:", error);
         });
       }
 
-      status.textContent = "Location saved! Starting chat...";
-      hideLoading("location-prompt", "Share Location");
-      
-      setTimeout(initializeChat, 1500);
+status.textContent = "Location saved! Starting chat...";
+hideLoading("location-prompt", "Share Location");
+
+// Hide location prompt immediately and initialize chat
+document.getElementById("location-prompt").style.display = "none";
+setTimeout(initializeChat, 500);
     },
     (error) => {
       console.error("Geolocation error:", error);
@@ -818,8 +821,6 @@ function sendMessage(message, type = "text") {
   addMessage(message, "user", userName);
 }
 
-
-
 function addImageMessage(url, sender) {
   addMessage(url, sender);
 }
@@ -916,9 +917,6 @@ function uploadImage() {
       alert("An error occurred.");
     });
 }
-
-
-
 
 // Event Listeners
 document.addEventListener("DOMContentLoaded", function() {
