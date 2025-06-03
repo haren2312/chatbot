@@ -305,66 +305,108 @@
     }
 
     .edit-modal {
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  background: #1e1e1e;
-  padding: 20px;
-  border-radius: 12px;
-  z-index: 9999;
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: #1e1e1e;
+      padding: 20px;
+      border-radius: 12px;
+      z-index: 9999;
+      color: white;
+      width: 300px;
+      display: none;
+      box-shadow: 0 0 10px #00d4ff;
+    }
+    .edit-modal input {
+      width: 100%;
+      padding: 8px;
+      margin: 6px 0;
+      border: none;
+      border-radius: 6px;
+    }
+    .edit-modal button {
+      margin-top: 10px;
+      padding: 6px 12px;
+      border: none;
+      border-radius: 6px;
+      background-color: #00d4ff;
+      color: #000;
+      cursor: pointer;
+    }
+    .modal-backdrop {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0,0,0,0.6);
+      z-index: 9998;
+      display: none;
+    }
+
+    #modalBackdrop {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0, 0, 0, 0.4);
+      z-index: 998;
+    }
+
+    .session-info {
+      font-size: 0.8rem;
+      color: #888;
+      margin-top: 4px;
+    }
+
+    /* Container styled like a professional quote card */
+.edit-user-quote-box {
+  background: #f9fbfc;
+  border-left: 5px solid #0077cc;
+  padding: 1rem 1.5rem;
+  margin: 1rem 0;
+  border-radius: 8px;
+  font-family: "Segoe UI", sans-serif;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  max-width: 500px;
+}
+
+/* Input fields */
+.edit-user-quote-box input[type="text"],
+.edit-user-quote-box input[type="email"],
+.edit-user-quote-box input[type="number"] {
+  width: 100%;
+  padding: 10px;
+  margin-top: 8px;
+  margin-bottom: 16px;
+  border: 1px solid #ccd;
+  border-radius: 6px;
+  font-size: 14px;
+}
+
+/* Labels */
+.edit-user-quote-box label {
+  font-weight: 600;
+  display: block;
+  margin-bottom: 4px;
+  color: #333;
+}
+
+/* Save button */
+.edit-user-quote-box button {
+  background-color: #0077cc;
   color: white;
-  width: 300px;
-  display: none;
-  box-shadow: 0 0 10px #00d4ff;
-}
-.edit-modal input {
-  width: 100%;
-  padding: 8px;
-  margin: 6px 0;
+  padding: 10px 18px;
   border: none;
   border-radius: 6px;
-}
-.edit-modal button {
-  margin-top: 10px;
-  padding: 6px 12px;
-  border: none;
-  border-radius: 6px;
-  background-color: #00d4ff;
-  color: #000;
   cursor: pointer;
-}
-.modal-backdrop {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-color: rgba(0,0,0,0.6);
-  z-index: 9998;
-  display: none;
+  font-weight: 600;
+  transition: background 0.2s ease;
 }
 
-#modalBackdrop {
-  display: none;
-  position: fixed;
-  top: 0; left: 0; right: 0; bottom: 0;
-  background: rgba(0, 0, 0, 0.4);
-  z-index: 998;
+.edit-user-quote-box button:hover {
+  background-color: #005fa3;
 }
-
-.edit-modal {
-  display: none;
-  position: fixed;
-  top: 50%; left: 50%;
-  transform: translate(-50%, -50%);
-  background: #fff;
-  padding: 20px;
-  border-radius: 10px;
-  z-index: 999;
-  box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
-}
-
 
   </style>
 </head>
@@ -384,11 +426,11 @@
     </div>
   </div>
 
+  
+
   <div class="chat-area">
     <div id="user-info-list" class="user-info-section"></div>
 
-    
-    
     <div class="chat-box" id="chatBox">
       <div class="empty-state">
         <h3>Select a chat to view messages</h3>
@@ -404,29 +446,11 @@
       <button id="sendBtn">Send</button>
     </div>
 
-    
-    
     <div class="emoji-picker" id="emojiPicker">
       <span>😊</span><span>😂</span><span>😍</span><span>🤔</span><span>👍</span><span>❤️</span><span>🔥</span><span>✨</span>
     </div>
   </div>
 </div>
-
-
-<div class="modal-backdrop" id="modalBackdrop"></div>
-<div class="edit-modal" id="editModal">
-  <h3>Edit User Info</h3>
-  <input type="text" id="editName" placeholder="Name">
-  <input type="email" id="editEmail" placeholder="Email">
-  <input type="text" id="editLat" placeholder="Latitude">
-  <input type="text" id="editLng" placeholder="Longitude">
-  <button onclick="saveUserEdit()">Save</button>
-  <button onclick="closeEditModal()" style="margin-top:10px;">Cancel</button>
-</div>
-
-
-
-
 
 
 <!-- Firebase SDK -->
@@ -457,10 +481,9 @@
   let selectedSessionId = null;
   let allSessions = {};
   let allLocations = {};
+  let allUserData = {};
   let currentChatListener = null;
   let searchTimeout;
-
-  let allUserData = {};  // Store all user data globally
 
   // DOM elements
   const sessionList = document.getElementById("sessionList");
@@ -472,58 +495,126 @@
   const emojiBtn = document.getElementById("emojiBtn");
   const emojiPicker = document.getElementById("emojiPicker");
 
+  // Function to generate consistent session ID based on user identity
+  function generateSessionId(name, email) {
+    // Create a consistent hash from name + email
+    const userIdentity = (name + email).toLowerCase().replace(/\s+/g, '');
+    
+    // Simple hash function for consistent session IDs
+    let hash = 0;
+    for (let i = 0; i < userIdentity.length; i++) {
+      const char = userIdentity.charCodeAt(i);
+      hash = ((hash << 5) - hash) + char;
+      hash = hash & hash; // Convert to 32-bit integer
+    }
+    
+    return 'user_' + Math.abs(hash).toString(36);
+  }
+
+  // Function to find or create user session
+  function findOrCreateUserSession(userData) {
+    const { name, email } = userData;
+    if (!name || !email) return null;
+    
+    const sessionId = generateSessionId(name, email);
+    
+    // Check if user already exists
+    if (!allUserData[sessionId]) {
+      // Create new user entry
+      db.ref("userData/" + sessionId).set({
+        name: name,
+        email: email,
+        latitude: userData.latitude || "",
+        longitude: userData.longitude || "",
+        firstSeen: Date.now(),
+        lastSeen: Date.now()
+      });
+    } else {
+      // Update last seen time
+      db.ref("userData/" + sessionId + "/lastSeen").set(Date.now());
+    }
+    
+    return sessionId;
+  }
+
+  let currentEditingSessionId = null;
 
   function closeEditModal() {
-  document.getElementById("editModal").style.display = "none";
-  document.getElementById("modalBackdrop").style.display = "none";
-}
+    document.getElementById("editModal").style.display = "none";
+    document.getElementById("modalBackdrop").style.display = "none";
+  }
 
-let currentEditingSessionId = null;
+  function openEditModal(sessionId) {
+    const user = allUserData[sessionId] || {};
 
-// Open modal and fill current user data
-function openEditModal(sessionId) {
-  const user = (allSessions && allSessions[sessionId]) || {};
-  const userData = (userDataSnapshot && userDataSnapshot[sessionId]) || {};
+    document.getElementById("editName").value = user.name || "";
+    document.getElementById("editEmail").value = user.email || "";
+    document.getElementById("editLat").value = user.latitude || "";
+    document.getElementById("editLng").value = user.longitude || "";
 
-  // fallback: use `userData` if available globally
-  const name = userData?.name || "";
-  const email = userData?.email || "";
-  const lat = userData?.latitude || "";
-  const lng = userData?.longitude || "";
+    currentEditingSessionId = sessionId;
+    document.getElementById("editModal").style.display = "block";
+    document.getElementById("modalBackdrop").style.display = "block";
+  }
 
-  document.getElementById("editName").value = name;
-  document.getElementById("editEmail").value = email;
-  document.getElementById("editLat").value = lat;
-  document.getElementById("editLng").value = lng;
-
-  currentEditingSessionId = sessionId;
-  document.getElementById("editModal").style.display = "block";
-  document.getElementById("modalBackdrop").style.display = "block";
-}
-
-// Save edited user info
-function saveUserEdit() {
-  const sessionId = currentEditingSessionId;
-  if (!sessionId || !db) return;
-
+  function saveUserEdit(sessionId) {
   const name = document.getElementById("editName").value.trim();
   const email = document.getElementById("editEmail").value.trim();
-  const lat = document.getElementById("editLat").value.trim();
-  const lng = document.getElementById("editLng").value.trim();
+  const lat = parseFloat(document.getElementById("editLat").value.trim());
+  const lng = parseFloat(document.getElementById("editLng").value.trim());
 
-  // Save to userData
-  db.ref("userData/" + sessionId).update({
+  if (!name || !email) {
+    alert("Name and email are required.");
+    return;
+  }
+
+  const newSessionId = btoa(email + name); // Encode new session ID
+
+  if (newSessionId === sessionId) {
+    // Simple case: No session ID change — just update user data
+    db.ref("userData/" + sessionId).update({
+      name: name,
+      email: email,
+      latitude: lat,
+      longitude: lng,
+      lastSeen: Date.now()
+    });
+    alert("User info updated.");
+    return;
+  }
+
+  // Advanced case: Session ID has changed — migrate data
+  const oldUserData = allUserData[sessionId] || {};
+  const oldChatData = allSessions[sessionId] || {};
+
+  // 1. Write new user data to new session ID
+  db.ref("userData/" + newSessionId).set({
     name: name,
     email: email,
     latitude: lat,
-    longitude: lng
-  }).then(() => {
-    closeEditModal();
-    alert("User info updated successfully.");
-  }).catch((error) => {
-    console.error("Update error:", error);
-    alert("Failed to update user info.");
+    longitude: lng,
+    firstSeen: oldUserData.firstSeen || Date.now(),
+    lastSeen: Date.now()
   });
+
+  // 2. Migrate chat history
+  if (Object.keys(oldChatData).length > 0) {
+    db.ref("chats/" + newSessionId).set(oldChatData);
+  }
+
+  // 3. Remove old records
+  db.ref("userData/" + sessionId).remove();
+  db.ref("chats/" + sessionId).remove();
+
+  // 4. Update the selected session
+  selectedSessionId = newSessionId;
+
+  // 5. Refresh chat panel
+  setTimeout(() => {
+    loadChatForSession(newSessionId);
+  }, 500);
+
+  alert("User info updated. Session ID changed.");
 }
 
 
@@ -558,8 +649,9 @@ function saveUserEdit() {
     // Listen to user data
     db.ref("userData").on("value", (snapshot) => {
       try {
-        const data = snapshot.val();
-        renderUserInfo(data);
+        allUserData = snapshot.val() || {};
+        renderUserInfo(allUserData);
+        renderSessions(searchInput.value.toLowerCase());
       } catch (error) {
         console.error("Error loading user data:", error);
         showError("Failed to load user information");
@@ -568,67 +660,62 @@ function saveUserEdit() {
   }
 
   const fileInput = document.getElementById('fileInput');
-const uploadBtn = document.getElementById('uploadBtn');
+  const uploadBtn = document.getElementById('uploadBtn');
 
-uploadBtn.onclick = () => {
-  fileInput.click();
-};
+  uploadBtn.onclick = () => {
+    fileInput.click();
+  };
 
-fileInput.onchange = () => {
-  const file = fileInput.files[0];
-  if (!file) return;
+  fileInput.onchange = () => {
+    const file = fileInput.files[0];
+    if (!file) return;
 
-  if (!selectedSessionId || !db) {
-    alert("Please select a chat session first.");
-    return;
-  }
-
-  if (!file.type.startsWith('image/')) {
-    alert("Only image files are allowed.");
-    return;
-  }
-
-  const formData = new FormData();
-  formData.append('image', file);
-
-  // Show loading or disable UI during upload
-  uploadBtn.disabled = true;
-
-  fetch('image_upload_handler.php', {
-  method: 'POST',
-  body: formData,
-})
-
-  .then(res => res.json())
-  .then(data => {
-    uploadBtn.disabled = false;
-    if (data.success && data.url) {
-      // Send chat message with image URL
-      const messageData = {
-        sender: "agent",
-        message: data.url, // Store image URL as message
-        type: "image",
-        timestamp: Date.now()
-      };
-
-      return db.ref("chats/" + selectedSessionId).push(messageData);
-    } else {
-      alert("Upload failed: " + (data.error || 'Unknown error'));
+    if (!selectedSessionId || !db) {
+      alert("Please select a chat session first.");
+      return;
     }
-  })
-  .catch(err => {
-    console.error("Upload error:", err);
-    alert("Failed to upload image");
-    uploadBtn.disabled = false;
-  })
-  .finally(() => {
-    fileInput.value = ""; // Reset file input
-  });
-};
 
+    if (!file.type.startsWith('image/')) {
+      alert("Only image files are allowed.");
+      return;
+    }
 
-  // Render user information
- function renderUserInfo(data) {
+    const formData = new FormData();
+    formData.append('image', file);
+
+    uploadBtn.disabled = true;
+
+    fetch('image_upload_handler.php', {
+      method: 'POST',
+      body: formData,
+    })
+    .then(res => res.json())
+    .then(data => {
+      uploadBtn.disabled = false;
+      if (data.success && data.url) {
+        const messageData = {
+          sender: "agent",
+          message: data.url,
+          type: "image",
+          timestamp: Date.now()
+        };
+
+        return db.ref("chats/" + selectedSessionId).push(messageData);
+      } else {
+        alert("Upload failed: " + (data.error || 'Unknown error'));
+      }
+    })
+    .catch(err => {
+      console.error("Upload error:", err);
+      alert("Failed to upload image");
+      uploadBtn.disabled = false;
+    })
+    .finally(() => {
+      fileInput.value = "";
+    });
+  };
+
+  function renderUserInfo(data) {
     const userInfoList = document.getElementById("user-info-list");
 
     if (!userInfoList) return;
@@ -656,12 +743,19 @@ fileInput.onchange = () => {
         ? `<a href="https://maps.google.com/?q=${lat},${lng}" target="_blank">📍</a>`
         : '<span style="color: #666;">📍 N/A</span>';
 
+      const firstSeen = user.firstSeen ? new Date(user.firstSeen).toLocaleString() : 'Unknown';
+      const lastSeen = user.lastSeen ? new Date(user.lastSeen).toLocaleString() : 'Unknown';
+
       output += `
         <div class="user-card">
           <strong>${name}</strong><br>
           📧 ${email}<br>
           ${locationLink}
-          <button style="margin-left:10px;" onclick="openEditModal('${sessionId}')">✏️ Edit</button>
+          <div style="font-size: 0.8rem; color: #888; margin-top: 5px;">
+            First seen: ${firstSeen}<br>
+            Last seen: ${lastSeen}
+          </div>
+          <button style="margin-left:10px; margin-top: 5px;" onclick="openEditModal('${sessionId}')">✏️ Edit</button>
         </div>
       `;
     }
@@ -679,15 +773,20 @@ fileInput.onchange = () => {
       .replace(/'/g, "&#039;");
   }
 
-
-
   // Search functionality
-  searchInput.addEventListener("input", () => {
-    clearTimeout(searchTimeout);
-    searchTimeout = setTimeout(() => {
-      renderSessions(searchInput.value.toLowerCase());
-    }, 300);
-  });
+  searchInput.addEventListener('keyup', () => {
+  clearTimeout(searchTimeout);
+  searchTimeout = setTimeout(() => {
+    renderSessions(searchInput.value.toLowerCase());
+  }, 300);
+});
+
+function escapeHtml(text) {
+  const div = document.createElement("div");
+  div.textContent = text;
+  return div.innerHTML;
+}
+
 
   // Render sessions with search filter
   function renderSessions(filter = "") {
@@ -703,7 +802,13 @@ fileInput.onchange = () => {
 
     let hasResults = false;
     for (let sid of sessionIds) {
-      if (filter && !sid.toLowerCase().includes(filter)) continue;
+      const userData = allUserData[sid] || {};
+      const userName = userData.name || sid;
+      
+      // Filter by user name or session ID
+      if (filter && !userName.toLowerCase().includes(filter) && !sid.toLowerCase().includes(filter)) {
+        continue;
+      }
       
       hasResults = true;
       const sessionBtn = document.createElement("div");
@@ -716,9 +821,15 @@ fileInput.onchange = () => {
         ? `<a href="https://www.google.com/maps?q=${allLocations[sid].latitude},${allLocations[sid].longitude}" target="_blank" style="color:#00d4ff;">📍</a>`
         : '';
       
+      const displayName = userName !== sid ? userName : sid;
+      const userEmail = userData.email ? ` (${userData.email})` : '';
+      
       sessionBtn.innerHTML = `
         <div style="display:flex;justify-content:space-between;align-items:center;">
-          <span title="${escapeHtml(sid)}">${escapeHtml(sid)}</span>
+          <div>
+            <div title="${escapeHtml(sid)}">${escapeHtml(displayName)}</div>
+            <div class="session-info">${escapeHtml(userEmail)}</div>
+          </div>
           <span>${locationIcon}</span>
         </div>
       `;
@@ -731,6 +842,12 @@ fileInput.onchange = () => {
       sessionList.innerHTML = '<div class="empty-state">No sessions match your search</div>';
     }
   }
+
+  function selectSession(sessionId) {
+  selectedSessionId = sessionId;
+  inputGroup.style.display = 'flex';
+  loadChatMessages(sessionId);
+}
 
   // Load chat function
   function loadChat(sid) {
@@ -752,8 +869,8 @@ fileInput.onchange = () => {
     // Find and select current session
     const sessionItems = document.querySelectorAll(".session-item");
     sessionItems.forEach(item => {
-      const sessionName = item.querySelector('span').textContent.trim();
-      if (sessionName === sid) {
+      const sessionDiv = item.querySelector('div > div');
+      if (sessionDiv && sessionDiv.getAttribute('title') === sid) {
         item.classList.add("selected");
       }
     });
@@ -777,7 +894,8 @@ fileInput.onchange = () => {
     chatBox.innerHTML = "";
     
     if (!chatData) {
-      chatBox.innerHTML = '<div class="empty-state"><h3>No messages yet</h3><p>This conversation hasn\'t started yet</p></div>';
+      const userName = allUserData[selectedSessionId]?.name || selectedSessionId;
+      chatBox.innerHTML = `<div class="empty-state"><h3>No messages yet</h3><p>Start a conversation with ${escapeHtml(userName)}</p></div>`;
       return;
     }
 
@@ -791,18 +909,17 @@ fileInput.onchange = () => {
       const timestamp = msg.timestamp ? new Date(msg.timestamp).toLocaleTimeString() : '';
       const sender = escapeHtml(msg.sender || 'Unknown');
 
-let messageContent = '';
-if (msg.type === 'image' && msg.message) {
-  // Render image tag with max width/height
-  messageContent = `<img src="${escapeHtml(msg.message)}" alt="image" style="max-width:200px;max-height:200px;border-radius:8px;cursor:pointer;" onclick="window.open('${escapeHtml(msg.message)}','_blank')"/>`;
-} else {
-  messageContent = escapeHtml(msg.message || '');
-}
+      let messageContent = '';
+      if (msg.type === 'image' && msg.message) {
+        messageContent = `<img src="${escapeHtml(msg.message)}" alt="image" style="max-width:200px;max-height:200px;border-radius:8px;cursor:pointer;" onclick="window.open('${escapeHtml(msg.message)}','_blank')"/>`;
+      } else {
+        messageContent = escapeHtml(msg.message || '');
+      }
 
-messageDiv.innerHTML = `
-  <b>${sender}:</b> ${messageContent}
-  ${timestamp ? `<small style="color: #666; margin-left: 10px;">${timestamp}</small>` : ''}
-`;
+      messageDiv.innerHTML = `
+        <b>${sender}:</b> ${messageContent}
+        ${timestamp ? `<small style="color: #666; margin-left: 10px;">${timestamp}</small>` : ''}
+      `;
 
       chatBox.appendChild(messageDiv);
     });
@@ -812,98 +929,25 @@ messageDiv.innerHTML = `
 
   // Send message function
   function sendMessage() {
-  const msg = msgInput.value.trim();
-  if (!msg || !selectedSessionId || !db) return;
+    const msg = msgInput.value.trim();
+    if (!msg || !selectedSessionId || !db) return;
 
-  const messageData = {
-    sender: "agent",
-    message: msg,
-    type: "text",    // add this
-    timestamp: Date.now()
-  };
+    const messageData = {
+      sender: "agent",
+      message: msg,
+      type: "text",
+      timestamp: Date.now()
+    };
 
-  db.ref("chats/" + selectedSessionId).push(messageData)
-    .then(() => {
-      msgInput.value = "";
-    })
-    .catch((error) => {
-      console.error("Error sending message:", error);
-      showError("Failed to send message");
-    });
-}
-
-
-// Open edit modal and load user data
-function openEditModal(sessionId) {
-  if (!sessionId) return;
-  currentEditSessionId = sessionId;
-
-  // Set session ID on modal for saving later
-  const editModal = document.getElementById("editModal");
-  editModal.setAttribute("data-session-id", sessionId);
-
-  // Fetch user data from Firebase userData node
-  db.ref("userData/" + sessionId).once("value").then((snapshot) => {
-    const data = snapshot.val() || {};
-    document.getElementById("editName").value = data.name || "";
-    document.getElementById("editEmail").value = data.email || "";
-    document.getElementById("editLat").value = data.latitude || "";
-    document.getElementById("editLng").value = data.longitude || "";
-
-    // Show modal and backdrop
-    editModal.style.display = "block";
-    document.getElementById("modalBackdrop").style.display = "block";
-  }).catch((error) => {
-    alert("Failed to load user data: " + error.message);
-  });
-}
-
-// Save edits back to Firebase
-function saveUserEdit() {
-  const sessionId = document.getElementById("editModal").getAttribute("data-session-id");
-  if (!sessionId) {
-    alert("No session selected.");
-    return;
-  }
-
-  const name = document.getElementById("editName").value.trim();
-  const email = document.getElementById("editEmail").value.trim();
-  const latitude = document.getElementById("editLat").value.trim();
-  const longitude = document.getElementById("editLng").value.trim();
-
-  // Basic validation (optional)
-  if (!name || !email) {
-    alert("Name and email cannot be empty.");
-    return;
-  }
-
-  const updatedData = {
-    name,
-    email,
-    latitude,
-    longitude,
-  };
-
-  db.ref("userData/" + sessionId).update(updatedData)
-    .then(() => {
-      alert("User info updated successfully!");
-      closeEditModal();
-      // Optionally, reload user info list
-      db.ref("userData").once("value").then(snapshot => {
-        renderUserInfo(snapshot.val());
+    db.ref("chats/" + selectedSessionId).push(messageData)
+      .then(() => {
+        msgInput.value = "";
+      })
+      .catch((error) => {
+        console.error("Error sending message:", error);
+        showError("Failed to send message");
       });
-    })
-    .catch((error) => {
-      alert("Failed to update user info: " + error.message);
-    });
-}
-
-// Close modal function
-function closeEditModal() {
-  document.getElementById("editModal").style.display = "none";
-  document.getElementById("modalBackdrop").style.display = "none";
-}
-
+  }
 
 
 
