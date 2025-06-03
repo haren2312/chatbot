@@ -412,8 +412,6 @@
   </div>
 </div>
 
-<button onclick="closeEditModal()" style="float:right;">✖️</button>
-
 
 <div class="modal-backdrop" id="modalBackdrop"></div>
 <div class="edit-modal" id="editModal">
@@ -423,7 +421,10 @@
   <input type="text" id="editLat" placeholder="Latitude">
   <input type="text" id="editLng" placeholder="Longitude">
   <button onclick="saveUserEdit()">Save</button>
+  <button onclick="closeEditModal()" style="margin-top:10px;">Cancel</button>
 </div>
+
+
 
 
 
@@ -459,6 +460,8 @@
   let currentChatListener = null;
   let searchTimeout;
 
+  let allUserData = {};  // Store all user data globally
+
   // DOM elements
   const sessionList = document.getElementById("sessionList");
   const chatBox = document.getElementById("chatBox");
@@ -473,6 +476,54 @@
   function closeEditModal() {
   document.getElementById("editModal").style.display = "none";
   document.getElementById("modalBackdrop").style.display = "none";
+}
+
+let currentEditingSessionId = null;
+
+// Open modal and fill current user data
+function openEditModal(sessionId) {
+  const user = (allSessions && allSessions[sessionId]) || {};
+  const userData = (userDataSnapshot && userDataSnapshot[sessionId]) || {};
+
+  // fallback: use `userData` if available globally
+  const name = userData?.name || "";
+  const email = userData?.email || "";
+  const lat = userData?.latitude || "";
+  const lng = userData?.longitude || "";
+
+  document.getElementById("editName").value = name;
+  document.getElementById("editEmail").value = email;
+  document.getElementById("editLat").value = lat;
+  document.getElementById("editLng").value = lng;
+
+  currentEditingSessionId = sessionId;
+  document.getElementById("editModal").style.display = "block";
+  document.getElementById("modalBackdrop").style.display = "block";
+}
+
+// Save edited user info
+function saveUserEdit() {
+  const sessionId = currentEditingSessionId;
+  if (!sessionId || !db) return;
+
+  const name = document.getElementById("editName").value.trim();
+  const email = document.getElementById("editEmail").value.trim();
+  const lat = document.getElementById("editLat").value.trim();
+  const lng = document.getElementById("editLng").value.trim();
+
+  // Save to userData
+  db.ref("userData/" + sessionId).update({
+    name: name,
+    email: email,
+    latitude: lat,
+    longitude: lng
+  }).then(() => {
+    closeEditModal();
+    alert("User info updated successfully.");
+  }).catch((error) => {
+    console.error("Update error:", error);
+    alert("Failed to update user info.");
+  });
 }
 
 
@@ -578,32 +629,55 @@ fileInput.onchange = () => {
 
   // Render user information
  function renderUserInfo(data) {
-  const userInfoList = document.getElementById("user-info-list");
+    const userInfoList = document.getElementById("user-info-list");
 
-  if (!data || Object.keys(data).length === 0) {
-    userInfoList.innerHTML = '<div class="user-info-section"><h3>Users</h3><p>No user data available</p></div>';
-    return;
+    if (!userInfoList) return;
+
+    if (!data || Object.keys(data).length === 0) {
+      userInfoList.innerHTML = `
+        <div class="user-info-section">
+          <h3>Users</h3>
+          <p>No user data available</p>
+        </div>`;
+      return;
+    }
+
+    let output = "<h3>Users</h3>";
+
+    for (let sessionId in data) {
+      const user = data[sessionId] || {};
+      const name = escapeHtml(user.name || "Unknown");
+      const email = escapeHtml(user.email || "No email");
+      const lat = parseFloat(user.latitude);
+      const lng = parseFloat(user.longitude);
+      const hasLocation = !isNaN(lat) && !isNaN(lng);
+
+      const locationLink = hasLocation
+        ? `<a href="https://maps.google.com/?q=${lat},${lng}" target="_blank">📍</a>`
+        : '<span style="color: #666;">📍 N/A</span>';
+
+      output += `
+        <div class="user-card">
+          <strong>${name}</strong><br>
+          📧 ${email}<br>
+          ${locationLink}
+          <button style="margin-left:10px;" onclick="openEditModal('${sessionId}')">✏️ Edit</button>
+        </div>
+      `;
+    }
+
+    userInfoList.innerHTML = output;
   }
 
-  let output = "<h3>Users</h3>";
-  for (let sessionId in data) {
-    const user = data[sessionId];
-    const locationLink = (user.latitude && user.longitude)
-      ? `<a href="https://maps.google.com/?q=${user.latitude},${user.longitude}" target="_blank">📍</a>`
-      : '<span style="color: #666;">📍 N/A</span>';
-
-    output += `
-      <div class="user-card">
-        <strong>${escapeHtml(user.name || 'Unknown')}</strong>
-        📧 ${escapeHtml(user.email || 'No email')}<br>
-        ${locationLink}
-        <button style="margin-left:10px;" onclick="openEditModal('${sessionId}')">✏️ Edit</button>
-      </div>
-    `;
+  function escapeHtml(unsafe) {
+    if (typeof unsafe !== "string") return "";
+    return unsafe
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#039;");
   }
-  userInfoList.innerHTML = output;
-}
-
 
 
 
@@ -916,18 +990,6 @@ function closeModal() {
 }
 
 
-  // Utility functions
-  function escapeHtml(text) {
-  return text.replace(/[&<>"']/g, function (m) {
-    return ({
-      '&': '&amp;',
-      '<': '&lt;',
-      '>': '&gt;',
-      '"': '&quot;',
-      "'": '&#39;'
-    })[m];
-  });
-}
 
   function showError(message) {
     const errorDiv = document.createElement('div');

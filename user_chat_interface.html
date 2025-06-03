@@ -60,14 +60,14 @@
       right: 20px;
       width: 100%;
       max-width: 420px;
-      background: var(--card);
+      background: var(--primary);
       border-radius: 12px;
       box-shadow: 0 8px 20px rgba(0, 0, 0, 0.6);
       display: none;
       flex-direction: column;
       gap: 12px;
       z-index: 998;
-      padding: 20px;
+      padding: 10px;
       max-height: 110vh;
       overflow: hidden;
     }
@@ -85,10 +85,11 @@
       border: 1px solid var(--border-color);
       border-radius: 8px;
       padding: 12px;
-      background: #1e293b;
+      background-color: white;
       display: flex;
       flex-direction: column;
       gap: 10px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
     }
 
     .msg {
@@ -129,8 +130,9 @@
       border-radius: 8px;
       font-size: 14px;
       outline: none;
-      background: var(--input-bg);
-      color: white;
+      background: white;
+      color: rgb(0, 0, 0);
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
     }
 
     #input::placeholder {
@@ -191,9 +193,9 @@
     input[type="email"] {
       padding: 10px;
       border-radius: 8px;
-      border: 1px solid var(--border-color);
-      background: var(--input-bg);
-      color: white;
+      border: 1px solid black;
+      background: white;
+      color: black;
       width: 100%;
       font-size: 14px;
       outline: none;
@@ -205,7 +207,9 @@
     }
 
     .prompt-box {
-      background: var(--card);
+      background-image: url("bg-patten.png");
+      background-repeat: no-repeat;
+      background-attachment: fixed;
       border-radius: 16px;
       padding: 24px;
       box-shadow: 0 12px 30px rgba(0, 0, 0, 0.5);
@@ -254,7 +258,7 @@
 
     .prompt-label {
       font-size: 14px;
-      color: var(--text);
+      color: black;
     }
 
     .chat-header {
@@ -262,7 +266,7 @@
       align-items: center;
       gap: 12px;
       padding: 12px;
-      background: var(--card);
+      background: white;
       border-radius: 10px;
       box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
     }
