@@ -4,419 +4,654 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Agent Panel - Enterprise Chat</title>
-  <style>
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
-
-    body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background-color: #0b0e14;
-      color: #e0e0e0;
-      height: 100vh;
-      display: flex;
-      overflow: hidden;
-    }
-
-    .container {
-      display: flex;
-      width: 100%;
-      height: 100vh;
-      box-shadow: inset 0 0 8px rgba(0, 0, 0, 0.8);
-    }
-
-    .sidebar {
-      width: 320px;
-      background-color: #101822;
-      border-right: 1px solid #1e2a38;
-      display: flex;
-      flex-direction: column;
-      padding: 0;
-      overflow-y: auto;
-      box-shadow: inset -4px 0 8px rgba(0, 0, 0, 0.6);
-    }
-
-    .sidebar-header {
-      padding: 20px 20px 12px;
-      border-bottom: 1px solid #1e2a38;
-      background: #121c2a;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
-
-    .sidebar-header h3 {
-      font-size: 1.3rem;
-      font-weight: 600;
-      color: #00bfff;
-    }
-
-    .sidebar-header span {
-      font-size: 1.2rem;
-      color: #5aaeff;
-      opacity: 0.8;
-    }
-
-    .search-bar {
-      padding: 14px 20px 10px;
-      background-color: #101822;
-      border-bottom: 1px solid #1e2a38;
-      position: relative;
-    }
-
-    .search-bar input {
-      width: 100%;
-      padding: 12px 16px 12px 44px;
-      border-radius: 10px;
-      border: 2px solid #00bfff;
-      background-color: #0e1a2b;
-      color: #fff;
-      font-size: 0.95rem;
-      transition: all 0.3s ease;
-      box-shadow: 0 0 0 transparent;
-    }
-
-    .search-bar input:focus {
-      border-color: #00e0ff;
-      box-shadow: 0 0 10px #00bfff88;
-      outline: none;
-    }
-
-    .search-bar::before {
-      content: "🔍";
-      position: absolute;
-      top: 50%;
-      left: 28px;
-      transform: translateY(-50%);
-      font-size: 1rem;
-      color: #00bfff;
-    }
-
-    #sessionList {
-      flex: 1;
-      overflow-y: auto;
-      padding: 10px 20px;
-    }
-
-    .session-item {
-      background-color: #131c2a;
-      color: #d6f1ff;
-      padding: 12px 14px;
-      margin-bottom: 10px;
-      border-radius: 10px;
-      cursor: pointer;
-      border-left: 4px solid transparent;
-      transition: all 0.25s ease;
-      box-shadow: 0 1px 4px rgba(0, 191, 255, 0.12);
-      font-size: 0.95rem;
-      overflow: hidden;
-      white-space: nowrap;
-      text-overflow: ellipsis;
-    }
-
-    .session-item:hover {
-      background-color: #182739;
-      border-left-color: #00bfff;
-      color: #00d4ff;
-    }
-
-    .session-item.selected {
-      background-color: #003d66;
-      color: #a0e7ff;
-      border-left-color: #00bfff;
-      font-weight: bold;
-      box-shadow: 0 0 6px rgba(0, 191, 255, 0.3);
-    }
-
-    .chat-area {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      background-color: #0e1119;
-      padding:0px 20px 10px 20px;
-      overflow: hidden;
-    }
-
-    .chat-box {
-    flex-grow: 1;
-    overflow-y: auto;
-    padding: 10px;
-    scroll-behavior: smooth;
-    color: #ccc;
-    font-size: 1rem;
-    margin-bottom: 20px;
-    background: #131c2a;
-    border-radius: 10px;
-    border: 1px solid cyan;
+ <style>
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
 }
 
-    .chat-msg {
-      margin-bottom: 12px;
-      padding: 8px 12px;
-      border-radius: 8px;
-      background-color: #1a2332;
-      border-left: 3px solid #00bfff;
-    }
-
-    .chat-msg b {
-      color: #00bfff;
-      font-weight: 700;
-    }
-
-    .user-info-section {
-    max-height: 160px;
-    overflow-y: auto;
-    margin-bottom: 20px;
-    background-color: #131c2a;
-    border-radius: 10px;
-    padding: 10px;
-    border: 1px solid cyan;
+body {
+  font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background-color: #f5f8fa;
+  color: #222e3a;
+  height: 100vh;
+  display: flex;
+  overflow: hidden;
 }
 
-    .user-info-section h3 {
-      color: #00bfff;
-      margin-bottom: 15px;
-      font-size: 1.2rem;
-    }
-
-    .user-card {
-      background-color: #1a2332;
-      padding: 12px;
-      margin-bottom: 10px;
-      border-radius: 8px;
-      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
-      border-left: 3px solid #00bfff;
-    }
-
-    .user-card strong {
-      color: #00d4ff;
-      display: block;
-      margin-bottom: 5px;
-    }
-
-    .user-card a {
-      color: #5aaeff;
-      text-decoration: none;
-    }
-
-    .user-card a:hover {
-      color: #00bfff;
-      text-decoration: underline;
-    }
-
-    .input-group {
-      display: flex;
-      gap: 12px;
-      padding-top: 16px;
-      border-top: 1px solid #1f2b3a;
-    }
-
-    .input-group input[type="text"] {
-      flex: 1;
-      padding: 12px 16px;
-      border-radius: 8px;
-      border: 1px solid #2b3c4d;
-      background-color: #1c2230;
-      color: #eee;
-      font-size: 1rem;
-    }
-
-    .input-group input:focus {
-      border-color: #00bfff;
-      outline: none;
-      box-shadow: 0 0 8px #00bfff99;
-    }
-
-    .input-group button {
-      background-color: #00bfff;
-      border: none;
-      border-radius: 8px;
-      color: white;
-      padding: 12px 18px;
-      font-weight: 700;
-      cursor: pointer;
-      font-size: 1rem;
-      transition: background-color 0.3s ease;
-    }
-
-    .input-group button:hover {
-      background-color: #0099cc;
-    }
-
-    #emojiBtn {
-      flex: 0 0 42px;
-      font-size: 1.4rem;
-      background-color: transparent;
-      border-radius: 6px;
-      border: 1px solid #2b3c4d;
-      color: #00bfff;
-      transition: all 0.3s ease;
-    }
-
-    #emojiBtn:hover {
-      border-color: #00bfff;
-      background-color: #1c2230;
-      cursor: pointer;
-    }
-
-    .error-message {
-      color: #ff6b6b;
-      background-color: #2d1b1b;
-      padding: 10px;
-      border-radius: 5px;
-      margin: 10px 0;
-      border-left: 3px solid #ff6b6b;
-    }
-
-    .loading {
-      color: #00bfff;
-      text-align: center;
-      padding: 20px;
-    }
-
-    .empty-state {
-      text-align: center;
-      color: #666;
-      padding: 40px 20px;
-    }
-
-    .emoji-picker {
-      position: absolute;
-      bottom: 70px;
-      right: 20px;
-      background-color: #1c2230;
-      border: 1px solid #2b3c4d;
-      border-radius: 8px;
-      padding: 10px;
-      display: none;
-      z-index: 1000;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
-    }
-
-    .emoji-picker span {
-      cursor: pointer;
-      font-size: 1.5rem;
-      margin: 2px;
-      padding: 5px;
-      border-radius: 4px;
-      transition: background-color 0.2s;
-    }
-
-    .emoji-picker span:hover {
-      background-color: #2b3c4d;
-    }
-
-    .edit-modal {
-      position: fixed;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      background: #1e1e1e;
-      padding: 20px;
-      border-radius: 12px;
-      z-index: 9999;
-      color: white;
-      width: 300px;
-      display: none;
-      box-shadow: 0 0 10px #00d4ff;
-    }
-    .edit-modal input {
-      width: 100%;
-      padding: 8px;
-      margin: 6px 0;
-      border: none;
-      border-radius: 6px;
-    }
-    .edit-modal button {
-      margin-top: 10px;
-      padding: 6px 12px;
-      border: none;
-      border-radius: 6px;
-      background-color: #00d4ff;
-      color: #000;
-      cursor: pointer;
-    }
-    .modal-backdrop {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background-color: rgba(0,0,0,0.6);
-      z-index: 9998;
-      display: none;
-    }
-
-    #modalBackdrop {
-      display: none;
-      position: fixed;
-      top: 0; left: 0; right: 0; bottom: 0;
-      background: rgba(0, 0, 0, 0.4);
-      z-index: 998;
-    }
-
-    .session-info {
-      font-size: 0.8rem;
-      color: #888;
-      margin-top: 4px;
-    }
-
-    /* Container styled like a professional quote card */
-.edit-user-quote-box {
-  background: #f9fbfc;
-  border-left: 5px solid #0077cc;
-  padding: 1rem 1.5rem;
-  margin: 1rem 0;
-  border-radius: 8px;
-  font-family: "Segoe UI", sans-serif;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-  max-width: 500px;
-}
-
-/* Input fields */
-.edit-user-quote-box input[type="text"],
-.edit-user-quote-box input[type="email"],
-.edit-user-quote-box input[type="number"] {
+.container {
+  display: flex;
   width: 100%;
-  padding: 10px;
-  margin-top: 8px;
-  margin-bottom: 16px;
-  border: 1px solid #ccd;
-  border-radius: 6px;
-  font-size: 14px;
+  height: 100vh;
+  box-shadow: inset 0 0 8px rgba(40,70,180,0.06);
 }
 
-/* Labels */
-.edit-user-quote-box label {
-  font-weight: 600;
-  display: block;
-  margin-bottom: 4px;
-  color: #333;
+.sidebar {
+  width: 250px;
+  background-color: #f7fafd;
+  border-right: 1.5px solid #e5e9ef;
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+  overflow-y: auto;
+  box-shadow: inset -4px 0 8px rgba(40,70,180,0.04);
 }
 
-/* Save button */
-.edit-user-quote-box button {
-  background-color: #0077cc;
+.sidebar-header {
+  padding: 20px 20px 12px;
+  border-bottom: 1.5px solid #e5e9ef;
+  background: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.sidebar-header h3 {
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: #2563eb;
+}
+
+.sidebar-header span {
+  font-size: 1.2rem;
+  color: #95b7f8;
+  opacity: 0.9;
+}
+
+.search-bar {
+  padding: 14px 20px 10px;
+  background-color: #f7fafd;
+  border-bottom: 1.5px solid #e5e9ef;
+  position: relative;
+}
+
+.search-bar input {
+  width: 100%;
+  padding: 12px 16px 12px 44px;
+  border-radius: 10px;
+  border: 2px solid #2563eb;
+  background-color: #f3f6fb;
+  color: #1a2441;
+  font-size: 0.97rem;
+  transition: all 0.3s;
+}
+
+.search-bar input:focus {
+  border-color: #1748b2;
+  box-shadow: 0 0 8px #2563eb33;
+  outline: none;
+}
+
+.search-bar::before {
+  content: "🔍";
+  position: absolute;
+  top: 50%;
+  left: 28px;
+  transform: translateY(-50%);
+  font-size: 1rem;
+  color: #2563eb;
+}
+
+#sessionList {
+  flex: 1;
+  overflow-y: auto;
+  padding: 10px 20px;
+}
+
+.session-item {
+  background-color: #f4f7fd;
+  color: #2563eb;
+  padding: 12px 14px;
+  margin-bottom: 10px;
+  border-radius: 10px;
+  cursor: pointer;
+  border-left: 4px solid transparent;
+  transition: all 0.18s;
+  box-shadow: 0 1px 4px rgba(37, 99, 235, 0.07);
+  font-size: 0.99rem;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
+}
+
+.session-item:hover {
+  background-color: #eaf1ff;
+  border-left-color: #2563eb;
+  color: #1748b2;
+}
+
+.session-item.selected {
+  background-color: #2563eb18;
+  color: #1748b2;
+  border-left-color: #2563eb;
+  font-weight: bold;
+  box-shadow: 0 0 6px #2563eb22;
+}
+
+.chat-area {
+  flex: 1;
+  display: flex;
+  flex-direction: row;
+  background-color: #f7fafd;
+  gap: 25px;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.chat-box {
+  flex: 1 1 0%;
+  min-width: 0;
+  min-height: 0;
+  height: calc(100vh - 64px);
+  background: #fff;
+  border-radius: 14px;
+  border: 1.5px solid #e5e9ef;
+  box-shadow: 0 3px 14px #2563eb08;
+  padding: 24px 18px 18px 18px;
+  overflow-y: scroll;          /* always show scrollbar */
+  scrollbar-gutter: stable;    /* optional: keeps space for scrollbar */
+  color: #27324c;
+  font-size: 1.06rem;
+  margin-bottom: 0;
+  display: flex;
+  flex-direction: column;
+  /* justify-content: flex-start; REMOVE THIS */
+}
+
+
+/* Professional scrollbar only for chat-box */
+.chat-box::-webkit-scrollbar {
+  width: 10px;
+  background: #f0f4fa;
+  border-radius: 12px;
+}
+.chat-box::-webkit-scrollbar-thumb {
+  background: #c7d2ea;
+  border-radius: 12px;
+  border: 3px solid #fff;
+}
+.chat-box::-webkit-scrollbar-thumb:hover {
+  background: #b0bee3;
+}
+
+.chat-msg {
+  margin-bottom: 18px;
+  padding: 12px 16px;
+  border-radius: 8px;
+  background: linear-gradient(90deg, #eaf1ff 85%, #f7fafd 100%);
+  border-left: 4px solid #2563eb;
+  color: #23334d;
+  box-shadow: 0 2px 8px #2563eb0d;
+  transition: box-shadow 0.15s;
+}
+
+.chat-msg {
+  position: relative;
+}
+.chat-msg .msg-actions {
+  display: none;
+  position: absolute;
+  top: 7px;
+  right: 11px;
+  z-index: 4;
+}
+.chat-msg:hover .msg-actions {
+  display: flex;
+  gap: 6px;
+}
+.msg-actions button {
+  background: none;
+  border: none;
+  color: #888;
+  font-size: 1.05rem;
+  padding: 2px 4px;
+  cursor: pointer;
+  transition: color 0.18s;
+  border-radius: 4px;
+}
+.msg-actions button:hover {
+  background: #f7f7f7;
+  color: #d73737;
+}
+.chat-msg.editing {
+  background: #fff7e0;
+  border-left: 4px solid #f9783a;
+}
+.edit-input-wrap {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+.edit-input-wrap input {
+  flex: 1;
+  font-size: 1rem;
+  padding: 7px 8px;
+  border-radius: 5px;
+  border: 1px solid #c9d6ee;
+}
+.edit-input-wrap button {
+  background: #1cc8ae;
+  color: #fff;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 5px;
+  font-size: 0.97rem;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.edit-input-wrap button.cancel-btn {
+  background: #eee;
+  color: #666;
+}
+.edit-input-wrap button:hover:not(.cancel-btn) {
+  background: #2563eb;
+}
+.edit-input-wrap button.cancel-btn:hover {
+  background: #f9783a;
+  color: #fff;
+}
+
+
+.chat-msg b {
+  color: #1748b2;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+.chat-msg:hover {
+  box-shadow: 0 4px 18px #2563eb16;
+}
+
+.input-group {
+  padding-top: 20px;
+  padding-bottom: 0px;
+  border-top: 1.5px solid #e5e9ef;
+  background: #f7fafd;
+  margin: 0;
+  border-radius: 0 0 12px 12px;
+}
+
+.input-group input[type="text"] {
+  background: #f8fafc;
+  border: 1.5px solid #c9d6ee;
+  border-radius: 8px;
+  padding: 12px 16px;
+  transition: border 0.15s, box-shadow 0.15s;
+}
+.input-group input:focus {
+  border-color: #2563eb;
+  box-shadow: 0 0 6px #2563eb33;
+}
+
+.input-group button {
+  background: linear-gradient(90deg, #2563eb 80%, #2e8de6 100%);
+  border: none;
+  border-radius: 8px;
   color: white;
-  padding: 10px 18px;
+  padding: 12px 18px;
+  font-weight: 700;
+  cursor: pointer;
+  font-size: 1rem;
+  box-shadow: 0 1px 8px #2563eb10;
+  transition: background 0.2s, box-shadow 0.2s;
+}
+.input-group button:hover, .input-group button:focus {
+  background: #1748b2;
+  box-shadow: 0 2px 12px #1748b210;
+}
+
+#emojiBtn {
+  flex: 0 0 42px;
+  font-size: 1.4rem;
+  background-color: transparent;
+  border-radius: 6px;
+  border: 1.5px solid #c9d6ee;
+  color: #2563eb;
+  transition: all 0.3s;
+}
+#emojiBtn:hover {
+  border-color: #2563eb;
+  background-color: #eaf1ff;
+  cursor: pointer;
+}
+
+.user-info-section {
+  min-width: 320px;
+  max-width: 250px;
+  flex: 0 0 340px;
+  height: calc(100vh - 64px);
+  overflow-y: auto;
+  margin-bottom: 0;
+  background: #fff;
+  border-radius: 16px;
+  border: 1.5px solid #e5e9ef;
+  box-shadow: 0 4px 16px #2563eb08;
+  padding: 24px 18px 18px 18px;
+  display: flex;
+  flex-direction: column;
+  scroll-behavior: smooth;
+}
+/* Professional scrollbar only for user-info-section */
+.user-info-section::-webkit-scrollbar {
+  width: 10px;
+  background: #f0f4fa;
+  border-radius: 12px;
+}
+.user-info-section::-webkit-scrollbar-thumb {
+  background: #c7d2ea;
+  border-radius: 12px;
+  border: 3px solid #fff;
+}
+.user-info-section::-webkit-scrollbar-thumb:hover {
+  background: #b0bee3;
+}
+
+.user-info-section h3 {
+  color: #2563eb;
+  margin-bottom: 18px;
+  font-size: 1.14rem;
+  font-weight: 700;
+}
+
+.user-card {
+  background: #f3f6fb;
+  border-radius: 13px;
+  border: 1.5px solid #e5e9ef;
+  margin-bottom: 15px;
+  padding: 12px 18px 14px 18px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  position: relative;
+  transition: border-color 0.18s, box-shadow 0.18s;
+}
+.user-card:hover {
+  border-color: #2563eb;
+  box-shadow: 0 2px 14px #2563eb12;
+}
+.user-avatar {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  background: #d3e9fc;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  color: #2563eb;
+  font-size: 1.14rem;
+  flex-shrink: 0;
+  margin-right: 8px;
+  border: 2.5px solid #c8d6f3;
+  text-transform: uppercase;
+}
+.user-card strong {
+  color: #1748b2;
+  font-size: 1.01rem;
+  font-weight: 600;
+  margin-bottom: 1px;
+  display: block;
+}
+.user-card .user-meta {
+  font-size: 0.99rem;
+  color: #5d6478;
+  margin-bottom: 5px;
+}
+.user-card .user-meta-email {
+  color: #2563eb;
+  font-size: 0.96rem;
+}
+.user-card a, .user-card a:visited {
+  color: #2563eb;
+  font-size: 0.97rem;
+  text-decoration: underline dotted;
+}
+.user-card a:hover {
+  color: #1748b2;
+  text-decoration: underline solid;
+}
+.user-card button {
+  background: #2563eb;
+  color: #fff;
+  border: none;
+  border-radius: 7px;
+  font-weight: 600;
+  padding: 7px 13px;
+  cursor: pointer;
+  font-size: 0.99rem;
+  margin-left: auto;
+  margin-top: 0;
+  transition: background 0.18s;
+}
+.user-card button:hover {
+  background: #1748b2;
+}
+
+.error-message {
+  color: #e53935;
+  background-color: #fff0f0;
+  padding: 10px;
+  border-radius: 5px;
+  margin: 10px 0;
+  border-left: 3px solid #e53935;
+}
+
+.loading {
+  color: #2563eb;
+  text-align: center;
+  padding: 20px;
+}
+
+.empty-state {
+  text-align: center;
+  color: #9db0d0;
+  padding: 40px 20px;
+}
+
+.emoji-picker {
+  position: absolute;
+  bottom: 70px;
+  right: 20px;
+  background-color: #fff;
+  border: 1.5px solid #e5e9ef;
+  border-radius: 8px;
+  padding: 10px;
+  display: none;
+  z-index: 1000;
+  box-shadow: 0 4px 14px #2563eb13;
+}
+.emoji-picker span {
+  cursor: pointer;
+  font-size: 1.5rem;
+  margin: 2px;
+  padding: 5px;
+  border-radius: 4px;
+  transition: background-color 0.2s;
+}
+.emoji-picker span:hover {
+  background-color: #eaf1ff;
+}
+
+.edit-modal {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: #fff;
+  padding: 20px;
+  border-radius: 12px;
+  z-index: 9999;
+  color: #1748b2;
+  width: 320px;
+  display: none;
+  box-shadow: 0 0 20px #2563eb23;
+  border: 1.5px solid #e5e9ef;
+}
+.edit-modal input {
+  width: 100%;
+  padding: 8px;
+  margin: 6px 0;
+  border: 1.5px solid #e5e9ef;
+  border-radius: 6px;
+  color: #1a2441;
+}
+.edit-modal button {
+  margin-top: 10px;
+  padding: 7px 14px;
   border: none;
   border-radius: 6px;
+  background-color: #2563eb;
+  color: #fff;
   cursor: pointer;
   font-weight: 600;
-  transition: background 0.2s ease;
+  transition: background 0.2s;
+}
+.edit-modal button:hover {
+  background-color: #1748b2;
 }
 
-.edit-user-quote-box button:hover {
-  background-color: #005fa3;
+.modal-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(40,70,180,0.13);
+  z-index: 9998;
+  display: none;
 }
 
-  </style>
+#modalBackdrop {
+  display: none;
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(40,70,180,0.13);
+  z-index: 998;
+}
+
+.session-info {
+  font-size: 0.87rem;
+  color: #97a5bc;
+  margin-top: 2px;
+}
+
+/* Hide scrollbars globally unless inside .chat-box or .user-info-section */
+::-webkit-scrollbar {
+  width: 0;
+  background: transparent;
+}
+
+/* Responsive fixes */
+@media (max-width: 900px) {
+  .chat-area {
+    flex-direction: column;
+    gap: 16px;
+    padding: 16px;
+  }
+  .user-info-section, .chat-box {
+    max-width: 100%;
+    min-width: 0;
+    height: 260px;
+    padding: 12px 6px 8px 8px;
+  }
+}
+
+.chat-msg {
+  margin-bottom: 12px;
+  padding: 7px 12px;
+  border-radius: 7px;
+  background-color: #eaf1ff;
+  border-left: 3px solid #2563eb;
+  color: #23334d;
+  font-size: 0.98rem;
+  word-break: break-word;
+}
+.chat-msg b {
+  color: #1748b2;
+  font-weight: 600;
+  font-size: 0.99rem;
+}
+
+.input-group {
+  padding-top: 12px;
+  border-top: 1.5px solid #e5e9ef;
+  background: #f7fafd;
+  gap: 8px;
+}
+.input-group input[type="text"] {
+  flex: 1;
+  padding: 7px 10px;
+  border-radius: 7px;
+  border: 1.2px solid #c9d6ee;
+  background-color: #f8fafc;
+  color: #222e3a;
+  font-size: 0.98rem;
+  min-width: 0;
+}
+.input-group input:focus {
+  border-color: #2563eb;
+  outline: none;
+  box-shadow: 0 0 4px #2563eb22;
+}
+
+.input-group button,
+#emojiBtn,
+.user-card button,
+.edit-modal button {
+  border-radius: 6px;
+  font-size: 0.98rem;
+  padding: 7px 12px;
+  font-weight: 600;
+  min-width: 36px;
+  min-height: 36px;
+  border: none;
+  transition: background 0.16s, color 0.16s;
+}
+
+.input-group button,
+.user-card button,
+.edit-modal button {
+  background: #2563eb;
+  color: #fff;
+}
+
+.input-group button:hover,
+.user-card button:hover,
+.edit-modal button:hover {
+  background: #1748b2;
+  color: #fff;
+}
+
+#emojiBtn {
+  background: #f8fafc;
+  color: #2563eb;
+  border: 1.2px solid #c9d6ee;
+  padding: 7px 8px;
+}
+#emojiBtn:hover {
+  background: #eaf1ff;
+  border-color: #2563eb;
+  color: #1748b2;
+}
+
+.chat-msg img {
+  max-width: 120px;
+  max-height: 120px;
+  border-radius: 6px;
+  margin: 2px 0;
+  cursor: pointer;
+  box-shadow: 0 2px 8px #2563eb15;
+}
+
+</style>
+
+  <link href="https://fonts.googleapis.com/css?family=Inter:400,600,700&display=swap" rel="stylesheet">
+
 </head>
 <body>
-
 <div class="container">
+  <!-- SIDEBAR: Admin Session List -->
   <div class="sidebar">
     <div class="sidebar-header">
       <h3>Admin Panel</h3>
@@ -430,32 +665,31 @@
     </div>
   </div>
 
-  
-
+  <!-- MAIN CHAT + USER INFO SECTION -->
   <div class="chat-area">
-    <div style="margin-bottom:10px;">
-  <input type="text" id="userSearchInput" placeholder="Search user by name or email..." style="width: 100%; padding: 8px; border-radius: 8px; border: 1px solid #00bfff; background: #181f2a; color: #fff;">
-</div>
-<div id="user-info-list" class="user-info-section"></div>
-
-
-    <div class="chat-box" id="chatBox">
-      <div class="empty-state">
-        <h3>Select a chat to view messages</h3>
-        <p>Choose a session from the sidebar to start viewing the conversation</p>
+    <!-- CHAT PANEL (center column) -->
+    <div style="flex: 1; display: flex; flex-direction: column; min-width: 0;">
+      <div class="chat-box" id="chatBox">
+        <div class="empty-state">
+          <h3>Select a chat to view messages</h3>
+          <p>Choose a session from the sidebar to start viewing the conversation</p>
+        </div>
+      </div>
+      <div class="input-group" id="inputGroup" style="display: none;">
+        <button id="emojiBtn">😊</button>
+        <input type="text" id="msgInput" placeholder="Type your message..." maxlength="500">
+        <input type="file" id="fileInput" accept="image/*" style="display:none;" />
+        <button id="uploadBtn" title="Send Image 📷">📷</button>
+        <button id="sendBtn">Send</button>
+      </div>
+      <div class="emoji-picker" id="emojiPicker">
+        <span>😊</span><span>😂</span><span>😍</span><span>🤔</span><span>👍</span><span>❤️</span><span>🔥</span><span>✨</span>
       </div>
     </div>
-
-    <div class="input-group" id="inputGroup" style="display: none;">
-      <button id="emojiBtn">😊</button>
-      <input type="text" id="msgInput" placeholder="Type your message..." maxlength="500">
-      <input type="file" id="fileInput" accept="image/*" style="display:none;" />
-      <button id="uploadBtn" title="Send Image 📷">📷</button>
-      <button id="sendBtn">Send</button>
-    </div>
-
-    <div class="emoji-picker" id="emojiPicker">
-      <span>😊</span><span>😂</span><span>😍</span><span>🤔</span><span>👍</span><span>❤️</span><span>🔥</span><span>✨</span>
+    <!-- USER INFO PANEL (right column) -->
+    <div id="user-info-list" class="user-info-section">
+      <input type="text" id="userSearchInput" placeholder="Search user by name or email..." style="width: 100%; padding: 8px; border-radius: 8px; border: 1px solid #1748b2; background: #ffffff; color: #000000; margin-bottom:18px;">
+      <!-- JS will render user cards here -->
     </div>
   </div>
 </div>
@@ -477,6 +711,7 @@
     <button onclick="closeModal()" style="background:#ccc;color:#000;">Cancel</button>
   </div>
 </div>
+
 
 
 <!-- Firebase SDK -->
@@ -792,13 +1027,17 @@ function renderUserInfo(data, filter = "") {
       : '<span style="color: #666;">📍 N/A</span>';
 
     output += `
-      <div class="user-card">
-        <strong>${escapeHtml(name)}</strong>
-        📧 ${escapeHtml(email)}<br>
-        ${locationLink}
-        <button style="margin-left:10px; margin-top: 5px;" onclick="openEditModal('${sessionId}')">✏️ Edit</button>
-      </div>
-    `;
+  <div class="user-card">
+    <div class="user-avatar">${(name && name.length) ? escapeHtml(name[0].toUpperCase()) : "?"}</div>
+    <div style="flex:1">
+      <strong>${escapeHtml(name)}</strong>
+      <div class="user-meta user-meta-email">📧 ${escapeHtml(email)}</div>
+      <div class="user-meta">${locationLink}</div>
+    </div>
+    <button onclick="openEditModal('${sessionId}')">✏️ Edit</button>
+  </div>
+`;
+
   }
 
   if (!found) {
@@ -952,41 +1191,148 @@ userSearchInput.addEventListener('input', function () {
 
   // Render chat messages
   function renderChatMessages(chatData) {
-    chatBox.innerHTML = "";
-    
-    if (!chatData) {
-      const userName = allUserData[selectedSessionId]?.name || selectedSessionId;
-      chatBox.innerHTML = `<div class="empty-state"><h3>No messages yet</h3><p>Start a conversation with ${escapeHtml(userName)}</p></div>`;
+  chatBox.innerHTML = "";
+  if (!chatData) {
+    const userName = allUserData[selectedSessionId]?.name || selectedSessionId;
+    chatBox.innerHTML = `<div class="empty-state"><h3>No messages yet</h3><p>Start a conversation with ${escapeHtml(userName)}</p></div>`;
+    return;
+  }
+
+  const messagesArr = Object.entries(chatData)
+    .map(([msgId, msg]) => ({ ...msg, _id: msgId }))
+    .sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
+
+  messagesArr.forEach((msg) => {
+    const messageDiv = document.createElement("div");
+    messageDiv.className = "chat-msg";
+    messageDiv.dataset.msgId = msg._id;
+
+    // If editing state
+    if (msg._editing) {
+      messageDiv.classList.add("editing");
+      messageDiv.innerHTML = `
+        <div class="edit-input-wrap">
+          <input type="text" value="${escapeHtml(msg.message)}" maxlength="500" style="flex:1;" />
+          <button class="save-btn">Save</button>
+          <button class="cancel-btn">Cancel</button>
+        </div>
+      `;
+      // Save & Cancel logic
+      messageDiv.querySelector(".save-btn").onclick = () => saveEditedMessage(msg._id, messageDiv);
+      messageDiv.querySelector(".cancel-btn").onclick = () => cancelEditMessage(msg._id);
+      chatBox.appendChild(messageDiv);
       return;
     }
 
-    const messages = Object.values(chatData);
-    const sortedMessages = messages.sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
-    
-    sortedMessages.forEach(msg => {
-      const messageDiv = document.createElement("div");
-      messageDiv.className = "chat-msg";
-      
-      const timestamp = msg.timestamp ? new Date(msg.timestamp).toLocaleTimeString() : '';
-      const sender = escapeHtml(msg.sender || 'Unknown');
+    // Message content
+    const timestamp = msg.timestamp ? new Date(msg.timestamp).toLocaleTimeString() : '';
+    const sender = escapeHtml(msg.sender || 'Unknown');
+    let messageContent = '';
+    if (msg.type === 'image' && msg.message) {
+      messageContent = `<img src="${escapeHtml(msg.message)}" alt="image" style="max-width:200px;max-height:200px;border-radius:8px;cursor:pointer;" onclick="window.open('${escapeHtml(msg.message)}','_blank')"/>`;
+    } else {
+      messageContent = escapeHtml(msg.message || '');
+    }
 
-      let messageContent = '';
-      if (msg.type === 'image' && msg.message) {
-        messageContent = `<img src="${escapeHtml(msg.message)}" alt="image" style="max-width:200px;max-height:200px;border-radius:8px;cursor:pointer;" onclick="window.open('${escapeHtml(msg.message)}','_blank')"/>`;
-      } else {
-        messageContent = escapeHtml(msg.message || '');
-      }
+    messageDiv.innerHTML = `
+      <b>${sender}:</b> ${messageContent}
+      ${timestamp ? `<small style="color: #666; margin-left: 10px;">${timestamp}</small>` : ''}
+      ${msg.sender === "agent" ? `
+        <span class="msg-actions">
+          <button class="edit-btn" title="Edit">✏️</button>
+          <button class="delete-btn" title="Delete">🗑️</button>
+        </span>
+      ` : ''}
+    `;
 
-      messageDiv.innerHTML = `
-        <b>${sender}:</b> ${messageContent}
-        ${timestamp ? `<small style="color: #666; margin-left: 10px;">${timestamp}</small>` : ''}
-      `;
+    // Add edit/delete event handlers for agent (admin) messages
+    if (msg.sender === "agent") {
+      // Edit
+      messageDiv.querySelector(".edit-btn").onclick = (e) => {
+        e.stopPropagation();
+        setEditingMessage(msg._id, messagesArr);
+      };
+      // Delete
+      messageDiv.querySelector(".delete-btn").onclick = (e) => {
+        e.stopPropagation();
+        deleteMessage(msg._id);
+      };
+    }
 
-      chatBox.appendChild(messageDiv);
-    });
-    
-    chatBox.scrollTop = chatBox.scrollHeight;
-  }
+    chatBox.appendChild(messageDiv);
+  });
+
+  chatBox.scrollTop = chatBox.scrollHeight;
+}
+
+// Sets editing state for a message
+function setEditingMessage(msgId, messagesArr) {
+  // Clone and set editing flag
+  const chatRef = db.ref("chats/" + selectedSessionId);
+  const update = {};
+  messagesArr.forEach((msg) => {
+    update[msg._id + "/_editing"] = (msg._id === msgId);
+  });
+  chatRef.update(update);
+}
+
+// Cancel editing
+function cancelEditMessage(msgId) {
+  db.ref("chats/" + selectedSessionId + "/" + msgId + "/_editing").remove();
+}
+
+// Save edited message
+function saveEditedMessage(msgId, messageDiv) {
+  const input = messageDiv.querySelector("input[type='text']");
+  const newText = input.value.trim();
+  if (!newText) return alert("Message cannot be empty.");
+  db.ref("chats/" + selectedSessionId + "/" + msgId).update({
+    message: newText,
+    _editing: null,
+    editedAt: Date.now()
+  });
+}
+
+// Delete message
+function deleteMessage(msgId) {
+  if (!confirm("Are you sure you want to delete this message? This cannot be undone.")) return;
+  db.ref("chats/" + selectedSessionId + "/" + msgId).remove();
+}
+
+// Sets editing state for a message
+function setEditingMessage(msgId, messagesArr) {
+  // Clone and set editing flag
+  const chatRef = db.ref("chats/" + selectedSessionId);
+  const update = {};
+  messagesArr.forEach((msg) => {
+    update[msg._id + "/_editing"] = (msg._id === msgId);
+  });
+  chatRef.update(update);
+}
+
+// Cancel editing
+function cancelEditMessage(msgId) {
+  db.ref("chats/" + selectedSessionId + "/" + msgId + "/_editing").remove();
+}
+
+// Save edited message
+function saveEditedMessage(msgId, messageDiv) {
+  const input = messageDiv.querySelector("input[type='text']");
+  const newText = input.value.trim();
+  if (!newText) return alert("Message cannot be empty.");
+  db.ref("chats/" + selectedSessionId + "/" + msgId).update({
+    message: newText,
+    _editing: null,
+    editedAt: Date.now()
+  });
+}
+
+// Delete message
+function deleteMessage(msgId) {
+  if (!confirm("Are you sure you want to delete this message? This cannot be undone.")) return;
+  db.ref("chats/" + selectedSessionId + "/" + msgId).remove();
+}
+
 
   // Send message function
   function sendMessage() {
