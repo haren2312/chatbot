@@ -115,6 +115,26 @@ body {
   overflow: hidden;
 }
 
+.session-avatar {
+  width: 32px;
+  height: 32px;
+  min-width: 32px;
+  min-height: 32px;
+  background: #e3ecfa;
+  color: #2563eb;
+  border-radius: 50%;
+  font-size: 1rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  letter-spacing: 1px;
+  margin-right: 10px;
+  user-select: none;
+}
+
+
 .session-item:hover {
   background-color: #eaf1ff;
   border-left-color: #2563eb;
@@ -185,6 +205,77 @@ body {
   box-shadow: 0 2px 8px #2563eb0d;
   transition: box-shadow 0.15s;
 }
+
+/* Modern Chat UI */
+.message-row {
+  display: flex;
+  align-items: flex-end;
+  margin-bottom: 16px;
+}
+
+.message-row.self {
+  justify-content: flex-end;
+}
+
+.message-bubble {
+    max-width: 60%;
+    padding: 5px;
+    position: relative;
+    background: #f4f8fd;
+    color: #213654;
+    box-shadow: 0 2px 24px 0 #2563eb13, 0 0.5px 1.5px #bdd0ea12;
+    font-size: .8rem;
+    border: 2px solid #5c8ef9;
+    min-width: 55px;
+    word-break: break-word;
+    transition: box-shadow 0.16s, background 0.15s;
+}
+
+.message-row.self .message-bubble {
+  background: linear-gradient(98deg, #2563eb 70%, #529ff9 100%);
+  color: #fff;
+  align-self: flex-end;
+}
+
+.message-bubble .msg-meta {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  font-size: 0.6em;
+  color: #88a1c2;
+  margin-top: 6px;
+  gap: 8px;
+}
+
+.message-row.self .msg-meta {
+  color: #cde1fa;
+}
+
+.message-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #f7fafd;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 1em;
+  color: #2563eb;
+  margin-right: 9px;
+  flex-shrink: 0;
+  box-shadow: 0 2px 7px #2563eb10;
+  border: 2px solid #eaf1ff;
+}
+
+.message-row.self .message-avatar {
+  margin-left: 9px;
+  margin-right: 0;
+  background: #2563eb;
+  color: #fff;
+  border: 2px solid #d0e6fa;
+}
+
 
 .chat-msg {
   position: relative;
@@ -741,6 +832,99 @@ body {
   color: #fff;
 }
 
+/* --- PRO QUOTE BUBBLE STYLES --- */
+.message-row {
+  display: flex;
+  align-items: flex-end;
+  margin-bottom: 22px;
+}
+
+.message-row.self {
+  justify-content: flex-end;
+}
+
+.message-bubble {
+    max-width: 60%;
+    padding: 0 10px;
+    border-radius: 10px;
+    position: relative;
+    background: #f4f8fd;
+    color: #213654;
+    box-shadow: 0 2px 24px 0 #2563eb13, 0 0.5px 1.5px #bdd0ea12;
+    font-size: .8rem;
+    min-width: 55px;
+    word-break: break-word;
+    transition: box-shadow 0.16s, background 0.15s;
+    background-color: lightcyan;
+}
+.message-bubble:hover {
+  background: #eaf2ff;
+  box-shadow: 0 8px 32px #2563eb22;
+}
+
+.message-row.self .message-bubble {
+  background: linear-gradient(96deg, #2563eb 90%, #5691ff 100%);
+  color: #fff;
+  box-shadow: 0 2px 22px #2563eb25;
+}
+
+.message-bubble .msg-content {
+  font-weight: 500;
+  font-family: 'Inter', 'Segoe UI', Arial, sans-serif;
+  line-height: 1.58;
+  letter-spacing: 0.01em;
+}
+
+.message-bubble .msg-meta {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 0.6em;
+  color: #7a97ba;
+  opacity: 0.84;
+  margin-top: 3px;
+}
+
+.message-row.self .msg-meta {
+  color: #d2e5ff;
+  opacity: 0.76;
+}
+
+.message-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 1em;
+  margin-right: 10px;
+  margin-left: 2px;
+  box-shadow: 0 2px 7px #2563eb10;
+  border: 2.5px solid #e5eefd;
+  background: #dbeaff; /* Fallback, JS randomizes */
+  color: #2563eb;
+  text-transform: uppercase;
+}
+.message-row.self .message-avatar {
+  margin-left: 10px;
+  margin-right: 2px;
+  background: #2563eb;
+  color: #fff;
+  border: 2.5px solid #b8d7fa;
+}
+
+/* For image messages */
+.message-bubble img {
+  border-radius: 10px;
+  max-width: 190px;
+  max-height: 170px;
+  margin: 2px 0 0 0;
+  box-shadow: 0 2px 12px #2563eb24;
+}
+
+
 
 </style>
 
@@ -753,12 +937,13 @@ body {
   <div class="sidebar">
     <div class="sidebar-header">
       <h3>Admin Panel</h3>
-      <span>💼</span>
+      <span>👤</span>
     </div>
     <div class="search-bar">
       <input type="text" id="searchInput" placeholder="Search by name...">
     </div>
     <div id="sessionList">
+      <div class="user-avatar">${name && name.length ? escapeHtml(name[0].toUpperCase()) : "?"}</div>
       <div class="loading">Loading sessions...</div>
     </div>
   </div>
@@ -1126,7 +1311,6 @@ function renderUserInfo(data, filter = "") {
 
     output += `
       <div class="user-card">
-        <div class="user-avatar">${name && name.length ? escapeHtml(name[0].toUpperCase()) : "?"}</div>
         <div style="flex:1">
           <strong>${escapeHtml(name)}</strong>
           <div class="user-meta user-meta-email">📧 ${escapeHtml(email)}</div>
@@ -1186,62 +1370,108 @@ userSearchInput.addEventListener('input', function () {
 
 
 
+const AVATAR_COLORS = [
+  "#f59e42", // orange
+  "#50b7f5", // sky blue
+  "#57e390", // light green
+  "#d25fef", // purple
+  "#ff5858", // red
+  "#ffbe5b", // gold
+  "#25a7cf", // teal
+  "#9b59b6", // violet
+  "#007bff", // blue
+  "#00b894", // green
+  "#fd79a8", // pink
+  "#e17055"  // coral
+];
+
+
+
+
+function getAvatarColor(str) {
+  if (!str) return AVATAR_COLORS[0];
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    hash = str.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  const idx = Math.abs(hash) % AVATAR_COLORS.length;
+  return AVATAR_COLORS[idx];
+}
+
+
+
 
   // Render sessions with search filter
-  function renderSessions(filter = "") {
-    if (!sessionList) return;
-    
-    sessionList.innerHTML = "";
-    
-    const sessionIds = Object.keys(allSessions);
-    if (sessionIds.length === 0) {
-      sessionList.innerHTML = '<div class="empty-state">No chat sessions found</div>';
-      return;
-    }
+ function renderSessions(filter = "") {
+  if (!sessionList) return;
 
-    let hasResults = false;
-    for (let sid of sessionIds) {
-      const userData = allUserData[sid] || {};
-      const userName = userData.name || sid;
+  sessionList.innerHTML = "";
 
-
-      // Filter by user name or session ID
-      if (filter && !userName.toLowerCase().includes(filter) && !sid.toLowerCase().includes(filter)) {
-        continue;
-      }
-      
-      hasResults = true;
-      const sessionBtn = document.createElement("div");
-      sessionBtn.className = "session-item";
-      if (selectedSessionId === sid) {
-        sessionBtn.classList.add("selected");
-      }
-      
-      const locationIcon = allLocations[sid] 
-        ? `<a href="https://www.google.com/maps?q=${allLocations[sid].latitude},${allLocations[sid].longitude}" target="_blank" style="color:#00d4ff;">📍</a>`
-        : '';
-      
-     const displayName = userData.name || sid;
-      const userEmail = userData.email ? ` (${userData.email})` : '';
-      
-      sessionBtn.innerHTML = `
-        <div style="display:flex;justify-content:space-between;align-items:center;">
-          <div>
-            <div title="${escapeHtml(sid)}">${escapeHtml(displayName)}</div>
-            <div class="session-info">${escapeHtml(userEmail)}</div>
-          </div>
-          <span>${locationIcon}</span>
-        </div>
-      `;
-      
-      sessionBtn.onclick = () => loadChat(sid);
-      sessionList.appendChild(sessionBtn);
-    }
-
-    if (!hasResults && filter) {
-      sessionList.innerHTML = '<div class="empty-state">No sessions match your search</div>';
-    }
+  const sessionIds = Object.keys(allSessions);
+  if (sessionIds.length === 0) {
+    sessionList.innerHTML = '<div class="empty-state">No chat sessions found</div>';
+    return;
   }
+
+  let hasResults = false;
+  for (let sid of sessionIds) {
+    const userData = allUserData[sid] || {};
+    const userName = userData.name || sid;
+
+    // Filter by user name or session ID
+    if (filter && !userName.toLowerCase().includes(filter) && !sid.toLowerCase().includes(filter)) {
+      continue;
+    }
+
+    hasResults = true;
+    const sessionBtn = document.createElement("div");
+    sessionBtn.className = "session-item";
+    if (selectedSessionId === sid) {
+      sessionBtn.classList.add("selected");
+    }
+
+    const locationIcon = allLocations[sid]
+      ? `<a href="https://www.google.com/maps?q=${allLocations[sid].latitude},${allLocations[sid].longitude}" target="_blank" style="color:#00d4ff;">📍</a>`
+      : '';
+
+    const displayName = userData.name || sid;
+    const userEmail = userData.email ? ` (${userData.email})` : '';
+
+    // Avatar initials and color
+    function getInitials(str) {
+      if (!str) return "?";
+      const names = str.split(' ').filter(Boolean);
+      if (names.length === 1) return names[0][0].toUpperCase();
+      return (names[0][0] + names[names.length - 1][0]).toUpperCase();
+    }
+    const initials = getInitials(userData.name || userData.email || sid);
+    const avatarColor = getAvatarColor(userData.email || userData.name || sid);
+
+    sessionBtn.innerHTML = `
+      <div style="display:flex;align-items:center;gap:11px;">
+        <div class="user-avatar" style="width:34px;height:34px;border-radius:50%;background:${avatarColor};display:flex;align-items:center;justify-content:center;font-weight:700;color:#fff;font-size:1rem;flex-shrink:0;">
+          ${escapeHtml(initials)}
+        </div>
+        <div style="flex:1;min-width:0;">
+          <div title="${escapeHtml(sid)}" style="font-weight:600;font-size:1em;color:#1748b2;text-overflow:ellipsis;white-space:nowrap;overflow:hidden;">
+            ${escapeHtml(displayName)}
+          </div>
+          <div class="session-info" style="text-overflow:ellipsis;white-space:nowrap;overflow:hidden;">${escapeHtml(userEmail)}</div>
+        </div>
+        <span>${locationIcon}</span>
+      </div>
+    `;
+
+    sessionBtn.onclick = () => loadChat(sid);
+    sessionList.appendChild(sessionBtn);
+  }
+
+  if (!hasResults && filter) {
+    sessionList.innerHTML = '<div class="empty-state">No sessions match your search</div>';
+  }
+}
+
+
 
   function selectSession(sessionId) {
   selectedSessionId = sessionId;
@@ -1289,6 +1519,20 @@ userSearchInput.addEventListener('input', function () {
     db.ref("chats/" + sid).on("value", currentChatListener);
   }
 
+
+  function getAvatarColor(name) {
+  // Palette: blue, green, purple, orange, teal, pink, etc
+  const colors = [
+    "#77B6EA", "#8DECB4", "#8B84FE", "#F6B37F",
+    "#F67E7D", "#85B8CB", "#F3CFC6", "#C6B6E3",
+    "#F7E876", "#5D87C7", "#A3E7FC", "#9BCF53"
+  ];
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
+  return colors[Math.abs(hash) % colors.length];
+}
+
+
   // Render chat messages
   function renderChatMessages(chatData) {
   chatBox.innerHTML = "";
@@ -1303,64 +1547,58 @@ userSearchInput.addEventListener('input', function () {
     .sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
 
   messagesArr.forEach((msg) => {
-    const messageDiv = document.createElement("div");
-    messageDiv.className = "chat-msg";
-    messageDiv.dataset.msgId = msg._id;
+  const isSelf = msg.sender === "agent"; // your logic for admin
+  const name = isSelf ? "You" : (allUserData[selectedSessionId]?.name || msg.sender || "User");
+  const initials = name.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2);
 
-    // If editing state
-    if (msg._editing) {
-      messageDiv.classList.add("editing");
-      messageDiv.innerHTML = `
-        <div class="edit-input-wrap">
-          <input type="text" value="${escapeHtml(msg.message)}" maxlength="500" style="flex:1;" />
-          <button class="save-btn">Save</button>
-          <button class="cancel-btn">Cancel</button>
-        </div>
-      `;
-      // Save & Cancel logic
-      messageDiv.querySelector(".save-btn").onclick = () => saveEditedMessage(msg._id, messageDiv);
-      messageDiv.querySelector(".cancel-btn").onclick = () => cancelEditMessage(msg._id);
-      chatBox.appendChild(messageDiv);
-      return;
-    }
+  // --- RANDOM COLOR AVATAR ---
+  const avatarColor = getAvatarColor(name);
 
-    // Message content
-    const timestamp = msg.timestamp ? new Date(msg.timestamp).toLocaleTimeString() : '';
-    const sender = escapeHtml(msg.sender || 'Unknown');
-    let messageContent = '';
-    if (msg.type === 'image' && msg.message) {
-      messageContent = `<img src="${escapeHtml(msg.message)}" alt="image" style="max-width:200px;max-height:200px;border-radius:8px;cursor:pointer;" onclick="window.open('${escapeHtml(msg.message)}','_blank')"/>`;
-    } else {
-      messageContent = escapeHtml(msg.message || '');
-    }
+  // --- MESSAGE CONTAINER ---
+  const rowDiv = document.createElement("div");
+  rowDiv.className = "message-row" + (isSelf ? " self" : "");
 
-    messageDiv.innerHTML = `
-      <b>${sender}:</b> ${messageContent}
-      ${timestamp ? `<small style="color: #666; margin-left: 10px;">${timestamp}</small>` : ''}
-      ${msg.sender === "agent" ? `
-        <span class="msg-actions">
-          <button class="edit-btn" title="Edit">✏️</button>
-          <button class="delete-btn" title="Delete">🗑️</button>
-        </span>
-      ` : ''}
-    `;
+  // Avatar (keep for both user and admin for symmetry/pro look)
+  const avatarDiv = document.createElement("div");
+  avatarDiv.className = "message-avatar";
+  avatarDiv.innerText = initials;
+  avatarDiv.style.background = avatarColor;
+  avatarDiv.style.color = "#fff";
+  rowDiv.appendChild(avatarDiv);
 
-    // Add edit/delete event handlers for agent (admin) messages
-    if (msg.sender === "agent") {
-      // Edit
-      messageDiv.querySelector(".edit-btn").onclick = (e) => {
-        e.stopPropagation();
-        setEditingMessage(msg._id, messagesArr);
-      };
-      // Delete
-      messageDiv.querySelector(".delete-btn").onclick = (e) => {
-        e.stopPropagation();
-        deleteMessage(msg._id);
-      };
-    }
+  // --- MESSAGE BUBBLE ---
+  const bubbleDiv = document.createElement("div");
+  bubbleDiv.className = "message-bubble";
 
-    chatBox.appendChild(messageDiv);
-  });
+  // Message (support text or image)
+  let msgContent = '';
+  if (msg.type === 'image' && msg.message) {
+    msgContent = `<img src="${escapeHtml(msg.message)}" alt="image" onclick="window.open('${escapeHtml(msg.message)}','_blank')" />`;
+  } else {
+    msgContent = `<div class="msg-content"> ${escapeHtml(msg.message || '')} </div>`;
+  }
+
+  // Footer/meta (styled like a quote signature)
+  bubbleDiv.innerHTML = `
+    ${msgContent}
+    <div class="msg-meta">
+      <span>${msg.timestamp ? new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ""}</span>
+    </div>
+  `;
+
+  rowDiv.appendChild(bubbleDiv);
+
+  // For admin/self: put avatar on the right
+  if (isSelf) {
+    rowDiv.removeChild(avatarDiv);
+    rowDiv.appendChild(bubbleDiv);
+    rowDiv.appendChild(avatarDiv);
+  }
+
+  chatBox.appendChild(rowDiv);
+});
+
+
 
   chatBox.scrollTop = chatBox.scrollHeight;
 }
