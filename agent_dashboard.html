@@ -134,7 +134,6 @@ body {
   display: flex;
   flex-direction: row;
   background-color: #f7fafd;
-  gap: 25px;
   min-width: 0;
   min-height: 0;
   overflow: hidden;
@@ -805,18 +804,7 @@ body {
     document.getElementById("modalBackdrop").style.display = "none";
   }
 
-  function openEditModal(sessionId) {
-    const user = allUserData[sessionId] || {};
 
-    document.getElementById("editName").value = user.name || "";
-    document.getElementById("editEmail").value = user.email || "";
-    document.getElementById("editLat").value = user.latitude || "";
-    document.getElementById("editLng").value = user.longitude || "";
-
-    currentEditingSessionId = sessionId;
-    document.getElementById("editModal").style.display = "block";
-    document.getElementById("modalBackdrop").style.display = "block";
-  }
 
   function saveUserEdit(sessionId) {
   const name = document.getElementById("editName").value.trim();
@@ -908,7 +896,7 @@ body {
     });
 
     // Listen to user data
-    db.ref("userData").on("value", (snapshot) => {
+    db.ref("users").on("value", (snapshot) => {
   allUserData = snapshot.val() || {};
   const filterVal = document.getElementById('userSearchInput')?.value || "";
   renderUserInfo(allUserData, filterVal);
@@ -980,11 +968,11 @@ body {
   };
 
   // Simulated Firebase fetch
-firebase.database().ref().once("value").then(snapshot => {
+firebase.database().ref("userData").once("value").then(snapshot => {
   const data = snapshot.val();
-  // Make sure you pass ONLY the users object!
-  renderUserInfo(data.users);
+  renderUserInfo(data);
 });
+
 
 
 function renderUserInfo(data, filter = "") {
@@ -1004,40 +992,50 @@ function renderUserInfo(data, filter = "") {
   filter = filter.trim().toLowerCase();
 
   let found = false;
-  for (let sessionId in data) {
-    const user = data[sessionId] || {};
-    const name = (user.name || "Unknown");
-    const email = (user.email || "No email");
+  for (let username in data) {
+    const user = data[username] || {};
+    const name = user.name || "Unknown";
+    const email = user.email || "No email";
+
     if (
       filter &&
       !name.toLowerCase().includes(filter) &&
       !email.toLowerCase().includes(filter)
     ) {
-      continue; // skip user if doesn't match filter
+      continue;
     }
     found = true;
 
-    // FIXED LOCATION EXTRACTION
-    const lat = parseFloat(user.latitude);
-    const lng = parseFloat(user.longitude);
-    const hasLocation = !isNaN(lat) && !isNaN(lng);
+    // Fix location extraction
+    const latRaw = user.location && user.location.latitude;
+    const lngRaw = user.location && user.location.longitude;
+    const hasLocation =
+      latRaw !== undefined &&
+      latRaw !== null &&
+      latRaw !== "" &&
+      lngRaw !== undefined &&
+      lngRaw !== null &&
+      lngRaw !== "" &&
+      !isNaN(Number(latRaw)) &&
+      !isNaN(Number(lngRaw));
+    const lat = hasLocation ? Number(latRaw) : null;
+    const lng = hasLocation ? Number(lngRaw) : null;
 
     const locationLink = hasLocation
-      ? `<a href="https://maps.google.com/?q=${lat},${lng}" target="_blank">📍Click Here </a>`
-      : '<span style="color: #666;">📍 N/A</span>';
+      ? `<a href="https://maps.google.com/?q=${lat},${lng}" target="_blank" style="color:#24b17c; font-weight:600;">📍Click Here</a>`
+      : '<span style="color: #d73737;">📍 N/A</span>';
 
     output += `
-  <div class="user-card">
-    <div class="user-avatar">${(name && name.length) ? escapeHtml(name[0].toUpperCase()) : "?"}</div>
-    <div style="flex:1">
-      <strong>${escapeHtml(name)}</strong>
-      <div class="user-meta user-meta-email">📧 ${escapeHtml(email)}</div>
-      <div class="user-meta">${locationLink}</div>
-    </div>
-    <button onclick="openEditModal('${sessionId}')">✏️ Edit</button>
-  </div>
-`;
-
+      <div class="user-card">
+        <div class="user-avatar">${name && name.length ? escapeHtml(name[0].toUpperCase()) : "?"}</div>
+        <div style="flex:1">
+          <strong>${escapeHtml(name)}</strong>
+          <div class="user-meta user-meta-email">📧 ${escapeHtml(email)}</div>
+          <div class="user-meta">${locationLink}</div>
+        </div>
+        <button onclick="openEditModal('${username}')">✏️ Edit</button>
+      </div>
+    `;
   }
 
   if (!found) {
@@ -1046,6 +1044,8 @@ function renderUserInfo(data, filter = "") {
 
   userInfoList.innerHTML = output;
 }
+
+
 
 
 window.addEventListener('DOMContentLoaded', function() {
