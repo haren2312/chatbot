@@ -319,14 +319,13 @@ body {
   min-width: 320px;
   max-width: 250px;
   flex: 0 0 340px;
-  height: calc(100vh - 64px);
   overflow-y: auto;
   margin-bottom: 0;
   background: #fff;
   border-radius: 16px;
   border: 1.5px solid #e5e9ef;
   box-shadow: 0 4px 16px #2563eb08;
-  padding: 24px 18px 18px 18px;
+  padding: 10px;
   display: flex;
   flex-direction: column;
   scroll-behavior: smooth;
@@ -358,7 +357,7 @@ body {
   border-radius: 13px;
   border: 1.5px solid #e5e9ef;
   margin-bottom: 15px;
-  padding: 12px 18px 14px 18px;
+  padding: 10px;
   display: flex;
   align-items: center;
   gap: 12px;
@@ -381,14 +380,13 @@ body {
   color: #2563eb;
   font-size: 1.14rem;
   flex-shrink: 0;
-  margin-right: 8px;
   border: 2.5px solid #c8d6f3;
   text-transform: uppercase;
 }
 .user-card strong {
   color: #1748b2;
-  font-size: 1.01rem;
-  font-weight: 600;
+  font-size: 0.9rem;
+  font-weight: 700;
   margin-bottom: 1px;
   display: block;
 }
@@ -398,8 +396,8 @@ body {
   margin-bottom: 5px;
 }
 .user-card .user-meta-email {
-  color: #2563eb;
-  font-size: 0.96rem;
+    color: #2563eb;
+    font-size: 0.6rem;
 }
 .user-card a, .user-card a:visited {
   color: #2563eb;
@@ -642,6 +640,107 @@ body {
   cursor: pointer;
   box-shadow: 0 2px 8px #2563eb15;
 }
+
+.modern-user-card {
+  background: #fff;
+  border-radius: 12px;
+  border: 1.5px solid #ecedf1;
+  margin-bottom: 18px;
+  padding: 16px 16px 16px 14px;
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  position: relative;
+  box-shadow: 0 3px 16px #2563eb08;
+  transition: border-color 0.18s, box-shadow 0.18s;
+}
+.modern-user-card:hover {
+  border-color: #2563eb;
+  box-shadow: 0 4px 18px #2563eb14;
+}
+.modern-avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: #e5eefd;
+  color: #2563eb;
+  font-size: 1.19rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  border: none;
+  box-shadow: 0 0 0 2px #e2eafe;
+  letter-spacing: 1px;
+}
+.modern-user-details {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.modern-user-name {
+  font-size: 1.13rem;
+  font-weight: 700;
+  color: #1748b2;
+  letter-spacing: 0.01em;
+  margin-bottom: 2px;
+}
+.modern-user-email {
+  font-size: 0.99rem;
+  color: #7a8599;
+  margin-bottom: 3px;
+  word-break: break-all;
+}
+.modern-user-meta {
+  margin-top: 2px;
+  display: flex;
+  align-items: center;
+  font-size: 0.98rem;
+}
+.modern-map-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  color: #2563eb;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 0.97rem;
+  opacity: 0.95;
+  border-bottom: 1px dotted #2563eb44;
+  padding-bottom: 0px;
+  transition: color 0.16s, border 0.16s;
+}
+.modern-map-link:hover {
+  color: #1748b2;
+  border-bottom: 1px solid #2563eb77;
+}
+.modern-map-link.disabled {
+  color: #aaa;
+  pointer-events: none;
+  border-bottom: none;
+  opacity: 0.7;
+}
+.modern-edit-btn {
+  background: #2563eb;
+  color: #fff;
+  border: none;
+  border-radius: 7px;
+  font-weight: 600;
+  padding: 7px 19px;
+  font-size: 0.99rem;
+  margin-left: 22px;
+  margin-top: 0;
+  transition: background 0.18s, color 0.18s;
+  box-shadow: 0 1px 4px #2563eb13;
+  outline: none;
+}
+.modern-edit-btn:hover, .modern-edit-btn:focus {
+  background: #1748b2;
+  color: #fff;
+}
+
 
 </style>
 
@@ -1022,7 +1121,7 @@ function renderUserInfo(data, filter = "") {
     const lng = hasLocation ? Number(lngRaw) : null;
 
     const locationLink = hasLocation
-      ? `<a href="https://maps.google.com/?q=${lat},${lng}" target="_blank" style="color:#24b17c; font-weight:600;">📍Click Here</a>`
+      ? `<a href="https://maps.google.com/?q=${lat},${lng}" target="_blank" style="color:#24b17c; font-weight:600;"><img style="width:30px;" src="images/location.png" alt="Bot Avatar" class="bot-avatar" /><span style="width:10px;" >Location</span></a>`
       : '<span style="color: #d73737;">📍 N/A</span>';
 
     output += `
@@ -1033,7 +1132,7 @@ function renderUserInfo(data, filter = "") {
           <div class="user-meta user-meta-email">📧 ${escapeHtml(email)}</div>
           <div class="user-meta">${locationLink}</div>
         </div>
-        <button onclick="openEditModal('${username}')">✏️ Edit</button>
+        <button style="width:70px; font-size:12px; " onclick="openEditModal('${username}')">✏️ Edit</button>
       </div>
     `;
   }
@@ -1104,7 +1203,8 @@ userSearchInput.addEventListener('input', function () {
     for (let sid of sessionIds) {
       const userData = allUserData[sid] || {};
       const userName = userData.name || sid;
-      
+
+
       // Filter by user name or session ID
       if (filter && !userName.toLowerCase().includes(filter) && !sid.toLowerCase().includes(filter)) {
         continue;
@@ -1121,7 +1221,7 @@ userSearchInput.addEventListener('input', function () {
         ? `<a href="https://www.google.com/maps?q=${allLocations[sid].latitude},${allLocations[sid].longitude}" target="_blank" style="color:#00d4ff;">📍</a>`
         : '';
       
-      const displayName = userName !== sid ? userName : sid;
+     const displayName = userData.name || sid;
       const userEmail = userData.email ? ` (${userData.email})` : '';
       
       sessionBtn.innerHTML = `
