@@ -1088,17 +1088,17 @@ body {
     // Check if user already exists
     if (!allUserData[sessionId]) {
       // Create new user entry
-      db.ref("userData/" + sessionId).set({
+      db.ref("users/" + sessionId).set({
         name: name,
         email: email,
-        latitude: userData.latitude || "",
-        longitude: userData.longitude || "",
+        latitude: users.latitude || "",
+        longitude: users.longitude || "",
         firstSeen: Date.now(),
         lastSeen: Date.now()
       });
     } else {
       // Update last seen time
-      db.ref("userData/" + sessionId + "/lastSeen").set(Date.now());
+      db.ref("users/" + sessionId + "/lastSeen").set(Date.now());
     }
     
     return sessionId;
@@ -1128,7 +1128,7 @@ body {
 
   if (newSessionId === sessionId) {
     // Simple case: No session ID change — just update user data
-    db.ref("userData/" + sessionId).update({
+    db.ref("users/" + sessionId).update({
       name: name,
       email: email,
       latitude: lat,
@@ -1140,16 +1140,16 @@ body {
   }
 
   // Advanced case: Session ID has changed — migrate data
-  const oldUserData = allUserData[sessionId] || {};
+  const oldusers = allusers[sessionId] || {};
   const oldChatData = allSessions[sessionId] || {};
 
   // 1. Write new user data to new session ID
-  db.ref("userData/" + newSessionId).set({
+  db.ref("users/" + newSessionId).set({
     name: name,
     email: email,
     latitude: lat,
     longitude: lng,
-    firstSeen: oldUserData.firstSeen || Date.now(),
+    firstSeen: oldusers.firstSeen || Date.now(),
     lastSeen: Date.now()
   });
 
@@ -1159,7 +1159,7 @@ body {
   }
 
   // 3. Remove old records
-  db.ref("userData/" + sessionId).remove();
+  db.ref("users/" + sessionId).remove();
   db.ref("chats/" + sessionId).remove();
 
   // 4. Update the selected session
@@ -1203,11 +1203,12 @@ body {
     });
 
     // Listen to user data
-    db.ref("users").on("value", (snapshot) => {
+ db.ref("users").on("value", (snapshot) => {
   allUserData = snapshot.val() || {};
   const filterVal = document.getElementById('userSearchInput')?.value || "";
-  renderUserInfo(allUserData, filterVal);
+  renderUserInfo(allUserData, filterVal, selectedSessionId);
 });
+
 
 
   }
@@ -1281,59 +1282,65 @@ firebase.database().ref("userData").once("value").then(snapshot => {
 });
 
 
-
-function renderUserInfo(data, filter = "") {
+function renderUserInfo(data, filter = "", sid = selectedSessionId) {
   const userInfoList = document.getElementById("user-info-list");
   if (!userInfoList) return;
 
-  // Only show info for selected session
-  const sid = selectedSessionId;
-  if (!sid || !data || !data[sid]) {
-    userInfoList.innerHTML = `
-      <div class="user-info-section">
-        <h3>User Details</h3>
-        <div class="empty-state" style="padding: 18px 0;">No user selected</div>
-      </div>
-    `;
+  let users = Object.entries(data)
+  .filter(([userId, user]) => user.name) // <--- Only users that have a name!
+  .filter(([userId, user]) => {
+    if (!filter) return true;
+    const email = user.email || "";
+    const name = user.name || ""; // changed from userId to user.name
+    return (
+      name.toLowerCase().includes(filter.toLowerCase()) ||
+      email.toLowerCase().includes(filter.toLowerCase())
+    );
+  });
+
+
+  // If viewing a single user (from chat selection)
+  if (sid && data[sid]) {
+    users = [[sid, data[sid]]];
+  }
+
+  let output = `<h3>User Details</h3>`;
+  if (users.length === 0) {
+    output += `<div class="empty-state">No user found.</div>`;
+    userInfoList.innerHTML = output;
     return;
   }
 
-  const user = data[sid] || {};
-  const name = user.name || "Unknown";
-  const email = user.email || "No email";
-  const initials = getInitial(name, email);
-  const avatarColor = getAvatarColor(email || name || sid);
+  users.forEach(([userId, user]) => {
+    const name = user.name || userId; // << FIXED
+    const email = user.email || "No email";
+    const initials = (name[0] || "?").toUpperCase();
 
-  // Location (if exists)
-  const latRaw = user.location && user.location.latitude;
-  const lngRaw = user.location && user.location.longitude;
-  const hasLocation = latRaw && lngRaw && !isNaN(Number(latRaw)) && !isNaN(Number(lngRaw));
-  const lat = hasLocation ? Number(latRaw) : null;
-  const lng = hasLocation ? Number(lngRaw) : null;
+    // Get location safely
+    let lat = null, lng = null;
+    if (user.location && typeof user.location === 'object') {
+      lat = user.location.latitude ?? null;
+      lng = user.location.longitude ?? null;
+    }
 
-  const locationLink = hasLocation
-    ? `<a href="https://maps.google.com/?q=${lat},${lng}" target="_blank" class="modern-map-link">📍 Location</a>`
-    : '<span class="modern-map-link disabled">📍 Location N/A</span>';
+    const locationLink = (lat && lng)
+      ? `<a href="https://maps.google.com/?q=${lat},${lng}" target="_blank" class="modern-map-link">📍 Location</a>`
+      : `<span class="modern-map-link disabled">📍 Location N/A</span>`;
 
-  userInfoList.innerHTML = `
-    <h3>User Details</h3>
-    <div class="modern-user-card" style="border: 2px solid #2563eb44;">
-      <div class="modern-avatar" style="background:${avatarColor};color:#31314f;">
-        ${escapeHtml(initials)}
+    output += `
+      <div class="modern-user-card" style="border: 2px solid #2563eb44;">
+        <div class="modern-avatar" style="background:#c8e6fa;color:#31314f;">
+          ${initials}
+        </div>
+        <div class="modern-user-details" style="flex:1;">
+          <span class="modern-user-name">${name}</span>
+          <span class="modern-user-email">📧${email}</span>
+          <span class="modern-user-meta">${locationLink}</span>
+        </div>
+        <!-- (Optional: add Edit button etc.) -->
       </div>
-      <div class="modern-user-details" style="flex:1;">
-        <span class="modern-user-name">${escapeHtml(name)}</span>
-        <span class="modern-user-email">${escapeHtml(email)}</span>
-        <span class="modern-user-meta">${locationLink}</span>
-      </div>
-      <button class="modern-edit-btn" onclick="openEditModal('${sid}')">✏️ Edit</button>
-    </div>
-  `;
-
-
-  if (!found) {
-    output += `<div style="color:#888; margin-top:10px;">No users match your search.</div>`;
-  }
+    `;
+  });
 
   userInfoList.innerHTML = output;
 
@@ -1499,43 +1506,47 @@ function getAvatarColor(str) {
 
   // Load chat function
   function loadChat(sid) {
-    if (!sid || !db) return;
-    
-    // Clean up previous listener
-    if (currentChatListener && selectedSessionId) {
-      db.ref("chats/" + selectedSessionId).off("value", currentChatListener);
-    }
-    
-    selectedSessionId = sid;
-    inputGroup.style.display = "flex";
-    
-    // Update session selection in UI
-    document.querySelectorAll(".session-item").forEach(item => {
-      item.classList.remove("selected");
-    });
-    
-    // Find and select current session
-    const sessionItems = document.querySelectorAll(".session-item");
-    sessionItems.forEach(item => {
-      const sessionDiv = item.querySelector('div > div');
-      if (sessionDiv && sessionDiv.getAttribute('title') === sid) {
-        item.classList.add("selected");
-      }
-    });
+  if (!sid || !db) return;
 
-    // Set up new listener
-    currentChatListener = (snapshot) => {
-      try {
-        const chatData = snapshot.val();
-        renderChatMessages(chatData);
-      } catch (error) {
-        console.error("Error loading chat data:", error);
-        showError("Failed to load chat messages");
-      }
-    };
-    
-    db.ref("chats/" + sid).on("value", currentChatListener);
+  // Clean up previous listener
+  if (currentChatListener && selectedSessionId) {
+    db.ref("chats/" + selectedSessionId).off("value", currentChatListener);
   }
+
+  selectedSessionId = sid;
+  inputGroup.style.display = "flex";
+
+  // Highlight session in sidebar
+  document.querySelectorAll(".session-item").forEach(item => {
+    item.classList.remove("selected");
+  });
+
+  // Select current session
+  const sessionItems = document.querySelectorAll(".session-item");
+  sessionItems.forEach(item => {
+    const sessionDiv = item.querySelector('div > div');
+    if (sessionDiv && sessionDiv.getAttribute('title') === sid) {
+      item.classList.add("selected");
+    }
+  });
+
+  // Render user info for the selected session
+ renderUserInfo(allUserData, "", selectedSessionId); // <-- ADD THIS!
+
+  // Set up new listener
+  currentChatListener = (snapshot) => {
+    try {
+      const chatData = snapshot.val();
+      renderChatMessages(chatData);
+    } catch (error) {
+      console.error("Error loading chat data:", error);
+      showError("Failed to load chat messages");
+    }
+  };
+
+  db.ref("chats/" + sid).on("value", currentChatListener);
+}
+
 
 
   function getAvatarColor(name) {
