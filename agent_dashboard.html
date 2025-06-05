@@ -30,17 +30,15 @@ body {
 .sidebar {
   width: 320px;
   background-color: #f7fafd;
-  border-right: 1.5px solid #e5e9ef;
   display: flex;
   flex-direction: column;
   padding: 0;
   overflow-y: auto;
-  box-shadow: inset -4px 0 8px rgba(40,70,180,0.04);
 }
 
 .sidebar-header {
-  padding: 20px 20px 12px;
-  border-bottom: 1.5px solid #e5e9ef;
+  padding: 15px;
+  border-bottom: 2px solid #b6bac0;
   background: #fff;
   display: flex;
   align-items: center;
@@ -50,25 +48,23 @@ body {
 .sidebar-header h3 {
   font-size: 1.3rem;
   font-weight: 700;
-  color: #2563eb;
+  color: #5700a9;
 }
 
 .sidebar-header span {
   font-size: 1.2rem;
-  color: #95b7f8;
-  opacity: 0.9;
 }
 
 .search-bar {
-  padding: 14px 20px 10px;
+  padding: 10px;
   background-color: #f7fafd;
-  border-bottom: 1.5px solid #e5e9ef;
+  border-bottom: 2px solid #b6bac0;
   position: relative;
 }
 
 .search-bar input {
   width: 100%;
-  padding: 10px 10px 10px 35px;
+  padding: 10px 10px 10px 45px;
   border-radius: 10px;
   border: 2px solid #2563eb;
   background-color: #f3f6fb;
@@ -86,8 +82,8 @@ body {
 .search-bar::before {
   content: "🔍";
   position: absolute;
-  top: 50%;
-  left: 28px;
+  top: 46%;
+  left: 25px;
   transform: translateY(-50%);
   font-size: 1rem;
   color: #2563eb;
@@ -165,8 +161,8 @@ body {
   min-height: 0;
   height: calc(100vh - 64px);
   background: #fff;
-  border-radius: 14px;
-  border: 1.5px solid #e5e9ef;
+  border-right: 1.5px solid #b6bac0;
+  border-left: 1.5px solid #b6bac0;
   box-shadow: 0 3px 14px #2563eb08;
   padding: 24px 18px 18px 18px;
   overflow-y: scroll;          /* always show scrollbar */
@@ -354,9 +350,8 @@ body {
 }
 
 .input-group {
-  padding-top: 20px;
+  padding-top: 0px;
   padding-bottom: 0px;
-  border-top: 1.5px solid #e5e9ef;
   background: #f7fafd;
   margin: 0;
   border-radius: 0 0 12px 12px;
@@ -413,8 +408,6 @@ body {
   overflow-y: auto;
   margin-bottom: 0;
   background: #fff;
-  border-radius: 16px;
-  border: 1.5px solid #e5e9ef;
   box-shadow: 0 4px 16px #2563eb08;
   padding: 10px;
   display: flex;
@@ -663,7 +656,6 @@ body {
 }
 
 .input-group {
-  padding-top: 10px;
   padding-bottom: 10px;
   border-top: 1.5px solid #e5e9ef;
   background: #f7fafd;
@@ -958,7 +950,7 @@ body {
   <!-- SIDEBAR: Admin Session List -->
   <div class="sidebar">
     <div class="sidebar-header">
-      <h3>Admin Panel</h3>
+      <h3>ADMIN PANEL</h3>
       <span>👤</span>
     </div>
     <div class="search-bar">
