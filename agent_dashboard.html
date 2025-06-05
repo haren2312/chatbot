@@ -28,7 +28,7 @@ body {
 }
 
 .sidebar {
-  width: 250px;
+  width: 320px;
   background-color: #f7fafd;
   border-right: 1.5px solid #e5e9ef;
   display: flex;
@@ -68,7 +68,7 @@ body {
 
 .search-bar input {
   width: 100%;
-  padding: 12px 16px 12px 44px;
+  padding: 10px 10px 10px 35px;
   border-radius: 10px;
   border: 2px solid #2563eb;
   background-color: #f3f6fb;
@@ -407,7 +407,7 @@ body {
 }
 
 .user-info-section {
-  min-width: 320px;
+  min-width: 250px;
   max-width: 250px;
   flex: 0 0 340px;
   overflow-y: auto;
@@ -738,8 +738,8 @@ body {
   background: #fff;
   border-radius: 12px;
   border: 1.5px solid #ecedf1;
-  margin-bottom: 18px;
-  padding: 16px 16px 16px 14px;
+  margin-bottom: 10px;
+  padding:10px 5px 10px 10px;
   display: flex;
   align-items: center;
   gap: 18px;
@@ -752,8 +752,8 @@ body {
   box-shadow: 0 4px 18px #2563eb14;
 }
 .modern-avatar {
-  width: 44px;
-  height: 44px;
+  width: 25px;
+  height: 25px;
   border-radius: 50%;
   background: #e5eefd;
   color: #2563eb;
@@ -774,14 +774,14 @@ body {
   gap: 3px;
 }
 .modern-user-name {
-  font-size: 1.13rem;
+  font-size: .9rem;
   font-weight: 700;
   color: #1748b2;
   letter-spacing: 0.01em;
   margin-bottom: 2px;
 }
 .modern-user-email {
-  font-size: 0.99rem;
+  font-size: 0.7rem;
   color: #7a8599;
   margin-bottom: 3px;
   word-break: break-all;
@@ -796,12 +796,11 @@ body {
   display: inline-flex;
   align-items: center;
   gap: 2px;
-  color: #2563eb;
+  color: #eb2564;
   text-decoration: none;
   font-weight: 600;
-  font-size: 0.97rem;
+  font-size: 0.8rem;
   opacity: 0.95;
-  border-bottom: 1px dotted #2563eb44;
   padding-bottom: 0px;
   transition: color 0.16s, border 0.16s;
 }
@@ -816,22 +815,21 @@ body {
   opacity: 0.7;
 }
 .modern-edit-btn {
+  display: none;
+  margin-left: 0;
   background: #2563eb;
   color: #fff;
   border: none;
   border-radius: 7px;
-  font-weight: 600;
-  padding: 7px 19px;
-  font-size: 0.99rem;
-  margin-left: 22px;
-  margin-top: 0;
-  transition: background 0.18s, color 0.18s;
-  box-shadow: 0 1px 4px #2563eb13;
+  padding: 5px 10px;
+  font-size: .7rem;
   outline: none;
+  align-items: center;
 }
-.modern-edit-btn:hover, .modern-edit-btn:focus {
-  background: #1748b2;
-  color: #fff;
+
+.modern-user-card:hover .modern-edit-btn,
+.modern-edit-btn:focus {
+  display: flex;
 }
 
 /* --- PRO QUOTE BUBBLE STYLES --- */
@@ -1018,6 +1016,27 @@ body {
   </div>
 </div>
 
+<div id="notification-toast" style="
+  display: none;
+  position: fixed;
+  top: 30px;
+  right: 30px;
+  z-index: 9999;
+  background: #2563eb;
+  color: #fff;
+  padding: 15px 24px;
+  border-radius: 9px;
+  box-shadow: 0 2px 16px #2563eb33;
+  font-size: 1.05em;
+  font-weight: 600;
+  min-width: 180px;
+  max-width: 420px;
+  letter-spacing: 0.01em;
+  pointer-events: none;
+  opacity: 0.0;
+  transition: opacity .25s;
+"></div>
+
 
 
 <!-- Firebase SDK -->
@@ -1061,6 +1080,19 @@ body {
   const searchInput = document.getElementById("searchInput");
   const emojiBtn = document.getElementById("emojiBtn");
   const emojiPicker = document.getElementById("emojiPicker");
+
+  function notify(message, options = {}) {
+  const el = document.getElementById('notification-toast');
+  el.textContent = message;
+  el.style.background = options.type === "error" ? "#e53935" : "#2563eb";
+  el.style.opacity = "1.0";
+  el.style.display = "block";
+  setTimeout(() => {
+    el.style.opacity = "0";
+    setTimeout(() => { el.style.display = "none"; }, 400);
+  }, options.timeout || 3000);
+}
+
 
   // Function to generate consistent session ID based on user identity
   function generateSessionId(name, email) {
@@ -1135,7 +1167,7 @@ body {
       longitude: lng,
       lastSeen: Date.now()
     });
-    alert("User info updated.");
+    notify("User info updated!", { type: "success" });
     return;
   }
 
@@ -1170,7 +1202,8 @@ body {
     loadChatForSession(newSessionId);
   }, 500);
 
-  alert("User info updated. Session ID changed.");
+  notify("User info updated. Session ID changed.", { type: "success" });
+
 }
 
 
@@ -1231,12 +1264,12 @@ body {
     if (!file) return;
 
     if (!selectedSessionId || !db) {
-      alert("Please select a chat session first.");
+      notify("Please select a chat session first.", { type: "error" });
       return;
     }
 
     if (!file.type.startsWith('image/')) {
-      alert("Only image files are allowed.");
+      notify("Only image files are allowed.", { type: "error" });
       return;
     }
 
@@ -1262,12 +1295,12 @@ body {
 
         return db.ref("chats/" + selectedSessionId).push(messageData);
       } else {
-        alert("Upload failed: " + (data.error || 'Unknown error'));
+        notify("Upload failed: " + (data.error || 'Unknown error'), { type: "error" });
       }
     })
     .catch(err => {
       console.error("Upload error:", err);
-      alert("Failed to upload image");
+      notify("Failed to upload image", { type: "error" });
       uploadBtn.disabled = false;
     })
     .finally(() => {
@@ -1304,7 +1337,7 @@ function renderUserInfo(data, filter = "", sid = selectedSessionId) {
     users = [[sid, data[sid]]];
   }
 
-  let output = `<h3>User Details</h3>`;
+  let output = `<h3>Edit Profile</h3>`;
   if (users.length === 0) {
     output += `<div class="empty-state">No user found.</div>`;
     userInfoList.innerHTML = output;
@@ -1328,18 +1361,19 @@ function renderUserInfo(data, filter = "", sid = selectedSessionId) {
       : `<span class="modern-map-link disabled">📍 Location N/A</span>`;
 
     output += `
-      <div class="modern-user-card" style="border: 2px solid #2563eb44;">
-        <div class="modern-avatar" style="background:#c8e6fa;color:#31314f;">
-          ${initials}
-        </div>
-        <div class="modern-user-details" style="flex:1;">
-          <span class="modern-user-name">${name}</span>
-          <span class="modern-user-email">📧${email}</span>
-          <span class="modern-user-meta">${locationLink}</span>
-        </div>
-        <!-- (Optional: add Edit button etc.) -->
-      </div>
-    `;
+  <div class="modern-user-card" id="user-info-${userId}" style="border: 2px solid #2563eb44;">
+    <div class="modern-avatar" style="background:#c8e6fa;color:#31314f;">
+      ${initials}
+    </div>
+    <div class="modern-user-details" style="flex:1;">
+      <span class="modern-user-name">${name}</span>
+      <span class="modern-user-email">📧${email}</span>
+      <span class="modern-user-meta">${locationLink}</span>
+    </div>
+    <button class="modern-edit-btn" onclick="openEditModal('${userId}')">✏️</button>
+  </div>
+`;
+
   });
 
   userInfoList.innerHTML = output;
@@ -1602,6 +1636,19 @@ function renderChatMessages(chatData) {
     .map(([msgId, msg]) => ({ ...msg, _id: msgId }))
     .sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
 
+     const latestMsg = messagesArr[messagesArr.length - 1];
+  if (
+    latestMsg &&
+    (latestMsg.sender || '').toLowerCase() === 'user' &&
+    (
+      !lastUserMsgTimestamp[selectedSessionId] ||
+      latestMsg.timestamp > lastUserMsgTimestamp[selectedSessionId]
+    )
+  ) {
+    notify("New message from " + (allUserData[selectedSessionId]?.name || "User") + "!", { type: "success" });
+    lastUserMsgTimestamp[selectedSessionId] = latestMsg.timestamp;
+  }
+
   messagesArr.forEach((msg) => {
     let senderType = (msg.sender || "").toLowerCase();
     let align = "left";
@@ -1703,7 +1750,7 @@ function cancelEditMessage(msgId) {
 function saveEditedMessage(msgId, messageDiv) {
   const input = messageDiv.querySelector("input[type='text']");
   const newText = input.value.trim();
-  if (!newText) return alert("Message cannot be empty.");
+  if (!newText) return notify("Message cannot be empty.", { type: "error" });
   db.ref("chats/" + selectedSessionId + "/" + msgId).update({
     message: newText,
     _editing: null,
@@ -1737,7 +1784,7 @@ function cancelEditMessage(msgId) {
 function saveEditedMessage(msgId, messageDiv) {
   const input = messageDiv.querySelector("input[type='text']");
   const newText = input.value.trim();
-  if (!newText) return alert("Message cannot be empty.");
+  if (!newText) return notify("Message cannot be empty.", { type: "error" });
   db.ref("chats/" + selectedSessionId + "/" + msgId).update({
     message: newText,
     _editing: null,
@@ -1770,7 +1817,7 @@ function deleteMessage(msgId) {
       })
       .catch((error) => {
         console.error("Error sending message:", error);
-        showError("Failed to send message");
+        notify("Failed to send message", { type: "error" });
       });
   }
 
@@ -1805,7 +1852,7 @@ function deleteMessage(msgId) {
     }
   });
 
-  let currentEditSessionId = "";
+let currentEditSessionId = "";
 
 function openEditModal(sessionId) {
   currentEditSessionId = sessionId;
@@ -1813,13 +1860,11 @@ function openEditModal(sessionId) {
   const user = allUserData[sessionId] || {};
   document.getElementById("editName").value = user.name || "";
   document.getElementById("editEmail").value = user.email || "";
-  document.getElementById("editLat").value = user.latitude || "";
-  document.getElementById("editLng").value = user.longitude || "";
+  document.getElementById("editLat").value = user.latitude || user.location?.latitude || "";
+  document.getElementById("editLng").value = user.longitude || user.location?.longitude || "";
   document.getElementById("editModal").style.display = "block";
   document.getElementById("modalBackdrop").style.display = "block";
 }
-
-
 
 function saveUserEdit() {
   const sessionId = document.getElementById("editModal").getAttribute("data-session-id");
@@ -1829,7 +1874,7 @@ function saveUserEdit() {
   const longitude = document.getElementById("editLng").value.trim();
 
   if (!sessionId || !db) {
-    alert("Invalid session or database not initialized.");
+    notify("Invalid session or database not initialized.", { type: "error" });
     return;
   }
 
@@ -1840,23 +1885,22 @@ function saveUserEdit() {
     longitude
   };
 
-  // Update userData
-  db.ref("userData/" + sessionId).update(userData)
+  // Update in Firebase
+  db.ref("users/" + sessionId).update(userData)
     .then(() => {
-      // Hide modal after save
-      document.getElementById("editModal").style.display = "none";
-      document.getElementById("modalBackdrop").style.display = "none";
+      notify("User profile updated!", { type: "success" });
+      closeModal();
     })
     .catch((err) => {
-      alert("Failed to update user data: " + err.message);
+      notify("Failed to update user profile: " + err.message, { type: "error" });
     });
 }
-
 
 function closeModal() {
   document.getElementById("editModal").style.display = "none";
   document.getElementById("modalBackdrop").style.display = "none";
 }
+
 
 
 
