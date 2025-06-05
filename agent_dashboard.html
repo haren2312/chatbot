@@ -1286,65 +1286,50 @@ function renderUserInfo(data, filter = "") {
   const userInfoList = document.getElementById("user-info-list");
   if (!userInfoList) return;
 
-  if (!data || Object.keys(data).length === 0) {
+  // Only show info for selected session
+  const sid = selectedSessionId;
+  if (!sid || !data || !data[sid]) {
     userInfoList.innerHTML = `
       <div class="user-info-section">
-        <h3>Edit Profile</h3>
-        <p>No user data available</p>
-      </div>`;
+        <h3>User Details</h3>
+        <div class="empty-state" style="padding: 18px 0;">No user selected</div>
+      </div>
+    `;
     return;
   }
 
-  let output = "<h3>Edit Profile</h3>";
-  filter = filter.trim().toLowerCase();
+  const user = data[sid] || {};
+  const name = user.name || "Unknown";
+  const email = user.email || "No email";
+  const initials = getInitial(name, email);
+  const avatarColor = getAvatarColor(email || name || sid);
 
-  let found = false;
-  for (let username in data) {
-    const user = data[username] || {};
-    const name = user.name || "Unknown";
-    const email = user.email || "No email";
+  // Location (if exists)
+  const latRaw = user.location && user.location.latitude;
+  const lngRaw = user.location && user.location.longitude;
+  const hasLocation = latRaw && lngRaw && !isNaN(Number(latRaw)) && !isNaN(Number(lngRaw));
+  const lat = hasLocation ? Number(latRaw) : null;
+  const lng = hasLocation ? Number(lngRaw) : null;
 
-    if (
-      filter &&
-      !name.toLowerCase().includes(filter) &&
-      !email.toLowerCase().includes(filter)
-    ) {
-      continue;
-    }
-    found = true;
+  const locationLink = hasLocation
+    ? `<a href="https://maps.google.com/?q=${lat},${lng}" target="_blank" class="modern-map-link">📍 Location</a>`
+    : '<span class="modern-map-link disabled">📍 Location N/A</span>';
 
-    // Fix location extraction
-    const latRaw = user.location && user.location.latitude;
-    const lngRaw = user.location && user.location.longitude;
-    const hasLocation =
-      latRaw !== undefined &&
-      latRaw !== null &&
-      latRaw !== "" &&
-      lngRaw !== undefined &&
-      lngRaw !== null &&
-      lngRaw !== "" &&
-      !isNaN(Number(latRaw)) &&
-      !isNaN(Number(lngRaw));
-    const lat = hasLocation ? Number(latRaw) : null;
-    const lng = hasLocation ? Number(lngRaw) : null;
-
-    const locationLink = hasLocation
-      ? `<a href="https://maps.google.com/?q=${lat},${lng}" target="_blank" style="color:red; font-weight:600;">📍Location</a>`
-      : '<span style="color:red;">📍 N/A</span>';
-
-    // Highlight if selected
-    const selected = (username === selectedSessionId) ? 'selected-user-card' : '';
-    output += `
-      <div class="user-card ${selected}" id="user-info-${username}">
-        <div style="flex:1">
-          <strong>${escapeHtml(name)}</strong>
-          <div class="user-meta user-meta-email">📧 ${escapeHtml(email)}</div>
-          <div class="user-meta">${locationLink}</div>
-        </div>
-        <button style="width:70px; font-size:12px; " onclick="openEditModal('${username}')">✏️ Edit</button>
+  userInfoList.innerHTML = `
+    <h3>User Details</h3>
+    <div class="modern-user-card" style="border: 2px solid #2563eb44;">
+      <div class="modern-avatar" style="background:${avatarColor};color:#31314f;">
+        ${escapeHtml(initials)}
       </div>
-    `;
-  }
+      <div class="modern-user-details" style="flex:1;">
+        <span class="modern-user-name">${escapeHtml(name)}</span>
+        <span class="modern-user-email">${escapeHtml(email)}</span>
+        <span class="modern-user-meta">${locationLink}</span>
+      </div>
+      <button class="modern-edit-btn" onclick="openEditModal('${sid}')">✏️ Edit</button>
+    </div>
+  `;
+
 
   if (!found) {
     output += `<div style="color:#888; margin-top:10px;">No users match your search.</div>`;
