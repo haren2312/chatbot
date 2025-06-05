@@ -453,20 +453,27 @@ body {
   box-shadow: 0 2px 14px #2563eb12;
 }
 .user-avatar {
-  width: 42px;
-  height: 42px;
+  width: 38px;
+  height: 38px;
   border-radius: 50%;
-  background: #d3e9fc;
   display: flex;
   align-items: center;
   justify-content: center;
   font-weight: 700;
-  color: #2563eb;
-  font-size: 1.14rem;
+  font-size: 1.2rem;
   flex-shrink: 0;
-  border: 2.5px solid #c8d6f3;
-  text-transform: uppercase;
+  color: #fff;
+  background: linear-gradient(135deg, #1e3264, #1fa363 80%);
+  box-shadow: 0 2px 8px #14455522;
+  border: 2.5px solid #fff;
+  position: relative;
+  overflow: hidden;
 }
+
+.user-avatar[data-color="blue"]    { background: linear-gradient(135deg, #2563eb, #1748b2 85%); }
+.user-avatar[data-color="green"]   { background: linear-gradient(135deg, #159b5c, #134e3b 85%); }
+.user-avatar[data-color="purple"]  { background: linear-gradient(135deg, #6c47bd, #311453 85%); }
+.user-avatar[data-color="orange"]  { background: linear-gradient(135deg, #ff8c42, #c23616 85%); }
 .user-card strong {
   color: #1748b2;
   font-size: 0.9rem;
@@ -1084,6 +1091,8 @@ body {
     setTimeout(() => { el.style.display = "none"; }, 400);
   }, options.timeout || 3000);
 }
+
+
 
 
   // Function to generate consistent session ID based on user identity
