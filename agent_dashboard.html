@@ -947,6 +947,9 @@ body {
 }
 
 
+
+
+
 </style>
 
   <link href="https://fonts.googleapis.com/css?family=Inter:400,600,700&display=swap" rel="stylesheet">
@@ -1092,6 +1095,15 @@ body {
   }, options.timeout || 3000);
 }
 
+
+// Returns Unicode flag emoji for a given ISO 3166-1 alpha-2 country code (e.g., "IN" -> 🇮🇳)
+function getCountryFlag(countryCode) {
+  if (!countryCode) return "🏳️"; // Default/fallback
+  // Convert country code (e.g., "IN") to flag emoji
+  return countryCode.toUpperCase().replace(/./g, char =>
+    String.fromCodePoint(127397 + char.charCodeAt())
+  );
+}
 
 
 
@@ -1506,21 +1518,61 @@ function getAvatarColor(str) {
     }
     const initials = getInitials(userData.name || userData.email || sid);
     const avatarColor = getAvatarColor(userData.email || userData.name || sid);
+    
+const countryCode = userData.country || "IN"; // fallback to India if not available
+const countryFlag = getCountryFlag(countryCode);
 
-    sessionBtn.innerHTML = `
-      <div style="display:flex;align-items:center;gap:11px;">
-        <div class="user-avatar" style="width:34px;height:34px;border-radius:50%;background:${avatarColor};display:flex;align-items:center;justify-content:center;font-weight:700;color:#fff;font-size:1rem;flex-shrink:0;">
-          ${escapeHtml(initials)}
-        </div>
-        <div style="flex:1;min-width:0;">
-          <div title="${escapeHtml(sid)}" style="font-weight:600;font-size:1em;color:#1748b2;text-overflow:ellipsis;white-space:nowrap;overflow:hidden;">
-            ${escapeHtml(displayName)}
-          </div>
-          <div class="session-info" style="text-overflow:ellipsis;white-space:nowrap;overflow:hidden;">${escapeHtml(userEmail)}</div>
-        </div>
-        <span>${locationIcon}</span>
+sessionBtn.innerHTML = `
+  <div style="display:flex;align-items:center;gap:11px;position:relative;">
+    <div style="position:relative;width:45px;height:45px;">
+      <div class="user-avatar" style="
+          width:45px;height:45px;
+          border-radius:50%;
+          background:${avatarColor};
+          display:flex;
+          align-items:center;
+          justify-content:center;
+          font-weight:700;
+          color:black;
+          font-size:1.1rem;
+          ">
+        ${escapeHtml(initials)}
       </div>
-    `;
+      <span class="country-flag"
+            title="${countryCode}"
+            style="
+              position: absolute;
+    right: -7px;
+    bottom: 0px;
+    font-size: .9em;
+    background: #fff;
+    border-radius: 50%;
+    box-shadow:0 5px 5px #00000055;
+    padding: 2px 4px;
+    /* border: 1.2px solid #e4e4e4; */
+    display: flex
+;
+    align-items: center;
+    justify-content: center;
+    z-index: 2;
+
+            ">
+        ${countryFlag}
+      </span>
+    </div>
+    <div style="flex:1;min-width:0;">
+      <div title="${escapeHtml(sid)}"
+           style="font-weight:600;font-size:1em;color:#1748b2;text-overflow:ellipsis;white-space:nowrap;overflow:hidden;">
+        ${escapeHtml(displayName)}
+      </div>
+      <div class="session-info"
+           style="text-overflow:ellipsis;white-space:nowrap;overflow:hidden;">${escapeHtml(userEmail)}</div>
+    </div>
+    <span>${locationIcon}</span>
+  </div>
+`;
+
+
 
     sessionBtn.onclick = () => loadChat(sid);
     sessionList.appendChild(sessionBtn);

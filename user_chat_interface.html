@@ -29,7 +29,7 @@
     body {
       background-image: url("images/demo-ss.png");
       background-size: cover;
-      font-family: 'Segoe UI', Tahoma, sans-serif;
+      font-family: "Crisp Noto Sans Regular", sans-serif;
       min-height: 100vh;
     }
 
@@ -58,16 +58,14 @@
     position: fixed;
     bottom: 100px;
     right: 20px;
-    width: 100%;
+    width: 40%;
     max-width: 420px;
-    background: var(--primary);
+    border: 1px solid rgb(127, 127, 127);
     border-radius: 10px;
-    box-shadow: 0 8px 10px rgba(0, 0, 0, 0.6);
     display: none;
     flex-direction: column;
     gap: 12px;
     z-index: 998;
-    padding: 5px;
     max-height: 90vh;
     overflow: hidden;
 }
@@ -80,61 +78,57 @@
     }
 
    #messages {
-    height: 300px;
+    height: 250px;
     overflow-y: auto;
-    border: 1px solid var(--border-color);
-    border-radius: 10px;
-    padding: 12px;
+    /* border: 1px solid var(--border-color); */
+    /* border-radius: 10px; */
+    /* padding: 12px; */
     background-color: white;
-    display: flex;
+    display: flex
+;
     flex-direction: column;
-    gap: 10px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
+    /* gap: 10px; */
+    /* box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4); */
 }
 
     .msg {
-      max-width: 80%;
-      padding: 10px 14px;
-      border-radius: 16px;
-      font-size: 14px;
-      animation: fadeIn 0.3s ease;
-      word-wrap: break-word;
-      line-height: 1.4;
-    }
+    max-width: 70%;
+    padding: 5px;
+    font-size: 10px;
+    animation: fadeIn 0.3s ease;
+    word-wrap: break-word;
+    /* line-height: 1.4; */
+}
+
 
     .user {
-      align-self: flex-end;
-    background: #ffffff;
+    align-self: flex-end;
     color: #000000;
     border-bottom-right-radius: 4px;
-    border: solid #3b82f6 3px;
+    /* border: solid #3b82f6 3px; */
 }
 
     .bot {
     align-self: flex-start;
-    background: #3b82f6;
     color: white;
-    border-bottom-left-radius: 4px;
+    border-bottom-left-radius: 1px;
 }
 
     .agent {
     align-self: flex-start;
-    background: #81C784;
-    color: #ffffff;
+    color: #000000;
     border-bottom-left-radius: 4px;
-    border: solid black 1px;
+    /* border: solid black 1px; */
+    margin-top: 10px;
 }
 
     #input {
       flex-grow: 1;
       padding: 10px;
-      border: 1px solid var(--border-color);
-      border-radius: 8px;
       font-size: 14px;
       outline: none;
       background: white;
       color: rgb(0, 0, 0);
-      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
     }
 
     #input::placeholder {
@@ -142,15 +136,15 @@
     }
 
     button {
-      background: var(--primary);
-      color: white;
-      border: solid white 1px;
-      padding: 10px 16px;
-      border-radius: 8px;
-      font-size: 14px;
-      cursor: pointer;
-      transition: background 0.3s;
-    }
+    background: var(--primary);
+    color: #ffffff;
+    border: solid white 1px;
+    /* padding: 10px 16px; */
+    border-radius: 8px;
+    font-size: 15px;
+    cursor: pointer;
+    transition: background 0.3s;
+}
 
     button:hover {
       background: var(--hover);
@@ -186,22 +180,23 @@
     }
 
     .input-row {
-      display: flex;
-      gap: 10px;
-      align-items: center;
-    }
+    display: flex
+;
+    gap: 10px;
+    align-items: center;
+    background-color: white;
+}
 
-    input[type="text"],
-    input[type="email"] {
-      padding: 10px;
-      border-radius: 8px;
-      border: 1px solid black;
-      background: white;
-      color: black;
-      width: 100%;
-      font-size: 14px;
-      outline: none;
-    }
+    input[type="text"], input[type="email"] {
+    padding: 10px;
+    /* border-radius: 8px; */
+    border: 1px solid #ffffff;
+    background: white;
+    color: black;
+    width: 100%;
+    font-size: 14px;
+    /* outline: none; */
+}
 
     input[type="text"]::placeholder,
     input[type="email"]::placeholder {
@@ -211,8 +206,8 @@
     .prompt-box {
       background-color: white;
       border-radius: 10px;
-      padding: 24px;
-      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.5);
+      padding: 10px;
+      border-radius: 10px;
       display: flex;
       flex-direction: column;
       gap: 20px;
@@ -226,17 +221,16 @@
     }
 
     .bot-avatar {
-      width: 48px;
-      height: 48px;
-      border-radius: 12px;
-      border: 3px solid var(--primary);
-      object-fit: cover;
-      background: var(--primary);
-      display: block;
-      align-items: center;
-      justify-content: center;
-      font-size: 24px;
-    }
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    /* border: 1px solid var(--primary); */
+    object-fit: cover;
+    background: #ffffff;
+    align-items: center;
+    justify-content: center;
+    font-size: 29px;
+}
 
     .prompt-title {
       font-size: 15px;
@@ -245,15 +239,15 @@
     }
 
     .prompt-subtitle {
-      font-size: 13px;
+      font-size: 10px;
       color: var(--border-color);
-      margin-top: 4px;
+      margin-top: 1px;
     }
 
     .prompt-content {
       display: flex;
       flex-direction: column;
-      gap: 12px;
+      gap: 10px;
     }
 
     .prompt-label {
@@ -262,38 +256,31 @@
     }
 
     .chat-header {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      padding: 12px;
-      background: white;
-      border-radius: 10px;
-      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
-    }
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+    background: white;
+    /* border-radius: 10px; */
+    /* box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4); */
+    background-color: var(--primary);
+    max-width: 300px;
+    height: 90px;
+}
 
     .bot-title {
       margin-left: 10px;
       font-size: 18px;
-      color: var(--primary);
+      color: white;
     }
 
     .bot-subtitle {
-      margin-left: 10px;
-      font-size: 13px;
-      color: gray;
-    }
+    /* margin-left: 10px; */
+    font-size: 10px;
+    color: #ffffff;
+}
 
-    .chat-messages {
-      height: 320px;
-      overflow-y: auto;
-      border: 1px solid var(--border-color);
-      border-radius: 10px;
-      padding: 14px;
-      background: #1e293b;
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-    }
+
 
     #location-status {
       margin-top: 10px;
@@ -309,9 +296,9 @@
     }
 
     .upload-button, .send-button {
-      padding: 10px 12px;
-      min-width: auto;
-    }
+    padding: 2px 10px;
+    min-width: auto;
+}
 
     @keyframes fadeIn {
       from {
@@ -389,7 +376,7 @@
       }
 
       .prompt-subtitle {
-        font-size: 12px;
+        font-size: 10px;
       }
 
       .chat-messages, #messages {
@@ -403,15 +390,14 @@
 
 .timestamp {
     display: block;
-    font-size: 0.6rem;
-    margin-top: 1px;
+    font-size: 0.4rem;
+    margin-top: 0px;
     text-align: right;
 }
 
  #chat-container {
-    max-height: 90vh;
+    max-height: 80vh;
     max-width: 50vh;
-    overflow-y: auto;
     scroll-behavior: smooth;
 }
 
@@ -428,6 +414,68 @@
     background-color: #555;
   }
 
+  .chat-bot-bg{
+    display:none;
+    flex-direction: column;
+  }
+
+  .msg {
+  display: flex;
+  align-items: flex-end;
+  margin-bottom: 16px;
+}
+
+.msg.user {
+  flex-direction: row-reverse;
+}
+
+.avatar {
+  width: 36px;
+  border-radius: 50%;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 8px;
+}
+
+.avatar img {
+  width: 50%;
+  object-fit: cover;
+}
+
+.bubble {
+  background: #fff;
+  color: #232323;
+  border-radius: 16px;
+  padding: 10px 14px;
+  box-shadow: 0 1px 3px rgba(60, 70, 80, 0.05);
+  max-width: 80vw;
+  min-width: 40px;
+  position: relative;
+}
+
+.msg.bot .bubble {
+  background: #2563eb;
+  color: #fff;
+  border-bottom-left-radius: 2px;
+}
+
+.msg.agent .bubble {
+  background: #fff7e6;
+  color: #404040;
+  border-bottom-left-radius: 2px;
+}
+
+.msg.user .bubble {
+  background: #f3f5fa;
+  color: #232323;
+  border-bottom-right-radius: 2px;
+}
+
+
+
+
   </style>
 </head>
 <body>
@@ -438,23 +486,23 @@
   <!-- Name Prompt -->
   <div id="name-prompt" class="prompt-box">
     <div class="prompt-header">
-      <div class="bot-avatar"><img src="images/bot-avatar.png" alt="Bot Avatar" class="bot-avatar" /></div>
+      <div class="bot-avatar"><img src="images/logo-bgB.png" alt="Bot Avatar" class="bot-avatar" /></div>
       <div>
-        <h3 class="prompt-title">Welcome to Seva Bot</h3>
+        <h3 class="prompt-title">Welcome to E-invite</h3>
         <p class="prompt-subtitle">Your Virtual Assistant</p>
       </div>
     </div>
     <div class="prompt-content">
       <label for="nameInput" class="prompt-label">What's your name?</label>
       <input id="nameInput" type="text" placeholder="Enter your name..." />
-      <button onclick="startChat()">Start Chat</button>
+      <button onclick="startChat()">Next</button>
     </div>
   </div>
 
   <!-- Email Prompt -->
   <div id="email-prompt" class="prompt-box" style="display:none;">
     <div class="prompt-header">
-      <div class="bot-avatar"><img src="images/bot-avatar.png" alt="Bot Avatar" class="bot-avatar" /></div>
+      <div class="bot-avatar"><img src="images/logo-bgB.png" alt="Bot Avatar" class="bot-avatar" /></div>
       <div>
         <h3 class="prompt-title">Email Required</h3>
         <p class="prompt-subtitle">We'll keep you updated</p>
@@ -485,11 +533,11 @@
   </div>
 
   <!-- Main Chat Interface -->
-  <div id="chat" style="display:none; flex-direction: column; gap: 12px;">
+  <div id="chat" class="chat-bot-bg">
     <div class="chat-header">
-      <div class="bot-avatar"><img src="images/bot-avatar.png" alt="Bot Avatar" class="bot-avatar" /></div>
+      <div class="bot-avatar"><img src="images/logo-bgB.png" alt="Bot Avatar" class="bot-avatar" /></div>
       <div>
-        <h3 class="bot-title">Welcome to Seva Bot</h3>
+        <h3 class="bot-title" style="color: white; margin: 0px; padding: 0px;" >Welcome to E-invite</h3>
         <p class="bot-subtitle">Your Virtual Assistant</p>
       </div>
     </div>
@@ -773,43 +821,51 @@ function addMessage(text, sender, name) {
   const msgDiv = document.createElement("div");
   msgDiv.className = `msg ${sender}`;
 
-  const contentDiv = document.createElement("div");
-  contentDiv.className = "message-content";
+  // Avatar
+  const avatarDiv = document.createElement("div");
+  avatarDiv.className = "avatar";
+  let avatarSrc = "";
+  if (sender === "bot") avatarSrc = "images/bot-avatar.png";
+  else if (sender === "agent") avatarSrc = "images/agent-avatar.png";
+  else avatarSrc = "images/user-avatar.png";
+  avatarDiv.innerHTML = `<img src="${avatarSrc}" alt="${sender}" />`;
 
-  // 🧾 Add sender name at the top
-  const nameSpan = document.createElement("div");
-  nameSpan.className = "sender-name";
-  nameSpan.textContent = name;
-  contentDiv.appendChild(nameSpan);
-
-  // 💬 Handle text or image
-  if (typeof text === 'string' && (text.match(/^https?:\/\/.*\.(jpeg|jpg|png|gif|webp)(\?.*)?$/i) || text.match(/^uploads\/.*\.(jpeg|jpg|png|gif|webp)$/i))) {
-
+  // Bubble
+  const bubbleDiv = document.createElement("div");
+  bubbleDiv.className = "bubble";
+  if (name) {
+    const nameSpan = document.createElement("span");
+    nameSpan.className = "sender-name";
+    nameSpan.textContent = name;
+    bubbleDiv.appendChild(nameSpan);
+  }
+  if (typeof text === 'string' && text.match(/\.(jpeg|jpg|png|gif|webp)$/i)) {
     const img = document.createElement("img");
     img.src = text;
     img.className = "image-in-message";
     img.alt = "Sent image";
-    img.onerror = () => {
-      contentDiv.textContent = "Image failed to load";
-    };
-    contentDiv.appendChild(img);
+    bubbleDiv.appendChild(img);
   } else {
     const msgText = document.createElement("div");
     msgText.textContent = text;
-    contentDiv.appendChild(msgText);
+    bubbleDiv.appendChild(msgText);
   }
-
-  // 🕒 Add timestamp
+  const now = new Date();
+  const dateOptions = { weekday: "short", year: "numeric", month: "short", day: "numeric" };
+  const timeString = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  const dateString = now.toLocaleDateString([], dateOptions);
   const timeSpan = document.createElement("span");
   timeSpan.className = "timestamp";
-  const now = new Date();
-  timeSpan.textContent = now.toLocaleString(); // or .toLocaleTimeString() if only time
-  contentDiv.appendChild(timeSpan);
+  timeSpan.textContent = `${dateString} • ${timeString}`;
+  bubbleDiv.appendChild(timeSpan);
 
-  msgDiv.appendChild(contentDiv);
+  msgDiv.appendChild(avatarDiv);
+  msgDiv.appendChild(bubbleDiv);
+
   messagesContainer.appendChild(msgDiv);
   messagesContainer.scrollTop = messagesContainer.scrollHeight;
 }
+
 
 function sendMessage(message, type = "text") {
   if (!db || !sessionId || !message) return;
