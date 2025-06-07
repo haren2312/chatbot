@@ -84,13 +84,9 @@
     /* box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4); */
 }
 
-    .msg {
-    max-width: 70%;
-    padding: 5px;
-    font-size: 10px;
-    animation: fadeIn 0.3s ease;
-    word-wrap: break-word;
-    /* line-height: 1.4; */
+.msg {
+  margin-bottom: 20px;
+  width: 100%;
 }
 
 
@@ -116,21 +112,21 @@
 }
 
     #input {
-      margin-top: 10px;
-      flex-grow: 1;
-      padding: 10px;
-      font-size: 14px;
-      outline: none;
-      background: white;
-      color: rgb(0, 0, 0);
-    }
+    margin-top: 10px;
+    flex-grow: 1;
+    padding: 10px 10px 0 10px;
+    font-size: 14px;
+    outline: none;
+    background: white;
+    color: rgb(0, 0, 0);
+}
 
     #input::placeholder {
       color: #9ca3af;
     }
 
     button {
-    background: #ffffff;
+    background: #2563eb;
     color: #ffffff;
     border: solid white 0px;
     padding: 10px 10px 5px 10px;
@@ -138,7 +134,6 @@
     font-size: 15px;
     cursor: pointer;
     transition: background 0.3s;
-    color: #bababa;
 }
 
     button:hover {
@@ -387,12 +382,6 @@
     height: 40px;
 }
 
-.timestamp {
-    display: block;
-    font-size: 0.4rem;
-    margin-top: 10px;
-    text-align: right;
-}
 
  #chat-container {
     max-height: 80vh;
@@ -418,55 +407,147 @@
     flex-direction: column;
   }
 
-  .msg {
-  display: flex;
-  align-items: flex-end;
-  margin-bottom: 16px;
-}
 
 .msg.user {
-  flex-direction: row-reverse;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+.msg.bot,
+.msg.agent {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+body, input, button, .bubble, .sender-name {
+  font-family: "Crisp Noto Sans Regular", "Segoe UI", Arial, sans-serif;
+}
+
+
+.msg-header {
+  display: flex;
+  align-items: center;
+  gap: 5px;
 }
 
 .avatar {
-  width: 36px;
-  border-radius: 50%;
-  overflow: hidden;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    overflow: hidden;
+    background: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    margin: 10px 0 0 10px;
 }
 
 .avatar img {
-  width: 50%;
-  object-fit: cover;
+    width: 80%;
+    height: 80%;
+    object-fit: cover;
+    border-radius: 50%;
+    display: block;
+}
+
+.sender-name {
+    font-size: 0.8rem;
+    color: #c5c5c5;
+    font-weight: 500;
+    /* margin-left: 4px; */
 }
 
 .bubble {
-  background: #fff;
-  color: #232323;
-  border-radius: 16px;
-  padding: 10px 14px;
-  box-shadow: 0 1px 3px rgba(60, 70, 80, 0.05);
-  max-width: 80vw;
-  min-width: 40px;
-  position: relative;
+    border-radius: 10px;
+    padding: 10px 15px;
+    font-size: .7rem;
+    font-family: inherit;
+    box-shadow: 0 2px 8px rgba(60, 70, 80, 0.05);
+    display: inline-block;
+    max-width: 80%;
+    min-width: 44px;
+    background: #fff;
+    color: #232323;
+    margin-left: 44px;
+}
+
+.msg-time {
+  display: block;
+  font-size: 0.8em;
+  color: #bcbcbc;
+  text-align: right;
+  margin-top: 6px;
+  margin-bottom: -6px;
+  font-weight: 400;
+}
+
+.msg.bot .msg-time {
+  color: #e3f0ff;
 }
 
 .msg.bot .bubble {
-  background: #2563eb;
-  color: #fff;
-  border-bottom-left-radius: 2px;
+    background: #1877f2;
+    color: #fff;
+    font-weight: 500;
+    margin-left: 50px;
 }
 
 .msg.agent .bubble {
-  background: #fff7e6;
-  color: #404040;
-  border-bottom-left-radius: 2px;
+    background: #1877f2;
+    color: #fff;
+    font-weight: 500;
+    margin-left: 50px;
 }
 
 .msg.user .bubble {
-  background: #f3f5fa;
-  color: #232323;
-  border-bottom-right-radius: 2px;
+    background: #efefef;
+    color: #232323;
+    margin-left: auto;
+    margin-right: 0;
+    background-color: #efefef;
+    font-weight: 500;
+}
+
+#chat-btn {
+    background: #ffffff;
+    /* color: #ffffff; */
+    border: solid white 0px;
+    padding: 10px 10px 5px 10px;
+    border-radius: 8px;
+    font-size: 15px;
+    cursor: pointer;
+    transition: background 0.3s;
+    color: #a1a1a1;
+
+}
+
+#emoji-btn {
+  background-color: white;
+  color: #bababa;
+}
+
+#emoji-btn:hover {
+  background: #1877f2;   /* New color on hover */
+  color: #fff;           /* Can change this too */
+}
+
+#chat-btn:hover {
+  background: #1877f2;   /* New color on hover */
+  color: #fff;           /* Can change this too */
+}
+
+.timestamp-line {
+    width: 100%;
+    text-align: center;
+    color: #696969;
+    font-size: 0.5rem;
+    margin: 16px 0 2px 0;
+    /* font-weight: 400; */
+    /* letter-spacing: 0.02em; */
+    display: block;
+    /* background: #f3f3f3; */
+    /* border-radius: 8px; */
 }

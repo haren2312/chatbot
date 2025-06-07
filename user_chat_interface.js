@@ -247,56 +247,68 @@ function loadChatMessages(callback) {
   });
 }
 
-function addMessage(text, sender, name) {
+function addMessage(text, sender, name, timestamp = Date.now()) {
   const messagesContainer = document.getElementById("messages");
 
+  // DATE and TIME
+  const now = new Date(timestamp);
+  const dayString = now.toLocaleDateString([], { weekday: "long", day: "numeric", month: "long" });
+  const timeString = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true });
+
+  // ---- DATE SEPARATOR LOGIC (optional, as before) ----
+  if (window.lastMessageDate !== dayString) {
+    const dateLine = document.createElement("div");
+    dateLine.className = "timestamp-line";
+    dateLine.textContent = dayString;
+    messagesContainer.appendChild(dateLine);
+    window.lastMessageDate = dayString;
+  }
+
+  // MESSAGE CONTAINER
   const msgDiv = document.createElement("div");
   msgDiv.className = `msg ${sender}`;
 
-  // Avatar
-  const avatarDiv = document.createElement("div");
-  avatarDiv.className = "avatar";
-  let avatarSrc = "";
-  if (sender === "bot") avatarSrc = "images/bot-avatar.png";
-  else if (sender === "agent") avatarSrc = "images/agent-avatar.png";
-  else avatarSrc = "images/user-avatar.png";
-  avatarDiv.innerHTML = `<img src="${avatarSrc}" alt="${sender}" />`;
+  // --- Only for bot/agent: Header with avatar and name
+  if (sender === "bot" || sender === "agent") {
+    const headerDiv = document.createElement("div");
+    headerDiv.className = "msg-header";
 
-  // Bubble
-  const bubbleDiv = document.createElement("div");
-  bubbleDiv.className = "bubble";
-  if (name) {
+    const avatarDiv = document.createElement("div");
+    avatarDiv.className = "avatar";
+    let avatarSrc = "";
+    if (sender === "bot") avatarSrc = "images/logo.jpg";
+    else avatarSrc = "images/agent-avatar.png";
+    avatarDiv.innerHTML = `<img src="${avatarSrc}" alt="${sender}" />`;
+
     const nameSpan = document.createElement("span");
     nameSpan.className = "sender-name";
-    nameSpan.textContent = name;
-    bubbleDiv.appendChild(nameSpan);
-  }
-  if (typeof text === 'string' && text.match(/\.(jpeg|jpg|png|gif|webp)$/i)) {
-    const img = document.createElement("img");
-    img.src = text;
-    img.className = "image-in-message";
-    img.alt = "Sent image";
-    bubbleDiv.appendChild(img);
-  } else {
-    const msgText = document.createElement("div");
-    msgText.textContent = text;
-    bubbleDiv.appendChild(msgText);
-  }
-  const now = new Date();
-  const dateOptions = { weekday: "short", year: "numeric", month: "short", day: "numeric" };
-  const timeString = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-  const dateString = now.toLocaleDateString([], dateOptions);
-  const timeSpan = document.createElement("span");
-  timeSpan.className = "timestamp";
-  timeSpan.textContent = `${dateString} • ${timeString}`;
-  bubbleDiv.appendChild(timeSpan);
+    nameSpan.textContent = name || (sender === "Bot" ? "E Inviter" : "Admin");
+    headerDiv.appendChild(avatarDiv);
+    headerDiv.appendChild(nameSpan);
 
-  msgDiv.appendChild(avatarDiv);
+    msgDiv.appendChild(headerDiv);
+  }
+
+  // --- Message bubble
+  const bubbleDiv = document.createElement("div");
+  bubbleDiv.className = "bubble";
+
+  // Message text
+  const msgText = document.createElement("div");
+  msgText.textContent = text;
+  bubbleDiv.appendChild(msgText);
+
+  // --- Time label inside bubble (bottom right) ---
+  const timeLabel = document.createElement("span");
+  timeLabel.className = "msg-time";
+  timeLabel.textContent = timeString;
+  bubbleDiv.appendChild(timeLabel);
+
   msgDiv.appendChild(bubbleDiv);
-
   messagesContainer.appendChild(msgDiv);
   messagesContainer.scrollTop = messagesContainer.scrollHeight;
 }
+
 
 
 function sendMessage(message, type = "text") {

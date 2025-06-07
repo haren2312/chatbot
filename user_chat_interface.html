@@ -63,7 +63,7 @@
   <!-- Main Chat Interface -->
   <div id="chat" class="chat-bot-bg">
     <div class="chat-header">
-      <div class="bot-avatar"><img src="images/logo.jpg" alt="Bot Avatar" class="bot-avatar" /></div>
+      <div class="bot-avatar"><img src="images/logo.jpg" alt="Bot Avatar" class="bot-avatar"></div>
       <div>
         <h3 class="bot-title" style="color: white; margin: 0px; padding: 0px;" >Welcome to E-invite</h3>
         <p class="bot-subtitle">Your Virtual Assistant</p>
@@ -77,11 +77,11 @@
     <div class="input-row">
       <input id="input" type="text" placeholder="Type your message..." />
     </div>
-    <div style="text-align: end; padding: 5px; background-color: white;">
+    <div style="text-align: end; padding: 0 5px 5px 0; background-color: white;">
      <input type="file" id="imageUpload" accept="image/*" style="display:none;" onchange="uploadImage()">
-      <button class="upload-button" onclick="document.getElementById('imageUpload').click()" title="Upload Image">🔗</button>
-      <button class=""> <img src="images/emoji-face.png" alt="image not found" ><img> </button>
-      <button class="send-button" onclick="sendMsg()" title="Send Message">➤</button>
+      <button id="chat-btn" class="upload-button" onclick="document.getElementById('imageUpload').click()" title="Upload Image">🔗</button>
+      <button id="emoji-btn" class="">❤︎</button>
+      <button id="chat-btn" class="send-button" onclick="sendMsg()" title="Send Message">➤</button>
 </div>
   </div>
 </div>
