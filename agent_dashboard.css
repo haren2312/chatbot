@@ -21,7 +21,7 @@ body {
 }
 
 .sidebar {
-  width: 320px;
+  width: 350px;
   background-color: #f7fafd;
   display: flex;
   flex-direction: column;
@@ -31,7 +31,7 @@ body {
 
 .sidebar-header {
   padding: 15px;
-  border-bottom: 2px solid #b6bac0;
+  border-bottom: 1px solid #cbcbcb;
   background: #fff;
   display: flex;
   align-items: center;
@@ -51,7 +51,7 @@ body {
 .search-bar {
   padding: 10px;
   background-color: #f7fafd;
-  border-bottom: 2px solid #b6bac0;
+  border-bottom: 1px solid #bebebe;
   position: relative;
 }
 
@@ -154,8 +154,8 @@ body {
   min-height: 0;
   height: calc(100vh - 64px);
   background: #fff;
-  border-right: 1.5px solid #b6bac0;
-  border-left: 1.5px solid #b6bac0;
+  border-right: 1px solid #cbcbcb;
+  border-left: 1px solid #cbcbcb;
   box-shadow: 0 3px 14px #2563eb08;
   padding: 24px 18px 18px 18px;
   overflow-y: scroll;          /* always show scrollbar */
@@ -395,8 +395,8 @@ body {
 }
 
 .user-info-section {
-  min-width: 250px;
-  max-width: 250px;
+  min-width: 320px;
+  max-width: 320px;
   flex: 0 0 340px;
   overflow-y: auto;
   margin-bottom: 0;
@@ -613,9 +613,9 @@ body {
 }
 
 .session-info {
-  font-size: 0.87rem;
-  color: #97a5bc;
-  margin-top: 2px;
+  font-size: 0.8rem;
+  color: #878787;
+  margin-top: 7px;
 }
 
 /* Hide scrollbars globally unless inside .chat-box or .user-info-section */
@@ -938,3 +938,5 @@ body {
   border: 2px solid #2563eb !important;
   box-shadow: 0 0 10px #2563eb33;
 }
+
+

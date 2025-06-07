@@ -14,7 +14,7 @@
   <!-- Name Prompt -->
   <div id="name-prompt" class="prompt-box">
     <div class="prompt-header">
-      <div class="bot-avatar"><img src="images/logo-bgB.png" alt="Bot Avatar" class="bot-avatar" /></div>
+      <div class="bot-avatar"><img src="images/logo.jpg" alt="Bot Avatar" class="bot-avatar" /></div>
       <div>
         <h3 class="prompt-title">Welcome to E-invite</h3>
         <p class="prompt-subtitle">Your Virtual Assistant</p>
@@ -30,7 +30,7 @@
   <!-- Email Prompt -->
   <div id="email-prompt" class="prompt-box" style="display:none;">
     <div class="prompt-header">
-      <div class="bot-avatar"><img src="images/logo-bgB.png" alt="Bot Avatar" class="bot-avatar" /></div>
+      <div class="bot-avatar"><img src="images/logo.jpg" alt="Bot Avatar" class="bot-avatar" /></div>
       <div>
         <h3 class="prompt-title">Email Required</h3>
         <p class="prompt-subtitle">We'll keep you updated</p>
@@ -63,7 +63,7 @@
   <!-- Main Chat Interface -->
   <div id="chat" class="chat-bot-bg">
     <div class="chat-header">
-      <div class="bot-avatar"><img src="images/logo-bgB.png" alt="Bot Avatar" class="bot-avatar" /></div>
+      <div class="bot-avatar"><img src="images/logo.jpg" alt="Bot Avatar" class="bot-avatar" /></div>
       <div>
         <h3 class="bot-title" style="color: white; margin: 0px; padding: 0px;" >Welcome to E-invite</h3>
         <p class="bot-subtitle">Your Virtual Assistant</p>
@@ -72,20 +72,17 @@
 
     <div id="messages" class="chat-messages"></div>
 
-<!-- 
-    <div class="presets">
-      <button class="preset-btn" onclick="presetClick('Track my order')">📦 Track Order</button>
-      <button class="preset-btn" onclick="presetClick('Return product')">🔁 Return Product</button>
-      <button class="preset-btn" onclick="presetClick('Refund status')">💸 Refund Status</button>
-      <button class="preset-btn" onclick="presetClick('Talk to agent')">👤 Talk to Agent</button>
-    </div> -->
-<hr>
+<hr style="width: 85%; margin-left: 20px; border: 1px solid #ebebeb;
+" >
     <div class="input-row">
       <input id="input" type="text" placeholder="Type your message..." />
-      <input type="file" id="imageUpload" accept="image/*" style="display:none;" onchange="uploadImage()" />
-      <button class="upload-button" onclick="document.getElementById('imageUpload').click()" title="Upload Image">🔗</button>
-      <button class="send-button" onclick="sendMsg()" title="Send Message">➤</button>
     </div>
+    <div style="text-align: end; padding: 5px; background-color: white;">
+     <input type="file" id="imageUpload" accept="image/*" style="display:none;" onchange="uploadImage()">
+      <button class="upload-button" onclick="document.getElementById('imageUpload').click()" title="Upload Image">🔗</button>
+      <button class=""> <img src="images/emoji-face.png" alt="image not found" ><img> </button>
+      <button class="send-button" onclick="sendMsg()" title="Send Message">➤</button>
+</div>
   </div>
 </div>
 

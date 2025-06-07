@@ -49,7 +49,7 @@ function getAvatarGradient(name = "") {
 }
 function getCountryFlagImg(countryCode = "IN", size = 20) {
   return `<img src="https://flagcdn.com/${size}x${Math.round(size*0.75)}/${countryCode.toLowerCase()}.png" 
-    alt="${countryCode.toUpperCase()} flag" style="width:${size}px;height:${Math.round(size*0.6)}px;border-radius:1px;box-shadow:0 1px 4px #0001;vertical-align:middle;" />`;
+    alt="${countryCode.toUpperCase()} flag" style= border-radius:50px;vertical-align:middle; wi " />`;
 }
 
 
@@ -108,7 +108,7 @@ function getCountryFlagImg(countryCode = "IN", size = 20) {
 </div>
 
           <div style="flex:1;min-width:0;">
-            <div style="font-weight:600;font-size:1em;color:#1748b2;text-overflow:ellipsis;white-space:nowrap;overflow:hidden;">
+            <div style="font-weight:600;font-size:1em;color:black;text-overflow:ellipsis;overflow:hidden;">
               ${escapeHtml(userData.name)}
             </div>
             <div class="session-info" style="text-overflow:ellipsis;white-space:nowrap;overflow:hidden;">
@@ -140,7 +140,7 @@ function getCountryFlagImg(countryCode = "IN", size = 20) {
     const countryFlag = getCountryFlagImg(user.country || "IN", 20);
     const locationLink = (lat && lng)
       ? `<a href="https://maps.google.com/?q=${lat},${lng}" target="_blank" class="modern-map-link">📍 Location</a>`
-      : `<span class="modern-map-link disabled">📍 Location N/A</span>`;
+      : `<span class="modern-map-link disabled">📍Location N/A</span>`;
     userInfoList.innerHTML = `
       <h3>User Profile</h3>
       <div class="modern-user-card" id="user-info-${selectedSessionId}">

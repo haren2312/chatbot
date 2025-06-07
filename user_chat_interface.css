@@ -116,6 +116,7 @@
 }
 
     #input {
+      margin-top: 10px;
       flex-grow: 1;
       padding: 10px;
       font-size: 14px;
@@ -129,14 +130,15 @@
     }
 
     button {
-    background: var(--primary);
+    background: #ffffff;
     color: #ffffff;
-    border: solid white 1px;
-    padding: 10px 10px 5px 10px; 
+    border: solid white 0px;
+    padding: 10px 10px 5px 10px;
     border-radius: 8px;
     font-size: 15px;
     cursor: pointer;
     transition: background 0.3s;
+    color: #bababa;
 }
 
     button:hover {
@@ -181,13 +183,14 @@
 }
 
     input[type="text"], input[type="email"] {
-    padding: 10px;
     /* border-radius: 8px; */
     border: 1px solid #ffffff;
     background: white;
     color: black;
     width: 100%;
     font-size: 14px;
+    outline: none;
+    box-shadow: none;
     /* outline: none; */
 }
 
@@ -217,12 +220,12 @@
     width: 30px;
     height: 30px;
     border-radius: 50%;
-    /* border: 1px solid var(--primary); */
+    border: 1px solid var(--primary);
     object-fit: cover;
     background: #ffffff;
     align-items: center;
     justify-content: center;
-    font-size: 29px;
+    font-size: 20px;
 }
 
     .prompt-title {
@@ -244,7 +247,8 @@
     }
 
     .prompt-label {
-      font-size: 14px;
+      margin-top: 5px;
+      font-size: 10px;
       color:#42a5f5;
     }
 
@@ -256,9 +260,11 @@
     background: white;
     /* border-radius: 10px; */
     /* box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4); */
-    background-color: var(--primary);
-    max-width: 300px;
-    height: 90px;
+    /* background-color: #2563eb; */
+    background-image: url("images/chat-head-bg.png");
+    background-size: cover;
+    max-width: 320px;
+    height: 150px;
 }
 
     .bot-title {
@@ -338,13 +344,13 @@
         padding: 20px;
       }
 
-      .bot-avatar {
+        .bot-avatar {
         width: 40px;
         height: 40px;
-        font-size: 20px;
+        font-size: 10px;
         display: flex;
-      }
     }
+}
 
     
 
