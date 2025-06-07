@@ -8,7 +8,13 @@
 </head>
 <body>
 
-<button id="chatbot-toggle"><img src="images/chat-icon.png" alt="??" class="chat-icon" /></button>
+
+
+<button id="chatbot-toggle">
+  <img id="chat-icon-img" src="images/chat-icon.png" style="display:block;" />
+  <img id="close-icon-img" src="images/close-icon.png" style="display:none;" />
+</button>
+
 
 <div id="chat-container">
   <!-- Name Prompt -->
@@ -80,8 +86,9 @@
     <div style="text-align: end; padding: 0 5px 5px 0; background-color: white;">
      <input type="file" id="imageUpload" accept="image/*" style="display:none;" onchange="uploadImage()">
       <button id="chat-btn" class="upload-button" onclick="document.getElementById('imageUpload').click()" title="Upload Image">🔗</button>
-      <button id="emoji-btn" class="">❤︎</button>
+  <button id="emoji-btn" type="button">❤︎</button>
       <button id="chat-btn" class="send-button" onclick="sendMsg()" title="Send Message">➤</button>
+      <div id="emoji-picker" style="display:none;position:absolute;bottom:40px;left:110px;z-index:1000;background:#fff;padding:6px 10px;border:1px solid #ddd;border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,0.1);"></div>
 </div>
   </div>
 </div>
@@ -89,6 +96,8 @@
 <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-storage-compat.js"></script>
+
+<script src="https://cdn.jsdelivr.net/npm/@joeattardi/emoji-button@4.6.4/dist/emoji-button.min.js"></script>
 
 <script src="user_chat_interface.js"></script>
 </body>

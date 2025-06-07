@@ -1,4 +1,5 @@
 
+
 // Firebase Configuration
 const firebaseConfig = {
   apiKey: "AIzaSyCuzXtnMzjJ76N8PH-I4ZND5NnyVfD3XjE",
@@ -49,6 +50,16 @@ function validateEmail(email) {
   return emailRegex.test(email);
 }
 
+
+
+// Create a clean key for Firebase paths from the email
+function sanitizeEmail(email) {
+    return email.trim().toLowerCase().replace(/[^a-z0-9]/g, "_");
+}
+
+
+
+
 function showError(message) {
   alert(message);
 }
@@ -85,8 +96,13 @@ function startChat() {
     nameInput.focus();
     return;
   }
+function sanitizeEmail(email) {
+    return email.trim().toLowerCase().replace(/[^a-z0-9]/g, "_");
+}
+// After email input/validation:
+userEmail = emailInput.value.trim().toLowerCase();
+sessionId = sanitizeEmail(userEmail);
 
-  sessionId = generateSessionId(userName);
   
   // Hide name prompt, show email prompt
   document.getElementById("name-prompt").style.display = "none";
@@ -100,17 +116,20 @@ function startChat() {
 
 function submitEmail() {
   const emailInput = document.getElementById("emailInput");
-  userEmail = emailInput.value.trim();
-  
+  userEmail = emailInput.value.trim().toLowerCase();
+
   if (!userEmail || !validateEmail(userEmail)) {
     showError("Please enter a valid email address");
     emailInput.focus();
     return;
   }
 
+  // The magic: generate sessionId from email
+  sessionId = sanitizeEmail(userEmail); // "raj09_gmail_com"
+
   showLoading("email-prompt", "Saving...");
 
-  // Save user data to Firebase
+  // Save user data to Firebase with email-based sessionId
   if (db) {
     db.ref("users/" + sessionId).set({
       name: userName,
@@ -126,12 +145,12 @@ function submitEmail() {
       showError("Error saving data. Please try again.");
     });
   } else {
-    // Fallback if Firebase is not available
     hideLoading("email-prompt", "Submit Email");
     document.getElementById("email-prompt").style.display = "none";
     document.getElementById("location-prompt").style.display = "block";
   }
 }
+
 
 function getLocation() {
   const status = document.getElementById("location-status");
@@ -209,25 +228,20 @@ function initializeChat() {
 }
 
 function loadChatMessages(callback) {
-  if (!db || !sessionId) {
-    if (callback) callback();
-    return;
-  }
-
   db.ref("chats/" + sessionId).once("value", (snapshot) => {
     if (snapshot.exists()) {
       snapshot.forEach((childSnapshot) => {
         const data = childSnapshot.val();
+        const key = childSnapshot.key;
         if (data && data.message) {
           if (data.type === "image") {
-            addImageMessage(data.message, data.sender);
+            addImageMessage(data.message, data.sender, null, data.timestamp, key);
           } else {
-            addMessage(data.message, data.sender);
+            addMessage(data.message, data.sender, null, data.timestamp, key);
           }
         }
       });
     }
-    
     if (callback) callback();
   }).catch((error) => {
     console.error("Error loading messages:", error);
@@ -247,7 +261,7 @@ function loadChatMessages(callback) {
   });
 }
 
-function addMessage(text, sender, name, timestamp = Date.now()) {
+function addMessage(text, sender, name, timestamp = Date.now(), messageKey = null) {
   const messagesContainer = document.getElementById("messages");
 
   // DATE and TIME
@@ -255,7 +269,7 @@ function addMessage(text, sender, name, timestamp = Date.now()) {
   const dayString = now.toLocaleDateString([], { weekday: "long", day: "numeric", month: "long" });
   const timeString = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true });
 
-  // ---- DATE SEPARATOR LOGIC (optional, as before) ----
+  // ---- DATE SEPARATOR LOGIC ----
   if (window.lastMessageDate !== dayString) {
     const dateLine = document.createElement("div");
     dateLine.className = "timestamp-line";
@@ -267,7 +281,7 @@ function addMessage(text, sender, name, timestamp = Date.now()) {
   // MESSAGE CONTAINER
   const msgDiv = document.createElement("div");
   msgDiv.className = `msg ${sender}`;
-
+  if (messageKey) msgDiv.dataset.key = messageKey; // For deletion
   // --- Only for bot/agent: Header with avatar and name
   if (sender === "bot" || sender === "agent") {
     const headerDiv = document.createElement("div");
@@ -282,7 +296,7 @@ function addMessage(text, sender, name, timestamp = Date.now()) {
 
     const nameSpan = document.createElement("span");
     nameSpan.className = "sender-name";
-    nameSpan.textContent = name || (sender === "Bot" ? "E Inviter" : "Admin");
+    nameSpan.textContent = name || (sender === "bot" ? "E Inviter" : "Admin");
     headerDiv.appendChild(avatarDiv);
     headerDiv.appendChild(nameSpan);
 
@@ -293,10 +307,23 @@ function addMessage(text, sender, name, timestamp = Date.now()) {
   const bubbleDiv = document.createElement("div");
   bubbleDiv.className = "bubble";
 
-  // Message text
-  const msgText = document.createElement("div");
-  msgText.textContent = text;
-  bubbleDiv.appendChild(msgText);
+  // Message text or image
+  const msgContent = document.createElement("div");
+  if (
+    typeof text === 'string' &&
+    (text.match(/\.(jpeg|jpg|gif|png|webp)$/i) || text.startsWith("data:image/"))
+  ) {
+    const img = document.createElement('img');
+    img.src = text;
+    img.alt = "Sent image";
+    img.style.maxWidth = "200px";
+    img.style.maxHeight = "150px";
+    img.style.borderRadius = "8px";
+    msgContent.appendChild(img);
+  } else {
+    msgContent.textContent = text;
+  }
+  bubbleDiv.appendChild(msgContent);
 
   // --- Time label inside bubble (bottom right) ---
   const timeLabel = document.createElement("span");
@@ -304,26 +331,72 @@ function addMessage(text, sender, name, timestamp = Date.now()) {
   timeLabel.textContent = timeString;
   bubbleDiv.appendChild(timeLabel);
 
+  // --- 3-dot menu for user's own messages ---
+  if (sender === "user" && messageKey) {
+    const msgActions = document.createElement("div");
+    msgActions.className = "msg-actions";
+
+    // 3-dot icon
+    const menuBtn = document.createElement("button");
+    menuBtn.className = "msg-menu";
+    menuBtn.innerHTML = "&#8942;"; // vertical ellipsis
+
+    // Dropdown
+    const dropdown = document.createElement("div");
+    dropdown.className = "msg-dropdown";
+    dropdown.style.display = "none";
+    dropdown.innerHTML = `<div class="msg-dropdown-item">Delete for everyone</div>`;
+
+    // Toggle dropdown
+    menuBtn.onclick = (e) => {
+      e.stopPropagation();
+      dropdown.style.display = dropdown.style.display === "block" ? "none" : "block";
+    };
+    // Click outside closes
+    document.addEventListener("click", () => { dropdown.style.display = "none"; });
+
+    // Delete click
+    dropdown.querySelector(".msg-dropdown-item").onclick = () => {
+      if (messageKey) deleteMessageFromFirebase(messageKey);
+    };
+
+    msgActions.appendChild(menuBtn);
+    msgActions.appendChild(dropdown);
+    bubbleDiv.appendChild(msgActions);
+  }
+
   msgDiv.appendChild(bubbleDiv);
   messagesContainer.appendChild(msgDiv);
   messagesContainer.scrollTop = messagesContainer.scrollHeight;
 }
 
 
+function deleteMessageFromFirebase(messageKey) {
+  if (!sessionId || !messageKey) return;
+  if (confirm("Are you sure you want to delete this message for everyone?")) {
+    db.ref("chats/" + sessionId + "/" + messageKey).remove().then(() => {
+      // Remove from UI
+      const msgDiv = document.querySelector(`[data-key="${messageKey}"]`);
+      if (msgDiv) msgDiv.remove();
+    });
+  }
+}
+
+
 
 function sendMessage(message, type = "text") {
   if (!db || !sessionId || !message) return;
-
   const newMsgRef = db.ref("chats/" + sessionId).push();
   newMsgRef.set({
     message,
     sender: "user",
     type,
     timestamp: Date.now()
+  }).then(() => {
+    addMessage(message, "user", userName, Date.now(), newMsgRef.key);
   });
-
-  addMessage(message, "user", userName);
 }
+
 
 function addImageMessage(url, sender) {
   addMessage(url, sender);
@@ -348,44 +421,39 @@ function botMessage(text) {
 function sendMsg(customText) {
   const input = document.getElementById("input");
   const msg = (customText || input.value).trim();
-  
   if (!msg) return;
 
-  // Add user message to UI
-  addMessage(msg, "user");
-  
-  // Save to Firebase
+  // Save to Firebase and get the key first
   if (db && sessionId) {
-    db.ref("chats/" + sessionId).push({
+    const newMsgRef = db.ref("chats/" + sessionId).push();
+    newMsgRef.set({
       sender: "user",
       message: msg,
       type: "text",
       timestamp: Date.now()
+    }).then(() => {
+      // Now show in UI with the key
+      addMessage(msg, "user", userName, Date.now(), newMsgRef.key);
     }).catch((error) => {
       console.error("Error saving user message:", error);
     });
   }
-  
-  // Clear input if not custom text
-  if (!customText) {
-    input.value = "";
-  }
 
-  // Check for preset reply
+  // Clear input if not custom text
+  if (!customText) input.value = "";
+
+  // Check for preset reply (unchanged)
   const lower = msg.toLowerCase();
   const reply = presetReplies[lower];
-
   if (reply) {
-    setTimeout(() => {
-      botMessage(reply);
-    }, 300);
+    setTimeout(() => { botMessage(reply); }, 300);
   } else {
-    // Generic response for non-preset messages
     setTimeout(() => {
       botMessage("Thank you for your message. Our team will get back to you soon! 😊");
     }, 300);
   }
 }
+
 
 function presetClick(message) {
   sendMsg(message);
@@ -424,12 +492,24 @@ function uploadImage() {
 
 // Event Listeners
 document.addEventListener("DOMContentLoaded", function() {
-  // Toggle chatbot visibility
-  document.getElementById("chatbot-toggle").onclick = () => {
-    const chatContainer = document.getElementById("chat-container");
+  const chatbotToggle = document.getElementById("chatbot-toggle");
+  const chatContainer = document.getElementById("chat-container");
+  const chatIcon = document.getElementById("chat-icon-img");
+  const closeIcon = document.getElementById("close-icon-img");
+
+  chatbotToggle.onclick = () => {
     const isVisible = chatContainer.style.display === "flex";
     chatContainer.style.display = isVisible ? "none" : "flex";
     
+    // Toggle the icons
+    if (!isVisible) {
+      chatIcon.style.display = "none";
+      closeIcon.style.display = "block";
+    } else {
+      chatIcon.style.display = "block";
+      closeIcon.style.display = "none";
+    }
+
     // Focus on appropriate input when opening
     if (!isVisible) {
       setTimeout(() => {
@@ -462,10 +542,44 @@ document.addEventListener("DOMContentLoaded", function() {
       sendMsg();
     }
   });
+
+  // Error handling for unhandled promises
+  window.addEventListener('unhandledrejection', function(event) {
+    console.error('Unhandled promise rejection:', event.reason);
+    event.preventDefault();
+  });
 });
 
-// Error handling for unhandled promises
-window.addEventListener('unhandledrejection', function(event) {
-  console.error('Unhandled promise rejection:', event.reason);
-  event.preventDefault();
+
+document.addEventListener("DOMContentLoaded", function() {
+  const emojiBtn = document.getElementById('emoji-btn');
+  const input = document.getElementById('input');
+  const picker = document.getElementById('emoji-picker');
+
+  // Basic emoji list (you can add many more!)
+  const emojis = ["😀","😂","😍","🥰","😎","😭","😡","😱","👍","🙏","🎉","🎂","🔥","🤔","🤖","❤️"];
+  picker.innerHTML = emojis.map(e => `<span style="cursor:pointer;font-size:22px;padding:2px;">${e}</span>`).join('');
+
+  emojiBtn.addEventListener('click', function() {
+    picker.style.display = picker.style.display === 'block' ? 'none' : 'block';
+  });
+
+  picker.addEventListener('click', function(e) {
+    if (e.target.tagName === 'SPAN') {
+      // Insert at caret position
+      const start = input.selectionStart;
+      const end = input.selectionEnd;
+      input.value = input.value.substring(0, start) + e.target.textContent + input.value.substring(end);
+      input.focus();
+      input.selectionStart = input.selectionEnd = start + e.target.textContent.length;
+      picker.style.display = 'none';
+    }
+  });
+
+  // Optional: close on click outside
+  document.addEventListener('click', function(e) {
+    if (!emojiBtn.contains(e.target) && !picker.contains(e.target)) {
+      picker.style.display = 'none';
+    }
+  });
 });
