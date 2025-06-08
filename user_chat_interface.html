@@ -69,13 +69,23 @@
   <!-- Main Chat Interface -->
   <div id="chat" class="chat-bot-bg">
     <div class="chat-header">
-      <div class="bot-avatar"><img src="images/logo.jpg" alt="Bot Avatar" class="bot-avatar"></div>
-      <div>
-        <h3 class="bot-title" style="color: white; margin: 0px; padding: 0px;" >Welcome to E-invite</h3>
-        <p class="bot-subtitle">Your Virtual Assistant</p>
-      </div>
+  <!-- Crisp-style Chat Button Centered at Top -->
+  <div class="chat-header-top">
+    <button class="crisp-chat-btn">
+      <span class="chat-icon-circle">
+        <img src="images/crsip-msg.png" alt="Chat Icon" class="chat-icon" />
+      </span>
+      <span class="chat-btn-label">Chat</span>
+    </button>
+  </div>
+  <!-- Row: Avatar + Name + Menu (Aligned Center, Not Wrapping) -->
+  <div class="chat-header-main">
+    <img src="images/logo.jpg" class="header-avatar" />
+    <div class="header-info">
+      <div class="header-title">E from E inviter</div>
     </div>
-
+  </div>
+</div>
     <div id="messages" class="chat-messages"></div>
 
 <hr style="width: 85%; margin-left: 20px; border: 1px solid #ebebeb;

@@ -423,36 +423,36 @@ function sendMsg(customText) {
   const msg = (customText || input.value).trim();
   if (!msg) return;
 
-  // Save to Firebase and get the key first
   if (db && sessionId) {
     const newMsgRef = db.ref("chats/" + sessionId).push();
+    const ts = Date.now();
     newMsgRef.set({
       sender: "user",
       message: msg,
       type: "text",
-      timestamp: Date.now()
+      timestamp: ts
     }).then(() => {
-      // Now show in UI with the key
-      addMessage(msg, "user", userName, Date.now(), newMsgRef.key);
+      // 1. Show user message in UI only AFTER saving
+      addMessage(msg, "user", userName, ts, newMsgRef.key);
+
+      // 2. Now handle bot reply after user message is rendered
+      const lower = msg.toLowerCase();
+      const reply = presetReplies[lower];
+      setTimeout(() => {
+        if (reply) {
+          botMessage(reply);
+        } else {
+          botMessage("Thank you for your message. Our team will get back to you soon! 😊");
+        }
+      }, 300);
     }).catch((error) => {
       console.error("Error saving user message:", error);
     });
   }
 
-  // Clear input if not custom text
   if (!customText) input.value = "";
-
-  // Check for preset reply (unchanged)
-  const lower = msg.toLowerCase();
-  const reply = presetReplies[lower];
-  if (reply) {
-    setTimeout(() => { botMessage(reply); }, 300);
-  } else {
-    setTimeout(() => {
-      botMessage("Thank you for your message. Our team will get back to you soon! 😊");
-    }, 300);
-  }
 }
+
 
 
 function presetClick(message) {
