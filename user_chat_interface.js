@@ -38,6 +38,8 @@ const presetReplies = {
   "talk to agent": "👤 Please wait. Connecting you to a real support agent..."
 };
 
+let pendingBotReplyTimeout = null;
+
 // Utility Functions
 function generateSessionId(name) {
   const sanitized = name.toLowerCase().replace(/\s+/g, "_").replace(/[^a-z0-9_]/g, "");
@@ -228,7 +230,17 @@ function initializeChat() {
 }
 
 function loadChatMessages(callback) {
-  db.ref("chats/" + sessionId).once("value", (snapshot) => {
+  const chatRef = db.ref("chats/" + sessionId);
+
+  // Step 1: Remove any previous listeners to prevent stacking (IMPORTANT!)
+  chatRef.off();
+
+  // Step 2: Store loaded keys to avoid duplicates
+  const loadedKeys = new Set();
+  let lastMsgKey = null;
+
+  // Step 3: Load all existing (history) messages ONCE
+  chatRef.once("value", (snapshot) => {
     if (snapshot.exists()) {
       snapshot.forEach((childSnapshot) => {
         const data = childSnapshot.val();
@@ -239,27 +251,35 @@ function loadChatMessages(callback) {
           } else {
             addMessage(data.message, data.sender, null, data.timestamp, key);
           }
+          loadedKeys.add(key);
+          lastMsgKey = key;
         }
       });
     }
-    if (callback) callback();
-  }).catch((error) => {
-    console.error("Error loading messages:", error);
-    if (callback) callback();
-  });
 
-  // Set up real-time listener for new agent messages
-  db.ref("chats/" + sessionId).limitToLast(1).on("child_added", (snapshot) => {
-    const data = snapshot.val();
-    if (data && data.sender === "agent" && data.message) {
-      if (data.type === "image") {
-        addImageMessage(data.message, "agent");
-      } else {
-        addMessage("Agent: " + data.message, "agent");
+    // Step 4: Real-time listener for **NEW** messages only (no repeats)
+    chatRef.orderByKey().startAt(lastMsgKey ? lastMsgKey : "").on("child_added", (snapshot) => {
+      // If already loaded (from history), skip
+      if (loadedKeys.has(snapshot.key)) return;
+
+      const data = snapshot.val();
+      if (data && data.message) {
+        if (data.type === "image") {
+          addImageMessage(data.message, data.sender, null, data.timestamp, snapshot.key);
+        } else {
+          addMessage(data.message, data.sender, null, data.timestamp, snapshot.key);
+        }
+        loadedKeys.add(snapshot.key);
       }
-    }
+    });
+
+    // Step 5: Callback when done loading
+    if (callback) callback();
   });
 }
+
+
+
 
 function addMessage(text, sender, name, timestamp = Date.now(), messageKey = null) {
   const messagesContainer = document.getElementById("messages");
@@ -403,20 +423,17 @@ function addImageMessage(url, sender) {
 }
 
 function botMessage(text) {
-  addMessage(text, "bot");
-  
-  // Save to Firebase
   if (db && sessionId) {
     db.ref("chats/" + sessionId).push({
       sender: "bot",
       message: text,
       type: "text",
       timestamp: Date.now()
-    }).catch((error) => {
-      console.error("Error saving bot message:", error);
     });
   }
+  // Don’t call addMessage() here!
 }
+
 
 function sendMsg(customText) {
   const input = document.getElementById("input");
@@ -424,34 +441,32 @@ function sendMsg(customText) {
   if (!msg) return;
 
   if (db && sessionId) {
-    const newMsgRef = db.ref("chats/" + sessionId).push();
-    const ts = Date.now();
-    newMsgRef.set({
+    db.ref("chats/" + sessionId).push({
       sender: "user",
       message: msg,
       type: "text",
-      timestamp: ts
-    }).then(() => {
-      // 1. Show user message in UI only AFTER saving
-      addMessage(msg, "user", userName, ts, newMsgRef.key);
-
-      // 2. Now handle bot reply after user message is rendered
-      const lower = msg.toLowerCase();
-      const reply = presetReplies[lower];
-      setTimeout(() => {
-        if (reply) {
-          botMessage(reply);
-        } else {
-          botMessage("Thank you for your message. Our team will get back to you soon! 😊");
-        }
-      }, 300);
-    }).catch((error) => {
-      console.error("Error saving user message:", error);
+      timestamp: Date.now()
     });
   }
 
   if (!customText) input.value = "";
+
+  // CANCEL any previous pending bot reply
+  if (pendingBotReplyTimeout) {
+    clearTimeout(pendingBotReplyTimeout);
+    pendingBotReplyTimeout = null;
+  }
+
+  // Schedule fallback bot reply in 30 seconds (or whatever time you want)
+  pendingBotReplyTimeout = setTimeout(() => {
+    // Only send fallback if NO agent has replied in the meantime
+    botMessage("Thank you for your message. Our team will get back to you soon! 😊");
+    pendingBotReplyTimeout = null;
+  }, 30000); // 30000 ms = 30 seconds
+
+  // Don't send the fallback reply immediately!
 }
+
 
 
 
@@ -479,7 +494,14 @@ function uploadImage() {
     .then((response) => response.json())
     .then((data) => {
       if (data.success) {
-        sendMessage(data.url, "image");
+        // JUST push to Firebase:
+        db.ref("chats/" + sessionId).push({
+          sender: "user",
+          message: data.url,
+          type: "image",
+          timestamp: Date.now()
+        });
+        // DO NOT call addImageMessage() here!
       } else {
         alert("Upload failed: " + data.error);
       }
@@ -489,6 +511,8 @@ function uploadImage() {
       alert("An error occurred.");
     });
 }
+
+
 
 // Event Listeners
 document.addEventListener("DOMContentLoaded", function() {
