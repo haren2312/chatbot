@@ -6,40 +6,47 @@
   <title>Agent Panel - Enterprise Chat</title>
   <link rel="stylesheet" href="agent_dashboard.css">
   <link href="https://fonts.googleapis.com/css?family=Inter:400,600,700&display=swap" rel="stylesheet">
-
 </head>
 <body>
-  
+
 <!-- NAV BAR (vertical, left) -->
 <div class="nav-bar" id="nav-bar">
   <button id="navToggle" class="nav-toggle">
     <span></span><span></span><span></span>
   </button>
   <div class="search-bar">
-      <input type="text" id="searchInput" >
-    </div>
+    <input type="text" id="searchInput" placeholder="Search...">
+  </div>
   <ul class="nav-menu">
     <li class="nav-logo">
-      <span  >👤</span>
+      <span>👤</span>
     </li>
     <li class="nav-item active" title="Chats">
-      <span>🗯️</span>
+      <span style="background-color: #1877f2; border-radius: 10px;">🗯️</span>
     </li>
-    <li class="nav-item" title="Users">
-      <span style="width: 20px;" >⚛</span>
+    <li class="nav-ai" title="AI">
+      <span style="width: 30px;">
+        <img src="images/ai.png" style="width:30px;" alt="AI">
+      </span>
     </li>
-    <!-- Add more nav-items as needed -->
   </ul>
-
-   <li class="nav-item" title="Settings">
-      <span>⚙️</span>
+  <li class="nav-set" title="Settings">
+      <span class="set">🌣</span>
     </li>
-
 </div>
 
-
+<div class="container">
+  <!-- SIDEBAR with filter bar -->
   <div class="sidebar">
-    
+    <div class="filter-bar">
+      <div class="filter-dropdown">
+        <span>All</span> <span class="dropdown-arrow">▼</span>
+      </div>
+      <button class="filter-btn">
+        <span style="font-size:1.1em;">&#128269;</span> Filters
+      </button>
+      <button class="add-btn">+</button>
+    </div>
     <div id="sessionList">
       <div class="loading">Loading sessions...</div>
     </div>
@@ -55,14 +62,13 @@
           <p>Choose a session from the sidebar to start viewing the conversation</p>
         </div>
       </div>
-      <hr style="width: 90%; margin-left: 45px; border: 1px solid #ebebeb;
-" >
+      <hr style="width: 90%; margin-left: 45px; border: 1px solid #ebebeb;">
       <div class="input-group" id="inputGroup" style="display: none;">
         <input type="text" id="msgInput" placeholder="Type your message..." maxlength="500" autocomplete="off">
         <button id="emojiBtn">❤︎</button>
         <input type="file" id="fileInput" accept="image/*" style="display:none;" />
         <button id="uploadBtn" title="Send Image 📷">🔗</button>
-        <button id="sendBtn" class="sendBtn" >➤</button>
+        <button id="sendBtn" class="sendBtn">➤</button>
       </div>
       <div class="emoji-picker" id="emojiPicker" style="display:none;">
         <span>😊</span><span>😂</span><span>😍</span><span>🤔</span><span>👍</span><span>❤️</span><span>🔥</span><span>✨</span>

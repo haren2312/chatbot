@@ -76,92 +76,175 @@ function getCountryFlagImg(countryCode = "IN", size = 20) {
 
   // --- SIDEBAR: Session List ---
   function renderSessions(filter = "") {
-    const sessionList = document.getElementById("sessionList");
-    sessionList.innerHTML = "";
-    const sessionIds = Object.keys(allSessions);
-    if (sessionIds.length === 0) {
-      sessionList.innerHTML = '<div class="empty-state">No chat sessions found</div>';
-      return;
-    }
-    let hasResults = false;
-    for (let sid of sessionIds) {
-      const userData = allUserData[sid];
-      if (!userData || !userData.name) continue; // Only show if user exists and has name
-      if (filter && !userData.name.toLowerCase().includes(filter)) continue;
-      hasResults = true;
-      const initials = getInitials(userData.name);
-      const avatarGradient = getAvatarGradient(userData.name + (userData.country || "IN"));
-      const isSelected = selectedSessionId === sid ? "selected" : "";
-      const countryFlag = getCountryFlagImg(userData.country || "IN", 20);
-      const sessionBtn = document.createElement("div");
-      sessionBtn.className = `session-item ${isSelected}`;
-      sessionBtn.innerHTML = `
-        <div style="display:flex;align-items:center;gap:11px;position:relative;">
-        <div style="position:relative;width:45px;height:45px;">
-        <div class="user-avatar"
-            style="width:45px;height:45px;border-radius:50%;background:${avatarGradient};display:flex;align-items:center;justify-content:center;font-weight:700;color:#fff;font-size:1.1rem;box-shadow:0 1px 8px #15193544;">
-                      ${escapeHtml(initials)}
-        </div>
-            <span class="country-flag"  
-    title="${userData.country || "IN"}"
-    style="position: absolute; right: -2px; bottom: -3px;">
-    ${countryFlag}
-  </span>
-</div>
+  const sessionList = document.getElementById("sessionList");
+  sessionList.innerHTML = "";
+  const sessionIds = Object.keys(allSessions);
+  if (sessionIds.length === 0) {
+    sessionList.innerHTML = '<div class="empty-state">No chat sessions found</div>';
+    return;
+  }
+  let hasResults = false;
+  for (let sid of sessionIds) {
+    const userData = allUserData[sid];
+    if (!userData || !userData.name) continue; // Only show if user exists and has name
+    if (filter && !userData.name.toLowerCase().includes(filter)) continue;
+    hasResults = true;
+    const initials = getInitials(userData.name);
+    const avatarGradient = getAvatarGradient(userData.name + (userData.country || "IN"));
+    const isSelected = selectedSessionId === sid ? "selected" : "";
+    const countryFlag = getCountryFlagImg(userData.country || "IN", 20);
 
-          <div style="flex:1;min-width:0;">
-            <div style="font-weight:600;font-size:1em;color:black;text-overflow:ellipsis;overflow:hidden;">
-              ${escapeHtml(userData.name)}
-            </div>
-            <div class="session-info" style="text-overflow:ellipsis;white-space:nowrap;overflow:hidden;">
-              ${escapeHtml(userData.email || "")}
-            </div>
+    // Get last message and time
+    let lastMsg = "";
+    let lastMsgTime = "";
+    const chatData = allSessions[sid];
+    if (chatData) {
+      // Convert messages to array, sort by timestamp
+      const messagesArr = Object.entries(chatData)
+        .map(([msgId, msg]) => ({ ...msg, _id: msgId }))
+        .sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
+      if (messagesArr.length) {
+        const last = messagesArr[messagesArr.length - 1];
+        if (last.type === "image") {
+          lastMsg = "📷 Image";
+        } else {
+          lastMsg = last.message || "";
+        }
+        if (last.timestamp) {
+          const d = new Date(last.timestamp);
+          // If today, show time; else show date
+          const now = new Date();
+          if (
+            d.getDate() === now.getDate() &&
+            d.getMonth() === now.getMonth() &&
+            d.getFullYear() === now.getFullYear()
+          ) {
+            lastMsgTime = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true });
+          } else {
+            lastMsgTime = d.toLocaleDateString();
+          }
+        }
+      }
+    }
+    if (!lastMsg) lastMsg = "<i>No messages yet</i>";
+
+    const sessionBtn = document.createElement("div");
+    sessionBtn.className = `session-item ${isSelected}`;
+    sessionBtn.innerHTML = `
+      <div style="display:flex;align-items:center;gap:11px;position:relative;">
+        <div style="position:relative;width:45px;height:45px;">
+          <div class="user-avatar"
+            style="width:45px;height:45px;border-radius:50%;background:${avatarGradient};display:flex;align-items:center;justify-content:center;font-weight:700;color:#fff;font-size:1.1rem;box-shadow:0 1px 8px #15193544;">
+            ${escapeHtml(initials)}
+          </div>
+          <span class="country-flag"  
+            title="${userData.country || "IN"}"
+            style="position: absolute; right: -2px; bottom: -3px;">
+            ${countryFlag}
+          </span>
+        </div>
+        <div style="flex:1;min-width:0;">
+          <div style="font-weight:600;font-size:1em;color:black;text-overflow:ellipsis;overflow:hidden;">
+            ${escapeHtml(userData.name)}
+          </div>
+          <div class="session-info" style="text-overflow:ellipsis;white-space:nowrap;overflow:hidden;color:#656e7e;">
+            <span style="display:inline-block;max-width:150px;overflow:hidden;text-overflow:ellipsis;vertical-align:middle;">
+              ${lastMsg}
+            </span>
+            <span style="color:#a6a6a6;font-size:.8em;float:right;padding-left:8px;">${lastMsgTime}</span>
           </div>
         </div>
-      `;
-      sessionBtn.onclick = () => loadChat(sid);
-      sessionList.appendChild(sessionBtn);
-    }
-    if (!hasResults) {
-      sessionList.innerHTML = '<div class="empty-state">No sessions match your search</div>';
-    }
-  }
-
-  // --- USER INFO PANEL ---
-  function renderUserInfoPanel() {
-    const userInfoList = document.getElementById("user-info-list");
-    if (!selectedSessionId || !allUserData[selectedSessionId]) {
-      userInfoList.innerHTML = ""; // Nothing if no user selected!
-      return;
-    }
-    const user = allUserData[selectedSessionId];
-    const initials = getInitials(user.name);
-    const avatarGradient = getAvatarGradient(user.name + (user.country || "IN"));
-    const lat = user.location?.latitude || user.latitude;
-    const lng = user.location?.longitude || user.longitude;
-    const countryFlag = getCountryFlagImg(user.country || "IN", 20);
-    const locationLink = (lat && lng)
-      ? `<a href="https://maps.google.com/?q=${lat},${lng}" target="_blank" class="modern-map-link">Location</a>`
-      : `<span class="modern-map-link disabled">Location N/A</span>`;
-    userInfoList.innerHTML = `
-      <div class="modern-user-card" id="user-info-${selectedSessionId}">
-        <div class="modern-avatar"
-  style="background:${avatarGradient};color:#fff;position:relative;box-shadow:0 3px 10px #15193533; width: 60px;height: 60px;">
-  ${initials}
-  <span class="country-flag" title="${user.country || "IN"}"
-        style="position:absolute;right:-8px;bottom:-5px;">
-    ${countryFlag}
-  </span>
-</div>
-        <div class="modern-user-details" style="flex:1;">
-          <span class="modern-user-name">${escapeHtml(user.name)}</span>
-          <span class="modern-user-email">${escapeHtml(user.email || "")}</span>
-          <span class="modern-user-meta">${locationLink}</span>
-        </div>
-        <button class="modern-edit-btn" onclick="openEditModal('${selectedSessionId}')">✏️</button>
       </div>
     `;
+    sessionBtn.onclick = () => loadChat(sid);
+    sessionList.appendChild(sessionBtn);
   }
+  if (!hasResults) {
+    sessionList.innerHTML = '<div class="empty-state">No sessions match your search</div>';
+  }
+}
+
+
+  // --- USER INFO PANEL ---
+ function renderUserInfoPanel() {
+  const userInfoList = document.getElementById("user-info-list");
+  if (!selectedSessionId || !allUserData[selectedSessionId]) {
+    userInfoList.innerHTML = "";
+    return;
+  }
+  const user = allUserData[selectedSessionId];
+  const initials = getInitials(user.name);
+  const avatarGradient = getAvatarGradient(user.name + (user.country || "IN"));
+  const lat = user.location?.latitude || user.latitude;
+  const lng = user.location?.longitude || user.longitude;
+  const city = user.city || "Unknown City";
+  const country = user.country || "IN";
+  const countryFlag = getCountryFlagImg(country, 20);
+  // Calculate time (for demo, just show current time)
+  const now = new Date();
+  const localTime = now.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+  const timezoneOffset = Intl.DateTimeFormat().resolvedOptions().timeZone;
+
+  userInfoList.innerHTML = `
+    <div class="modern-user-card" id="user-info-${selectedSessionId}">
+      <div class="modern-avatar"
+        style="background:${avatarGradient};color:#fff;position:relative;box-shadow:0 3px 10px #15193533; width: 60px;height: 60px;">
+        ${initials}
+        <span class="country-flag" title="${country}" style="position:absolute;right:-8px;bottom:-5px;">
+          ${countryFlag}
+        </span>
+      </div>
+      <div class="modern-user-details" style="flex:1;">
+        <span class="modern-user-name">${escapeHtml(user.name)}</span>
+        <span class="modern-user-email">${escapeHtml(user.email || "")}</span>
+      </div>
+      <button class="modern-edit-btn" onclick="openEditModal('${selectedSessionId}')">✏️</button>
+    </div>
+    <!-- Extra user info like in the Jira-style panel -->
+    <div class="modern-user-extra">
+    <div>
+    <p style="border: 1px solid lightgray;
+    padding: 10px 5px;
+    text-align: center;
+    background: #eaeded;" >Main Informations</p><br>
+    </div>
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:7px;">
+        <span style="font-size:1.2em;">📍</span>
+        <span>${city}, ${country}</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:7px;">
+        <span style="font-size:1.2em;">🕒</span>
+        <span>${localTime} <span style="color:#7a8599;font-size:.8em;">(${timezoneOffset})</span></span>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:7px;">
+        <span style="font-size:1.2em;">🌍</span>
+        <span>${countryFlag}</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:9px;">
+  <span style="font-size:1.3em;">📆</span>
+  <span>${getFormattedDateByTimezone()}</span>
+</div>
+
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:7px;">
+        <span style="font-size:1.2em;">🌐</span>
+        <a href="https://einvite.website/" target="_blank" style="color:#2563eb;text-decoration:underline;">https://einvite.website/</a>
+      </div>
+    </div>
+  `;
+}
+
+function getFormattedDateByTimezone(timezone = "Asia/Kolkata") {
+  // Example: "09 Jun 2025"
+  const now = new Date();
+  return now.toLocaleDateString("en-IN", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+    timeZone: timezone
+  });
+}
+
+
 
   // --- MODAL ---
   function openEditModal(sessionId) {
