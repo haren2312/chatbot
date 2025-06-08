@@ -10,17 +10,36 @@
 </head>
 <body>
   
-<div class="container">
-  <!-- SIDEBAR: Admin Session List -->
-   
+<!-- NAV BAR (vertical, left) -->
+<div class="nav-bar" id="nav-bar">
+  <button id="navToggle" class="nav-toggle">
+    <span></span><span></span><span></span>
+  </button>
+  <div class="search-bar">
+      <input type="text" id="searchInput" >
+    </div>
+  <ul class="nav-menu">
+    <li class="nav-logo">
+      <span  >👤</span>
+    </li>
+    <li class="nav-item active" title="Chats">
+      <span>🗯️</span>
+    </li>
+    <li class="nav-item" title="Users">
+      <span style="width: 20px;" >⚛</span>
+    </li>
+    <!-- Add more nav-items as needed -->
+  </ul>
+
+   <li class="nav-item" title="Settings">
+      <span>⚙️</span>
+    </li>
+
+</div>
+
+
   <div class="sidebar">
-    <div class="sidebar-header">
-      <h3>ADMIN PANEL</h3>
-      <span>👤</span>
-    </div>
-    <div class="search-bar">
-      <input type="text" id="searchInput" placeholder="Search by name...">
-    </div>
+    
     <div id="sessionList">
       <div class="loading">Loading sessions...</div>
     </div>
@@ -36,12 +55,14 @@
           <p>Choose a session from the sidebar to start viewing the conversation</p>
         </div>
       </div>
+      <hr style="width: 90%; margin-left: 45px; border: 1px solid #ebebeb;
+" >
       <div class="input-group" id="inputGroup" style="display: none;">
-        <button id="emojiBtn">😊</button>
         <input type="text" id="msgInput" placeholder="Type your message..." maxlength="500" autocomplete="off">
+        <button id="emojiBtn">❤︎</button>
         <input type="file" id="fileInput" accept="image/*" style="display:none;" />
-        <button id="uploadBtn" title="Send Image 📷">📷</button>
-        <button id="sendBtn">Send</button>
+        <button id="uploadBtn" title="Send Image 📷">🔗</button>
+        <button id="sendBtn" class="sendBtn" >➤</button>
       </div>
       <div class="emoji-picker" id="emojiPicker" style="display:none;">
         <span>😊</span><span>😂</span><span>😍</span><span>🤔</span><span>👍</span><span>❤️</span><span>🔥</span><span>✨</span>
@@ -57,7 +78,6 @@
 <div id="modalBackdrop" class="modal-backdrop" style="display:none;"></div>
 <div id="editModal" class="edit-modal" data-session-id="" style="display:none;">
   <div class="edit-user-quote-box">
-    <h3>Edit User</h3>
     <label for="editName">Name</label>
     <input type="text" id="editName" placeholder="Enter name">
     <label for="editEmail">Email</label>
