@@ -81,26 +81,25 @@ function getCountryFlagImg(countryCode = "IN", size = 20) {
     }, options.timeout || 2500);
   }
 
-  function getMessageStatusIcon(msg, isAgent) {
-  if (!isAgent) return ""; // Only show ticks for agent/admin sent messages
+  function getMessageStatusIcon(msg, isRight) {
+  // Only show status for right-side messages (admin/agent/bot)
+  if (!isRight) return "";
 
+  // Handle different message statuses
   if (msg.status === "read") {
-    // Double blue tick
-    return `<span style="margin-left:5px;color:#2563eb;font-size:1em;vertical-align:middle;">
-      ✔✔
-    </span>`;
+    // Double blue tick: Read
+    return `<span style="margin-left:7px; color:#2563eb; font-size:1.08em; vertical-align:middle;">✔✔</span>`;
   } else if (msg.status === "delivered") {
-    // Double gray tick
-    return `<span style="margin-left:5px;color:#bababa;font-size:1em;vertical-align:middle;">
-      ✔✔
-    </span>`;
+    // Double grey tick: Delivered but not read
+    return `<span style="margin-left:7px; color:#bababa; font-size:1.08em; vertical-align:middle;">✔✔</span>`;
   } else {
-    // Single gray tick (sent)
-    return `<span style="margin-left:5px;color:#bababa;font-size:1em;vertical-align:middle;">
-      ✔
-    </span>`;
+    // Single grey tick: Sent but not delivered/read
+    return `<span style="margin-left:7px; color:#bababa; font-size:1.08em; vertical-align:middle;">✔</span>`;
   }
 }
+
+
+
 
 
 // Listen for dropdown
@@ -222,6 +221,7 @@ function editMessage(msgId) {
     hasResults = true;
     const initials = getInitials(userData.name);
     const avatarGradient = getAvatarGradient(userData.name + (userData.country || "IN"));
+    const statusDot = getStatusDotHtml(sid);
     const isSelected = selectedSessionId === sid ? "selected" : "";
     const countryFlag = getCountryFlagImg(userData.country || "IN", 20);
 
@@ -261,6 +261,7 @@ function editMessage(msgId) {
           <div class="user-avatar"
             style="width:45px;height:45px;border-radius:50%;background:${avatarGradient};display:flex;align-items:center;justify-content:center;font-weight:700;color:#fff;font-size:1.1rem;box-shadow:0 1px 8px #15193544;">
             ${escapeHtml(initials)}
+             <span style="position:absolute;bottom:0;right:0;transform:translate(40%,40%);">${statusDot}</span>
           </div>
           <span class="country-flag" style="position: absolute; right: -2px; bottom: -3px;">
             ${countryFlag}
@@ -294,6 +295,34 @@ function editMessage(msgId) {
     sessionList.innerHTML = '<div class="empty-state">No sessions match your search</div>';
   }
 }
+
+
+// Add a status indicator (dot) based on presence
+function getStatusDotHtml(userId) {
+  const state = window.userPresence?.[userId]?.state;
+  if (state === "online") {
+    return `<span class="user-status-dot" style="background:#13d157"></span>`;
+  } else if (state === "offline") {
+    return `<span class="user-status-dot" style="background:#fd7e14"></span>`;
+  }
+  // Default: gray for unknown/offline
+  return `<span class="user-status-dot" style="background:#bbb"></span>`;
+}
+
+
+
+window.userPresence = {};
+
+function listenToPresence() {
+  firebase.database().ref("presence").on("value", function(snapshot) {
+    window.userPresence = snapshot.val() || {};
+    renderSessions(document.getElementById("searchInput").value.toLowerCase());
+    renderUserInfoPanel(); // <-- make sure you call this here!
+  });
+}
+listenToPresence();
+
+
 
 
 
@@ -334,13 +363,18 @@ function getLocationMapLink(city, country, lat, lng) {
 
   userInfoList.innerHTML = `
     <div class="modern-user-card" id="user-info-${selectedSessionId}">
-      <div class="modern-avatar"
-        style="background:${avatarGradient};color:#fff;position:relative;box-shadow:0 3px 10px #15193533; width: 60px;height: 60px;">
-        ${initials}
-        <span class="country-flag" title="${country}" style="position:absolute;right:-8px;bottom:-5px;">
-          ${countryFlag}
-        </span>
-      </div>
+     <div class="modern-avatar"
+  style="background:${avatarGradient};color:#fff;position:relative;box-shadow:0 3px 10px #15193533; width: 60px;height: 60px;display:inline-flex;align-items:center;justify-content:center;">
+  ${initials}
+  <span class="country-flag" title="${country}" style="position:absolute;right:-8px;bottom:-5px;">
+    ${countryFlag}
+  </span>
+  <span class="user-status-dot" style="position:absolute;bottom:0;right:0;transform:translate(35%,35%);">
+    ${getStatusDotHtml(selectedSessionId)}
+  </span>
+</div>
+
+
       <div class="modern-user-details" style="flex:1;">
         <span class="modern-user-name">${escapeHtml(user.name)}</span>
         <span class="modern-user-email">${escapeHtml(user.email || "")}</span>
@@ -393,6 +427,31 @@ function getFormattedDateByTimezone(timezone = "Asia/Kolkata") {
   });
 }
 
+function setUserPresence(userId) {
+  const presenceRef = firebase.database().ref("presence/" + userId);
+  const amOnline = { state: "online", last_changed: firebase.database.ServerValue.TIMESTAMP };
+  const amOffline = { state: "offline", last_changed: firebase.database.ServerValue.TIMESTAMP };
+
+  // Special Firebase ref: triggers when connection state changes
+  const connectedRef = firebase.database().ref(".info/connected");
+
+  connectedRef.on("value", function(snapshot) {
+    if (snapshot.val() === true) {
+      // Set offline on disconnect
+      presenceRef.onDisconnect().set(amOffline).then(function() {
+        // Set online now
+        presenceRef.set(amOnline);
+      });
+    }
+  });
+
+  // Optionally, mark offline when browser closes (extra safe)
+  window.addEventListener("beforeunload", () => {
+    presenceRef.set(amOffline);
+  });
+}
+
+
 
 
   // --- MODAL ---
@@ -443,6 +502,26 @@ function getFormattedDateByTimezone(timezone = "Asia/Kolkata") {
       // Only mark as read if not already, and not sent by this user
       if (
         msg.sender !== currentUserType &&
+        msg.status !== "read"
+      ) {
+        messagesRef.child(msgId).update({ status: "read" });
+      }
+    });
+  });
+}
+
+// For example, when chat loads for the user
+markAllAdminMessagesAsRead(selectedSessionId);
+
+function markAllAdminMessagesAsRead(sessionId) {
+  const messagesRef = db.ref("chats/" + sessionId);
+  messagesRef.once("value", (snapshot) => {
+    const messages = snapshot.val() || {};
+    Object.entries(messages).forEach(([msgId, msg]) => {
+      const sender = (msg.sender || "").toLowerCase();
+      // Mark only admin/bot/agent messages as read if not already read
+      if (
+        (sender === "admin" || sender === "bot" || sender === "agent") &&
         msg.status !== "read"
       ) {
         messagesRef.child(msgId).update({ status: "read" });
@@ -535,7 +614,10 @@ function renderChatMessages(chatData) {
         ${!isRight ? avatarHtml : ""}
         <div class="message-bubble" style="${bubbleColor};position:relative;${isRight ? "margin-left:auto;" : ""}" data-msg-id="${msg._id}">
           <div>${messageContent}</div>
-          <div class="msg-time">${timeString} ${getMessageStatusIcon(msg, isRight)}</div>
+         <div class="msg-time">
+  ${timeString}
+  ${getMessageStatusIcon(msg, isRight)}
+</div>
         </div>
         ${isRight ? avatarHtml : ""}
         ${isRight && senderType !== "bot" ? `
@@ -600,6 +682,7 @@ document.addEventListener("click", function(e){
     db.ref("chats/" + selectedSessionId).off("value", currentChatListener);
   }
   selectedSessionId = sessionId;
+  markAllAdminMessagesAsRead(sessionId);
   document.getElementById("inputGroup").style.display = "flex";
   document.querySelectorAll(".session-item").forEach(item => {
     item.classList.remove("selected");
@@ -609,15 +692,14 @@ document.addEventListener("click", function(e){
   // ----> This is the important line! <----
   markMessagesAsRead(sessionId, "agent"); // or "user", depending on who's logged in
 
-  currentChatListener = (snapshot) => {
-    try {
-      const chatData = snapshot.val();
-      renderChatMessages(chatData);
-      renderUserInfoPanel();
-    } catch (error) {
-      notify("Failed to load chat messages.", { type: "error" });
-    }
-  };
+  // IN USER PANEL ONLY (not admin)
+currentChatListener = (snapshot) => {
+  const chatData = snapshot.val();
+  renderChatMessages(chatData);
+  renderUserInfoPanel();
+  markAllAdminMessagesAsRead(selectedSessionId); // <-- ONLY HERE, ONLY USER!
+};
+
   db.ref("chats/" + sessionId).on("value", currentChatListener);
   renderUserInfoPanel();
 }

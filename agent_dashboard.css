@@ -1187,7 +1187,7 @@ body {
     color: #9b9b9b;
     cursor: pointer;
     transition: background 0.18s, color 0.18s;
-    padding: 0px 0px 25px 5px;
+    padding: 0px 0px 25px 0px;
     border-radius: 10px;
     width: 44px;
     display: flex;
@@ -1541,4 +1541,29 @@ width: 0px;
   box-shadow: 0 2px 7px #2563eb10;
   margin-bottom: 0px;
   cursor: pointer;
+}
+
+/* Reduce dot size for clarity */
+  .country-flag {
+  position: absolute;
+  right: 2px;   /* or -2px, whatever fits your padding */
+  bottom: 2px;
+  z-index: 2;
+}
+.user-status-dot {
+    position: absolute;
+    right: 55px;
+    bottom: 50px;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    border: 2px solid #fff;
+    box-shadow: 0 1px 4px #9992;
+    background: #ddd;
+    z-index: 1;
+}
+
+.delete-session-btn:hover {
+  color: #b71c1c;
+  transform: scale(1.2);
 }
