@@ -19,7 +19,11 @@
   let sessionSortMode = "latest"; // latest, oldest, az, za
   let sessionFilterMode = "all";
   window.lastViewedTimestamp = {};
+  window.editMessage = editMessage;
+  window.deleteMessage = deleteMessage;
 
+
+  
   // --- UTILS ---
   function escapeHtml(unsafe) {
     if (typeof unsafe !== "string") return "";
@@ -99,13 +103,72 @@ function getCountryFlagImg(countryCode = "IN", size = 20) {
 }
 
 
+// Listen for dropdown
+document.getElementById("sessionSortMode").addEventListener("change", function() {
+  sessionSortMode = this.value;
+  renderSessions(document.getElementById("searchInput").value.toLowerCase());
+});
+
+// Listen for search bar input
+document.getElementById("searchInput").addEventListener('input', function() {
+  renderSessions(this.value.toLowerCase());
+});
+
+
+// Setup hover/click for msg-menu
+chatBox.querySelectorAll('.message-bubble').forEach(bubble => {
+  const msgMenu = bubble.querySelector('.msg-menu');
+  const msgActions = bubble.querySelector('.msg-actions');
+  if (msgMenu && msgActions) {
+    msgMenu.onclick = function(e) {
+      e.stopPropagation();
+      msgActions.style.display = msgActions.style.display === "flex" ? "none" : "flex";
+      // Hide other menus
+      chatBox.querySelectorAll('.msg-actions').forEach(other => {
+        if (other !== msgActions) other.style.display = "none";
+      });
+    };
+    // Hide when clicking outside
+    document.addEventListener('click', function handler(ev) {
+      if (!bubble.contains(ev.target)) {
+        msgActions.style.display = "none";
+        document.removeEventListener('click', handler);
+      }
+    });
+  }
+});
+
+function deleteMessage(msgId) {
+  if (!selectedSessionId || !msgId) return;
+  if (!confirm("Delete this message?")) return;
+  const chatRef = db.ref("chats/" + selectedSessionId + "/" + msgId);
+  chatRef.remove()
+    .then(() => notify("Message deleted", { type: "success" }))
+    .catch(err => notify("Failed to delete: " + err.message, { type: "error" }));
+}
+
+function editMessage(msgId) {
+  const chatRef = db.ref("chats/" + selectedSessionId + "/" + msgId);
+  chatRef.once("value", snapshot => {
+    const msg = snapshot.val();
+    if (!msg) return;
+    const newText = prompt("Edit your message:", msg.message);
+    if (newText !== null && newText.trim() !== "" && newText !== msg.message) {
+      chatRef.update({ message: newText, edited: true })
+        .then(() => notify("Message edited", { type: "success" }))
+        .catch(err => notify("Edit failed: " + err.message, { type: "error" }));
+    }
+  });
+}
+
+
   // --- SIDEBAR: Session List ---
   function renderSessions(filter = "") {
   const sessionList = document.getElementById("sessionList");
   sessionList.innerHTML = "";
   const sessionIds = Object.keys(allSessions);
 
-  // --- 1. Collect sessions with last message timestamp
+  // 1. Gather and map sessions with metadata
   let sessionArray = sessionIds.map(sid => {
     const chatData = allSessions[sid];
     let lastMsgTime = 0, lastMsgType = "", lastMsgSender = "", lastMsg = "";
@@ -124,23 +187,45 @@ function getCountryFlagImg(countryCode = "IN", size = 20) {
     return { sid, lastMsgTime, lastMsg, lastMsgType, lastMsgSender };
   });
 
-  // --- 2. Sort sessions: latest message on top
-  sessionArray.sort((a, b) => (b.lastMsgTime || 0) - (a.lastMsgTime || 0));
+  // 2. Apply sorting (uses global sessionSortMode)
+  if (sessionSortMode === "latest") {
+    sessionArray.sort((a, b) => (b.lastMsgTime || 0) - (a.lastMsgTime || 0));
+  } else if (sessionSortMode === "oldest") {
+    sessionArray.sort((a, b) => (a.lastMsgTime || 0) - (b.lastMsgTime || 0));
+  } else if (sessionSortMode === "az") {
+    sessionArray.sort((a, b) => {
+      const nameA = (allUserData[a.sid]?.name || "").toLowerCase();
+      const nameB = (allUserData[b.sid]?.name || "").toLowerCase();
+      return nameA.localeCompare(nameB);
+    });
+  } else if (sessionSortMode === "za") {
+    sessionArray.sort((a, b) => {
+      const nameA = (allUserData[a.sid]?.name || "").toLowerCase();
+      const nameB = (allUserData[b.sid]?.name || "").toLowerCase();
+      return nameB.localeCompare(nameA);
+    });
+  }
 
   let hasResults = false;
   for (let session of sessionArray) {
     const { sid, lastMsg, lastMsgTime, lastMsgSender } = session;
     const userData = allUserData[sid];
     if (!userData || !userData.name) continue;
-    if (filter && !userData.name.toLowerCase().includes(filter)) continue;
-    hasResults = true;
 
+    // 3. Filter by name or email
+    if (filter) {
+      const name = (userData.name || "").toLowerCase();
+      const email = (userData.email || "").toLowerCase();
+      if (!name.includes(filter) && !email.includes(filter)) continue;
+    }
+
+    hasResults = true;
     const initials = getInitials(userData.name);
     const avatarGradient = getAvatarGradient(userData.name + (userData.country || "IN"));
     const isSelected = selectedSessionId === sid ? "selected" : "";
     const countryFlag = getCountryFlagImg(userData.country || "IN", 20);
 
-    // --- 3. Calculate time string
+    // 4. Format last message time
     let lastMsgTimeStr = "";
     if (lastMsgTime) {
       const d = new Date(lastMsgTime);
@@ -156,10 +241,9 @@ function getCountryFlagImg(countryCode = "IN", size = 20) {
       }
     }
 
-    // --- 4. Badge logic: show notification if latest message is not from agent/admin and not viewed
+    // 5. Notification badge for new/unread messages
     let showBadge = false;
-    // Assume you track "lastViewedTimestamp" for each session for the agent
-    // You need to implement this logic: update lastViewedTimestamp[sid] when the agent opens the chat.
+    // Use window.lastViewedTimestamp[sid] logic (see previous answer)
     if (
       lastMsgSender !== "agent" &&
       lastMsgSender !== "admin" &&
@@ -168,7 +252,7 @@ function getCountryFlagImg(countryCode = "IN", size = 20) {
       showBadge = true;
     }
 
-    // --- 5. Render session item
+    // 6. Render each session entry
     const sessionBtn = document.createElement("div");
     sessionBtn.className = `session-item ${isSelected}`;
     sessionBtn.innerHTML = `
@@ -181,7 +265,7 @@ function getCountryFlagImg(countryCode = "IN", size = 20) {
           <span class="country-flag" style="position: absolute; right: -2px; bottom: -3px;">
             ${countryFlag}
           </span>
-          ${showBadge ? `<span class="badge-notification" style="position:absolute;top:-3px;right:-5px;background:#e53935;color:white;border-radius:50%;padding:0 5px;font-size:0.7em;">●</span>` : ""}
+          ${showBadge ? `<span class="badge-notification" style="position:absolute;top:-6px;right:-8px;background:#e53935;color:white;border-radius:9px;padding:0 6px;font-size:0.8em;">●</span>` : ""}
         </div>
         <div style="flex:1;min-width:0;">
           <div style="font-weight:600;font-size:1em;color:black;text-overflow:ellipsis;overflow:hidden;">
@@ -197,18 +281,20 @@ function getCountryFlagImg(countryCode = "IN", size = 20) {
       </div>
     `;
     sessionBtn.onclick = () => {
-      // --- Mark as viewed ---
+      // Mark as viewed
       window.lastViewedTimestamp = window.lastViewedTimestamp || {};
       window.lastViewedTimestamp[sid] = Date.now();
       loadChat(sid);
-      renderSessions(filter); // Re-render to clear badge
+      renderSessions(filter); // Refresh badge immediately
     };
     sessionList.appendChild(sessionBtn);
   }
+
   if (!hasResults) {
     sessionList.innerHTML = '<div class="empty-state">No sessions match your search</div>';
   }
 }
+
 
 
 function getLocationMapLink(city, country, lat, lng) {
@@ -223,6 +309,8 @@ function getLocationMapLink(city, country, lat, lng) {
     return "#";
   }
 }
+
+
 
   // --- USER INFO PANEL ---
  function renderUserInfoPanel() {
@@ -260,14 +348,16 @@ function getLocationMapLink(city, country, lat, lng) {
       <button class="modern-edit-btn" onclick="openEditModal('${selectedSessionId}')">✏️</button>
     </div>
     <!-- Extra user info like in the Jira-style panel -->
-    <div class="modern-user-extra">
     <div>
-    <p style="border: 1px solid lightgray;
-    padding: 10px 5px;
+    <p style="border-bottom: 1px solid lightgray;
+    padding: 0px 0 15px 1px;
     text-align: center;
-    background: #eaeded;" >Main Informations</p><br>
+    /* background: #eaeded; */
+    width: 230px;font-weight: 700;
+    color: #aaaaaa;" >Main Information</p><br>
     </div>
-      <div style="display:flex;align-items:center;gap:10px;margin-bottom:7px;">
+    <div class="modern-user-extra">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:7px;">
         <span style="font-size:1.2em;">📍</span>
         <span>${city}, ${country}</span>
       </div>
@@ -362,9 +452,27 @@ function getFormattedDateByTimezone(timezone = "Asia/Kolkata") {
 }
 
 
+const ADMIN_PROFILE = {
+  name: "Admin",
+  initials: "A",
+  avatarUrl: "images/admin.png"
+};
+
+function renderAdminSidebarAvatar() {
+  const avatarContainer = document.getElementById("navAdminProfile");
+  // If using initials:
+  avatarContainer.innerHTML = `<div class="sidebar-admin-avatar">${ADMIN_PROFILE.initials}</div>`;
+  // If using an image, do this instead:
+  // avatarContainer.innerHTML = `<div class="sidebar-admin-avatar"><img src="${ADMIN_PROFILE.avatarUrl}" alt="Admin" style="width: 100%; height: 100%; border-radius: 50%;" /></div>`;
+}
+
+renderAdminSidebarAvatar();
+
+
+
 
   // --- CHAT PANEL ---
-  function renderChatMessages(chatData) {
+function renderChatMessages(chatData) {
   const chatBox = document.getElementById('chatBox');
   chatBox.innerHTML = "";
   if (!chatData) {
@@ -378,38 +486,37 @@ function getFormattedDateByTimezone(timezone = "Asia/Kolkata") {
   let lastMessageDate = null;
   
   messagesArr.forEach((msg) => {
-    // -- Date and time logic --
+    // Date & time
     const dateObj = msg.timestamp ? new Date(msg.timestamp) : new Date();
     const day = dateObj.toLocaleDateString();
     const timeString = dateObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true });
 
-    // -- Date separator, only show when the date changes --
+    // Date separator
     if (lastMessageDate !== day) {
       chatBox.innerHTML += `<div class="date-separator" style="text-align:center;margin:16px 0 8px 0;color:#000000;font-weight:500;background:white;background-color:#eaeded;border-radius:8px;padding:0px 0;">${day}</div>`;
       lastMessageDate = day;
     }
 
-    // -- Sender logic --
+    // Sender info
     let senderType = (msg.sender || "").toLowerCase();
-    let senderClass = "user";
-    let initials = "?";
-    let avatarColor = "#eee";
-
-    if (senderType === "agent" || senderType === "admin") {
-      senderClass = "agent";
-      initials = "A";
-      avatarColor = "#ffe5bb";
-    } else if (senderType === "bot") {
-      senderClass = "bot";
-      initials = "<img src='images/logo.jpg' alt='Bot' style='width:30px; border-radius: 50%; height:30px;'/>";
-      avatarColor = "#fffac0";
+    let isRight = senderType === "admin" || senderType === "agent" || senderType === "bot";
+    let avatarHtml = "";
+    if (senderType === "bot") {
+      avatarHtml = `<div class="message-avatar" style="background:#fff;padding:2px;">
+        <img src="images/logo.jpg" alt="Bot" style="width:28px; height:28px; border-radius:50%; display:block;">
+      </div>`;
+    } else if (isRight) {
+      // Admin/Agent avatar
+      avatarHtml = `<div class="message-avatar" style="background:#2563eb;color:#fff;">A</div>`;
     } else {
+      // User avatar
       let name = (allUserData[selectedSessionId]?.name || msg.sender || "");
-      initials = getInitials(name);
-      avatarColor = getAvatarGradient(name + (allUserData[selectedSessionId]?.country || "IN"));
+      let initials = getInitials(name);
+      let avatarColor = getAvatarGradient(name + (allUserData[selectedSessionId]?.country || "IN"));
+      avatarHtml = `<div class="message-avatar" style="background:${avatarColor};color:#fff;">${initials}</div>`;
     }
 
-    // -- Message Content --
+    // Message Content
     let messageContent = "";
     if (msg.type === "image" && msg.message) {
       messageContent = `<img src="${escapeHtml(msg.message)}" alt="image" style="max-width:160px;max-height:110px;border-radius:7px;cursor:pointer;box-shadow:0 1px 5px #2563eb1a;" onclick="window.open('${escapeHtml(msg.message)}','_blank')"/>`;
@@ -417,44 +524,60 @@ function getFormattedDateByTimezone(timezone = "Asia/Kolkata") {
       messageContent = escapeHtml(msg.message || "");
     }
 
-    // -- Alignment & style: agent/admin on RIGHT, bot/user on LEFT --
-    let isRight = senderClass === "agent";
-    let flexJustify = isRight ? "flex-end" : "flex-start";
-    let avatarOrder = isRight ? "order:2;margin-left:10px;" : "order:1;margin-right:10px;";
-    let bubbleOrder = isRight ? "order:1;" : "order:2;";
+    // Bubble color: all right-side (admin/agent/bot) are white/blue text
     let bubbleColor = isRight
-      ? "background:#ffffff;color:black;"
+      ? "background:#fff;color:#2563eb;"
       : "background:linear-gradient(98deg, #2563eb 90%, #1877f2 100%);color:#fff;";
 
-    if (senderClass === "bot") {
-      bubbleColor = "background:linear-gradient(98deg, #2563eb 90%, #1877f2 100%);color:#fff;";
-    }
-
-    // -- Message bubble HTML --
+    // Message bubble HTML
     chatBox.innerHTML += `
-      <div style="display:flex;align-items:flex-end;justify-content:${flexJustify};margin-bottom:14px;">
-    ${senderType === "agent" || senderType === "admin" ? "" : `
-      <div class="avatar-bubble" style="width:32px;height:32px;border-radius:50%;background:${avatarColor};color:white;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.8rem;${avatarOrder}">
-        ${initials}
-      </div>
-    `}
-        <div class="message-bubble"
-             style="padding:11px 16px 9px 16px;border-radius:13px;min-width:38px;max-width:70vw;box-shadow:0 1px 7px #2563eb12;background:rgb(255, 255, 255); position:relative;${bubbleOrder}${bubbleColor}">
+      <div style="display:flex;align-items:flex-end;justify-content:${isRight ? "flex-end" : "flex-start"};margin-bottom:14px;position:relative;">
+        ${!isRight ? avatarHtml : ""}
+        <div class="message-bubble" style="${bubbleColor};position:relative;${isRight ? "margin-left:auto;" : ""}" data-msg-id="${msg._id}">
           <div>${messageContent}</div>
-          <div class="msg-time" style="display:block;text-align:right;color:#bdbdbd;font-size:0.8em;margin-top:4px;">
-  ${timeString}
-  ${getMessageStatusIcon(msg, senderType === "agent" || senderType === "admin")}
-</div>
-
+          <div class="msg-time">${timeString} ${getMessageStatusIcon(msg, isRight)}</div>
         </div>
+        ${isRight ? avatarHtml : ""}
+        ${isRight && senderType !== "bot" ? `
+          <div class="msg-actions" style="display:none;position:absolute;top:35px;right:6px;z-index:10;">
+            <button onclick="editMessage('${msg._id}')" title="Edit"><i class="fa fa-pencil"></i></button>
+            <button onclick="deleteMessage('${msg._id}')" title="Delete"><i class="fa fa-trash"></i></button>
+          </div>
+        ` : ""}
       </div>
     `;
   });
+
   chatBox.scrollTop = chatBox.scrollHeight;
 }
 
-const navToggle = document.getElementById("navToggle");
-const navBar = document.getElementById("nav-bar");
+// Re-attach menu listeners
+// After chatBox.innerHTML += ... (i.e., after building all messages)
+chatBox.querySelectorAll('.msg-menu').forEach(menu => {
+  menu.onclick = function(e) {
+    e.stopPropagation();
+    // This menu's parent is the flex div, which contains both .msg-menu and .msg-actions
+    const actions = this.parentElement.querySelector('.msg-actions');
+    if (!actions) return;
+    // Hide all other open menus
+    chatBox.querySelectorAll('.msg-actions').forEach(other => {
+      if (other !== actions) other.style.display = "none";
+    });
+    actions.style.display = actions.style.display === "flex" ? "none" : "flex";
+  };
+});
+
+
+// Hide the menu when clicking anywhere else
+document.addEventListener("click", function (e) {
+  // If you click anywhere else, close all msg-actions
+  document.querySelectorAll('.msg-actions').forEach(actions => {
+    actions.style.display = "none";
+  });
+});
+
+
+
 navToggle.onclick = () => {
   navBar.classList.toggle("collapsed");
 };
@@ -498,7 +621,7 @@ document.addEventListener("click", function(e){
   db.ref("chats/" + sessionId).on("value", currentChatListener);
   renderUserInfoPanel();
 }
-  
+
   // --- Firebase listeners ---
   function initializeApp() {
     db.ref("chats").on("value", (snapshot) => {

@@ -10,41 +10,45 @@
 <body>
 
 <!-- NAV BAR (vertical, left) -->
-<div class="nav-bar" id="nav-bar">
-  <button id="navToggle" class="nav-toggle">
-    <span></span><span></span><span></span>
+<div class="nav-bar" id="navBar">
+  <button class="nav-toggle" id="navToggle">
+    <span></span>
+    <span></span>
+    <span></span>
   </button>
-  <div class="search-bar">
-    <input type="text" id="searchInput" placeholder="Search...">
-  </div>
   <ul class="nav-menu">
-    <li class="nav-logo">
-      <span>👤</span>
-    </li>
-    <li class="nav-item active" title="Chats">
-      <span style="background-color: #1877f2; border-radius: 10px;">🗯️</span>
-    </li>
-    <li class="nav-ai" title="AI">
-      <span style="width: 30px;">
-        <img src="images/ai.png" style="width:30px;" alt="AI">
-      </span>
-    </li>
+    <li class="nav-sec" title="Search">🔍︎</li>
+    <li class="nav-item" title="User">👤</li>
+    <li class="nav-item" title="Chats" id="nav-chat">🗪</li>
+    <li class="nav-item" id="nav-ai" title="AI"><img src="images/ai.png" alt="AI"></li>
   </ul>
-  <li class="nav-set" title="Settings">
-      <span class="set">🌣</span>
-    </li>
+  <div class="nav-settings" id="navAdminProfile">
+  <!-- Avatar HTML inserted here by JS -->
 </div>
+</div>
+
 
 <div class="container">
   <!-- SIDEBAR with filter bar -->
   <div class="sidebar">
-    <div class="filter-bar">
-      <div class="filter-dropdown">
-        <span>Filter</span> <span class="dropdown-arrow">▼</span>
-      </div>
-      <button class="filter-btn" style="padding-right: 10px;" >
-        <span style="font-size: 1em;padding: 0 5px 0 0;font-weight: 600;">&#128269;</span>Search User</button>
-    </div>
+    <div class="filter-bar" style="display: flex; gap: 10px; align-items: center;">
+  <label style="font-weight: 600; color: #545454; font-size: 11px;">Filter</label>
+  <select id="sessionSortMode" style="padding:5px 10px; border-radius: 5px; border: 1px solid #eaeaea;">
+    <option value="az">A-Z</option>
+    <option value="za">Z-A</option>
+    <option value="latest" selected>Newest</option>
+    <option value="oldest">Oldest</option>
+  </select>
+  <input id="searchInput" type="text" placeholder="🔍 Search User"
+    style="flex: 1;
+    min-width: 100px;
+    max-width: 130px;
+    padding: 5px 10px;
+    border-radius: 6px;
+    border: 1px solid #eaeaea;
+    margin-left: 40px;" />
+</div>
+
     <div id="sessionList">
       <div class="loading">Loading sessions...</div>
     </div>
@@ -116,7 +120,13 @@
   opacity: 0.0;
   transition: opacity .25s;
 "></div>
-
+<script>
+  const navBar = document.getElementById('navBar');
+  const navToggle = document.getElementById('navToggle');
+  navToggle.addEventListener('click', function() {
+    navBar.classList.toggle('collapsed');
+  });
+</script>
 <!-- Firebase SDK -->
 <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
