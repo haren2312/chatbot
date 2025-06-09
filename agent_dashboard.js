@@ -417,7 +417,7 @@ document.getElementById("profileModalBackdrop").onclick = closeProfileModal;
           <span class="country-flag" style="position: absolute; right: -2px; bottom: -3px;">
             ${countryFlag}
           </span>
-          ${showBadge ? `<span class="badge-notification" style="position:absolute;top:-6px;right:-8px;background:#e53935;color:white;border-radius:9px;padding:0 6px;font-size:0.8em;">●</span>` : ""}
+          ${showBadge ? `<span class="badge-notification" style="position:absolute;top:-6px;right:-8px;background:#b30400;color:white;border-radius:9px;padding:0 6px;font-size:0.8em;">1</span>` : ""}
         </div>
         <div style="flex:1;min-width:0;">
           <div style="font-weight:600;font-size:1em;color:black;text-overflow:ellipsis;overflow:hidden;">
@@ -433,12 +433,11 @@ document.getElementById("profileModalBackdrop").onclick = closeProfileModal;
       </div>
     `;
     sessionBtn.onclick = () => {
-  // Mark as viewed right away if you want
-  window.lastViewedTimestamp = window.lastViewedTimestamp || {};
   window.lastViewedTimestamp[sid] = Date.now();
-  // Only call loadChat
   loadChat(sid);
+  renderSessions(document.getElementById("searchInput").value.toLowerCase());
 };
+
     sessionList.appendChild(sessionBtn);
   }
 
@@ -571,6 +570,10 @@ function getLocationMapLink(city, country, lat, lng) {
     color: #aaaaaa;" >Main Information</p><br>
     </div>
     <div class="modern-user-extra">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:7px;">
+        <span style="font-size:1.2em;">📧</span>
+        <span style="white-space: nowrap;overflow: hidden;text-overflow: ellipsis;" >${escapeHtml(user.email || "")}</span>
+      </div>
           <div style="display:flex;align-items:center;gap:10px;margin-bottom:7px;">
         <span style="font-size:1.2em;">📍</span>
         <span>${city}, ${country}</span>
@@ -861,21 +864,28 @@ document.addEventListener("click", function(e){
 
 
   // --- Chat selection & loading ---
- function loadChat(sessionId) {
-  // Remove previous listeners first if any!
-  if (currentChatListener && selectedSessionId) {
-    db.ref("chats/" + selectedSessionId).off("value", currentChatListener);
-  }
-  selectedSessionId = sessionId;
+function loadChat(sessionId) {
+    selectedSessionId = sessionId; // <--- This is CRITICAL!
 
-  // Only now, listen to this chat's full message stream
-  currentChatListener = (snapshot) => {
-    const chatData = snapshot.val();
-    renderChatMessages(chatData);
-    renderUserInfoPanel();
-  };
-  db.ref("chats/" + sessionId).on("value", currentChatListener);
+    // Remove old listeners
+    if (currentChatListener && selectedSessionId) {
+        db.ref("chats/" + selectedSessionId).off("value", currentChatListener);
+    }
+
+    // Set up the new listener
+    currentChatListener = (snapshot) => {
+        const chatData = snapshot.val();
+        renderChatMessages(chatData);
+        renderUserInfoPanel(); // <-- MAKE SURE THIS IS CALLED!
+        document.getElementById("inputGroup").style.display = "flex"; // <--- Force show input!
+    };
+    db.ref("chats/" + sessionId).on("value", currentChatListener);
+
+    // Show input bar (just in case)
+    document.getElementById("inputGroup").style.display = "flex";
 }
+
+
 
 
 

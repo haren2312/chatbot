@@ -161,7 +161,7 @@ body {
     /* border-right: 1px solid #cbcbcb; */
     /* border-left: 1px solid #e5e5e5; */
     /* box-shadow: 0 3px 14px #2563eb08; */
-    padding: 15px 15px 15px 15px;
+    padding: 15px 15px 25px 15px ;
     overflow-y: scroll;
     scrollbar-gutter: stable;
     color: #27324c;
@@ -760,7 +760,7 @@ body {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    width: 200px;
+    width: 150px;
     display: block;
 }
 .modern-user-email {
@@ -772,11 +772,12 @@ body {
     word-break: break-all;
     /* text-overflow: ellipsis; */
     white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+  overflow: hidden;
+  text-overflow: ellipsis;
     width: 200px;
     display: block;
     font-weight: 600;
+    width: 150px;
 }
 .modern-user-meta {
   margin-top: 2px;
