@@ -1199,7 +1199,7 @@ body {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 15px 20px 12px 20px;
+  padding: 10px 20px 12px 20px;
   background: #fff;
   border-bottom: 1.5px solid #ecedf1;
   position: sticky;
@@ -1332,4 +1332,35 @@ width: 0px;
   width: 22px;
   height: 16px;
   display: block;
+}
+
+.filter-dropdown {
+  position: relative;
+  cursor: pointer;
+  user-select: none;
+}
+
+.dropdown-menu {
+  position: absolute;
+  left: 0;
+  top: 30px;
+  min-width: 140px;
+  background: #fff;
+  border: 1px solid #ececec;
+  box-shadow: 0 2px 14px #2221;
+  border-radius: 8px;
+  z-index: 2000;
+  padding: 5px 0;
+}
+
+.dropdown-option {
+  padding: 8px 16px;
+  cursor: pointer;
+  color: #222e3a;
+  font-size: 1em;
+  transition: background 0.17s;
+}
+.dropdown-option:hover {
+  background: #f2f6ff;
+  color: #2563eb;
 }

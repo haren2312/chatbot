@@ -16,6 +16,8 @@
   let allSessions = {};
   let allUserData = {};
   let currentChatListener = null;
+  let sessionSortMode = "latest"; // latest, oldest, az, za
+let sessionFilterMode = "all";
 
   // --- UTILS ---
   function escapeHtml(unsafe) {
@@ -164,6 +166,18 @@ function getCountryFlagImg(countryCode = "IN", size = 20) {
   }
 }
 
+function getLocationMapLink(city, country, lat, lng) {
+  // If latitude & longitude are valid, use them; else fallback to city/country search
+  if (lat && lng) {
+    return `https://www.google.com/maps?q=${lat},${lng}`;
+  } else if (city && country) {
+    return `https://www.google.com/maps/search/${encodeURIComponent(city + ', ' + country)}`;
+  } else if (country) {
+    return `https://www.google.com/maps/search/${encodeURIComponent(country)}`;
+  } else {
+    return "#";
+  }
+}
 
   // --- USER INFO PANEL ---
  function renderUserInfoPanel() {
