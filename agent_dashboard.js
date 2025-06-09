@@ -17,7 +17,8 @@
   let allUserData = {};
   let currentChatListener = null;
   let sessionSortMode = "latest"; // latest, oldest, az, za
-let sessionFilterMode = "all";
+  let sessionFilterMode = "all";
+  window.lastViewedTimestamp = {};
 
   // --- UTILS ---
   function escapeHtml(unsafe) {
@@ -76,60 +77,98 @@ function getCountryFlagImg(countryCode = "IN", size = 20) {
     }, options.timeout || 2500);
   }
 
+  function getMessageStatusIcon(msg, isAgent) {
+  if (!isAgent) return ""; // Only show ticks for agent/admin sent messages
+
+  if (msg.status === "read") {
+    // Double blue tick
+    return `<span style="margin-left:5px;color:#2563eb;font-size:1em;vertical-align:middle;">
+      ✔✔
+    </span>`;
+  } else if (msg.status === "delivered") {
+    // Double gray tick
+    return `<span style="margin-left:5px;color:#bababa;font-size:1em;vertical-align:middle;">
+      ✔✔
+    </span>`;
+  } else {
+    // Single gray tick (sent)
+    return `<span style="margin-left:5px;color:#bababa;font-size:1em;vertical-align:middle;">
+      ✔
+    </span>`;
+  }
+}
+
+
   // --- SIDEBAR: Session List ---
   function renderSessions(filter = "") {
   const sessionList = document.getElementById("sessionList");
   sessionList.innerHTML = "";
   const sessionIds = Object.keys(allSessions);
-  if (sessionIds.length === 0) {
-    sessionList.innerHTML = '<div class="empty-state">No chat sessions found</div>';
-    return;
-  }
-  let hasResults = false;
-  for (let sid of sessionIds) {
-    const userData = allUserData[sid];
-    if (!userData || !userData.name) continue; // Only show if user exists and has name
-    if (filter && !userData.name.toLowerCase().includes(filter)) continue;
-    hasResults = true;
-    const initials = getInitials(userData.name);
-    const avatarGradient = getAvatarGradient(userData.name + (userData.country || "IN"));
-    const isSelected = selectedSessionId === sid ? "selected" : "";
-    const countryFlag = getCountryFlagImg(userData.country || "IN", 20);
 
-    // Get last message and time
-    let lastMsg = "";
-    let lastMsgTime = "";
+  // --- 1. Collect sessions with last message timestamp
+  let sessionArray = sessionIds.map(sid => {
     const chatData = allSessions[sid];
+    let lastMsgTime = 0, lastMsgType = "", lastMsgSender = "", lastMsg = "";
     if (chatData) {
-      // Convert messages to array, sort by timestamp
       const messagesArr = Object.entries(chatData)
         .map(([msgId, msg]) => ({ ...msg, _id: msgId }))
         .sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
       if (messagesArr.length) {
         const last = messagesArr[messagesArr.length - 1];
-        if (last.type === "image") {
-          lastMsg = "📷 Image";
-        } else {
-          lastMsg = last.message || "";
-        }
-        if (last.timestamp) {
-          const d = new Date(last.timestamp);
-          // If today, show time; else show date
-          const now = new Date();
-          if (
-            d.getDate() === now.getDate() &&
-            d.getMonth() === now.getMonth() &&
-            d.getFullYear() === now.getFullYear()
-          ) {
-            lastMsgTime = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true });
-          } else {
-            lastMsgTime = d.toLocaleDateString();
-          }
-        }
+        lastMsgTime = last.timestamp || 0;
+        lastMsg = last.type === "image" ? "📷 Image" : (last.message || "");
+        lastMsgType = last.type;
+        lastMsgSender = last.sender;
       }
     }
-    if (!lastMsg) lastMsg = "<i>No messages yet</i>";
+    return { sid, lastMsgTime, lastMsg, lastMsgType, lastMsgSender };
+  });
 
+  // --- 2. Sort sessions: latest message on top
+  sessionArray.sort((a, b) => (b.lastMsgTime || 0) - (a.lastMsgTime || 0));
+
+  let hasResults = false;
+  for (let session of sessionArray) {
+    const { sid, lastMsg, lastMsgTime, lastMsgSender } = session;
+    const userData = allUserData[sid];
+    if (!userData || !userData.name) continue;
+    if (filter && !userData.name.toLowerCase().includes(filter)) continue;
+    hasResults = true;
+
+    const initials = getInitials(userData.name);
+    const avatarGradient = getAvatarGradient(userData.name + (userData.country || "IN"));
+    const isSelected = selectedSessionId === sid ? "selected" : "";
+    const countryFlag = getCountryFlagImg(userData.country || "IN", 20);
+
+    // --- 3. Calculate time string
+    let lastMsgTimeStr = "";
+    if (lastMsgTime) {
+      const d = new Date(lastMsgTime);
+      const now = new Date();
+      if (
+        d.getDate() === now.getDate() &&
+        d.getMonth() === now.getMonth() &&
+        d.getFullYear() === now.getFullYear()
+      ) {
+        lastMsgTimeStr = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true });
+      } else {
+        lastMsgTimeStr = d.toLocaleDateString();
+      }
+    }
+
+    // --- 4. Badge logic: show notification if latest message is not from agent/admin and not viewed
+    let showBadge = false;
+    // Assume you track "lastViewedTimestamp" for each session for the agent
+    // You need to implement this logic: update lastViewedTimestamp[sid] when the agent opens the chat.
+    if (
+      lastMsgSender !== "agent" &&
+      lastMsgSender !== "admin" &&
+      lastMsgTime > (window.lastViewedTimestamp?.[sid] || 0)
+    ) {
+      showBadge = true;
+    }
+
+    // --- 5. Render session item
     const sessionBtn = document.createElement("div");
     sessionBtn.className = `session-item ${isSelected}`;
     sessionBtn.innerHTML = `
@@ -139,11 +178,10 @@ function getCountryFlagImg(countryCode = "IN", size = 20) {
             style="width:45px;height:45px;border-radius:50%;background:${avatarGradient};display:flex;align-items:center;justify-content:center;font-weight:700;color:#fff;font-size:1.1rem;box-shadow:0 1px 8px #15193544;">
             ${escapeHtml(initials)}
           </div>
-          <span class="country-flag"  
-            title="${userData.country || "IN"}"
-            style="position: absolute; right: -2px; bottom: -3px;">
+          <span class="country-flag" style="position: absolute; right: -2px; bottom: -3px;">
             ${countryFlag}
           </span>
+          ${showBadge ? `<span class="badge-notification" style="position:absolute;top:-3px;right:-5px;background:#e53935;color:white;border-radius:50%;padding:0 5px;font-size:0.7em;">●</span>` : ""}
         </div>
         <div style="flex:1;min-width:0;">
           <div style="font-weight:600;font-size:1em;color:black;text-overflow:ellipsis;overflow:hidden;">
@@ -151,20 +189,27 @@ function getCountryFlagImg(countryCode = "IN", size = 20) {
           </div>
           <div class="session-info" style="text-overflow:ellipsis;white-space:nowrap;overflow:hidden;color:#656e7e;">
             <span style="display:inline-block;max-width:150px;overflow:hidden;text-overflow:ellipsis;vertical-align:middle;">
-              ${lastMsg}
+              ${lastMsg || "<i>No messages yet</i>"}
             </span>
-            <span style="color:#a6a6a6;font-size:.8em;float:right;padding-left:8px;">${lastMsgTime}</span>
+            <span style="color:#a6a6a6;font-size:.8em;float:right;padding-left:8px;">${lastMsgTimeStr}</span>
           </div>
         </div>
       </div>
     `;
-    sessionBtn.onclick = () => loadChat(sid);
+    sessionBtn.onclick = () => {
+      // --- Mark as viewed ---
+      window.lastViewedTimestamp = window.lastViewedTimestamp || {};
+      window.lastViewedTimestamp[sid] = Date.now();
+      loadChat(sid);
+      renderSessions(filter); // Re-render to clear badge
+    };
     sessionList.appendChild(sessionBtn);
   }
   if (!hasResults) {
     sessionList.innerHTML = '<div class="empty-state">No sessions match your search</div>';
   }
 }
+
 
 function getLocationMapLink(city, country, lat, lng) {
   // If latitude & longitude are valid, use them; else fallback to city/country search
@@ -300,6 +345,24 @@ function getFormattedDateByTimezone(timezone = "Asia/Kolkata") {
       });
   }
 
+  function markMessagesAsRead(sessionId, currentUserType) {
+  const messagesRef = db.ref("chats/" + sessionId);
+  messagesRef.once("value", (snapshot) => {
+    const messages = snapshot.val() || {};
+    Object.entries(messages).forEach(([msgId, msg]) => {
+      // Only mark as read if not already, and not sent by this user
+      if (
+        msg.sender !== currentUserType &&
+        msg.status !== "read"
+      ) {
+        messagesRef.child(msgId).update({ status: "read" });
+      }
+    });
+  });
+}
+
+
+
   // --- CHAT PANEL ---
   function renderChatMessages(chatData) {
   const chatBox = document.getElementById('chatBox');
@@ -379,8 +442,10 @@ function getFormattedDateByTimezone(timezone = "Asia/Kolkata") {
              style="padding:11px 16px 9px 16px;border-radius:13px;min-width:38px;max-width:70vw;box-shadow:0 1px 7px #2563eb12;background:rgb(255, 255, 255); position:relative;${bubbleOrder}${bubbleColor}">
           <div>${messageContent}</div>
           <div class="msg-time" style="display:block;text-align:right;color:#bdbdbd;font-size:0.8em;margin-top:4px;">
-            ${timeString}
-          </div>
+  ${timeString}
+  ${getMessageStatusIcon(msg, senderType === "agent" || senderType === "admin")}
+</div>
+
         </div>
       </div>
     `;
@@ -407,30 +472,33 @@ document.addEventListener("click", function(e){
 
   // --- Chat selection & loading ---
   function loadChat(sessionId) {
-    if (!sessionId || !db) return;
-    if (currentChatListener && selectedSessionId) {
-      db.ref("chats/" + selectedSessionId).off("value", currentChatListener);
-    }
-    selectedSessionId = sessionId;
-    document.getElementById("inputGroup").style.display = "flex";
-    // Highlight session in sidebar
-    document.querySelectorAll(".session-item").forEach(item => {
-      item.classList.remove("selected");
-    });
-    renderUserInfoPanel();
-    currentChatListener = (snapshot) => {
-      try {
-        const chatData = snapshot.val();
-        renderChatMessages(chatData);
-        renderUserInfoPanel();
-      } catch (error) {
-        notify("Failed to load chat messages.", { type: "error" });
-      }
-    };
-    db.ref("chats/" + sessionId).on("value", currentChatListener);
-    renderUserInfoPanel();
+  if (!sessionId || !db) return;
+  if (currentChatListener && selectedSessionId) {
+    db.ref("chats/" + selectedSessionId).off("value", currentChatListener);
   }
+  selectedSessionId = sessionId;
+  document.getElementById("inputGroup").style.display = "flex";
+  document.querySelectorAll(".session-item").forEach(item => {
+    item.classList.remove("selected");
+  });
+  renderUserInfoPanel();
 
+  // ----> This is the important line! <----
+  markMessagesAsRead(sessionId, "agent"); // or "user", depending on who's logged in
+
+  currentChatListener = (snapshot) => {
+    try {
+      const chatData = snapshot.val();
+      renderChatMessages(chatData);
+      renderUserInfoPanel();
+    } catch (error) {
+      notify("Failed to load chat messages.", { type: "error" });
+    }
+  };
+  db.ref("chats/" + sessionId).on("value", currentChatListener);
+  renderUserInfoPanel();
+}
+  
   // --- Firebase listeners ---
   function initializeApp() {
     db.ref("chats").on("value", (snapshot) => {

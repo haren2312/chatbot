@@ -1214,7 +1214,7 @@ body {
     font-weight: 600;
     color: #222;
     cursor: pointer;
-    padding: 10px 20px;
+    padding: 10px 100px 10px 15px;
     border-radius: 10px;
     transition: background .18s;
 }
@@ -1229,21 +1229,23 @@ body {
     margin-left: 5px;
 }
 
-.filter-btn,
-.add-btn {
+filter-btn, .add-btn {
     background: none;
     border: none;
-    font-size: .8rem;
+    font-size: .9rem;
     color: #2563eb;
     font-weight: 600;
     border-radius: 6px;
     cursor: pointer;
-    padding: 0 0 0 120px;
+    padding: 0 0 0 145px;
     transition: background 0.18s, color 0.18s;
-    display: flex;
+    display: flex
+;
     align-items: center;
     gap: 5px;
 }
+
+
 
 .filter-btn:hover, .add-btn:hover {
   background: #eaf1ff;

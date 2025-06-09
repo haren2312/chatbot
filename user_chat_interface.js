@@ -208,75 +208,61 @@ function skipLocation() {
 
 function initializeChat() {
   if (chatInitialized) return;
-  
+
   document.getElementById("chat").style.display = "flex";
   chatInitialized = true;
-  
-  // Load existing messages first, then add greeting
+
   loadChatMessages(() => {
-    // Add greeting message only if no messages exist
-    const messagesContainer = document.getElementById("messages");
-    if (messagesContainer.children.length === 0) {
-      setTimeout(() => {
-        botMessage(`Hi ${userName}! 👋 How can I help you today?`);
-      }, 500);
-    }
+    // If no messages exist, push the greeting ONLY to Firebase
+    const chatRef = db.ref("chats/" + sessionId);
+    chatRef.once("value", (snapshot) => {
+      if (!snapshot.exists()) {
+        // Only push greeting, do NOT call addMessage()
+        if (db && sessionId) {
+          db.ref("chats/" + sessionId).push({
+            sender: "bot",
+            message: `Hi ${userName}! 👋 How can I help you today?`,
+            type: "text",
+            timestamp: Date.now()
+          });
+        }
+      }
+    });
   });
 
-  // Focus on input
   setTimeout(() => {
     document.getElementById("input").focus();
   }, 100);
 }
 
-function loadChatMessages(callback) {
+function loadChatMessages() {
   const chatRef = db.ref("chats/" + sessionId);
+  const messagesContainer = document.getElementById("messages");
+  messagesContainer.innerHTML = ""; // Clear chat
 
-  // Step 1: Remove any previous listeners to prevent stacking (IMPORTANT!)
-  chatRef.off();
+  let isEmpty = true;
+  chatRef.off(); // Remove previous listeners
 
-  // Step 2: Store loaded keys to avoid duplicates
-  const loadedKeys = new Set();
-  let lastMsgKey = null;
-
-  // Step 3: Load all existing (history) messages ONCE
-  chatRef.once("value", (snapshot) => {
-    if (snapshot.exists()) {
-      snapshot.forEach((childSnapshot) => {
-        const data = childSnapshot.val();
-        const key = childSnapshot.key;
-        if (data && data.message) {
-          if (data.type === "image") {
-            addImageMessage(data.message, data.sender, null, data.timestamp, key);
-          } else {
-            addMessage(data.message, data.sender, null, data.timestamp, key);
-          }
-          loadedKeys.add(key);
-          lastMsgKey = key;
-        }
-      });
-    }
-
-    // Step 4: Real-time listener for **NEW** messages only (no repeats)
-    chatRef.orderByKey().startAt(lastMsgKey ? lastMsgKey : "").on("child_added", (snapshot) => {
-      // If already loaded (from history), skip
-      if (loadedKeys.has(snapshot.key)) return;
-
-      const data = snapshot.val();
-      if (data && data.message) {
-        if (data.type === "image") {
-          addImageMessage(data.message, data.sender, null, data.timestamp, snapshot.key);
-        } else {
-          addMessage(data.message, data.sender, null, data.timestamp, snapshot.key);
-        }
-        loadedKeys.add(snapshot.key);
+  chatRef.on("child_added", (snapshot) => {
+    const data = snapshot.val();
+    if (data && data.message) {
+      isEmpty = false;
+      if (data.type === "image") {
+        addImageMessage(data.message, data.sender, null, data.timestamp, snapshot.key);
+      } else {
+        addMessage(data.message, data.sender, null, data.timestamp, snapshot.key);
       }
-    });
-
-    // Step 5: Callback when done loading
-    if (callback) callback();
+    }
   });
+
+  // After short delay, if still empty, greet
+  setTimeout(() => {
+    if (isEmpty) {
+      botMessage(`Hi ${userName}! 👋 How can I help you today?`);
+    }
+  }, 900);
 }
+
 
 
 
@@ -439,7 +425,6 @@ function sendMsg(customText) {
   const input = document.getElementById("input");
   const msg = (customText || input.value).trim();
   if (!msg) return;
-
   if (db && sessionId) {
     db.ref("chats/" + sessionId).push({
       sender: "user",
@@ -448,24 +433,10 @@ function sendMsg(customText) {
       timestamp: Date.now()
     });
   }
-
   if (!customText) input.value = "";
-
-  // CANCEL any previous pending bot reply
-  if (pendingBotReplyTimeout) {
-    clearTimeout(pendingBotReplyTimeout);
-    pendingBotReplyTimeout = null;
-  }
-
-  // Schedule fallback bot reply in 30 seconds (or whatever time you want)
-  pendingBotReplyTimeout = setTimeout(() => {
-    // Only send fallback if NO agent has replied in the meantime
-    botMessage("Thank you for your message. Our team will get back to you soon! 😊");
-    pendingBotReplyTimeout = null;
-  }, 30000); // 30000 ms = 30 seconds
-
-  // Don't send the fallback reply immediately!
 }
+
+
 
 
 
