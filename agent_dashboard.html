@@ -22,7 +22,7 @@
     <li class="nav-item" title="Chats" id="nav-chat">🗪</li>
     <li class="nav-item" id="nav-ai" title="AI"><img src="images/ai.png" alt="AI"></li>
   </ul>
-  <div class="nav-settings" id="navAdminProfile">
+  <div class="nav-settings" id="navAdminProfile"  onclick="openProfileModal()">
   <!-- Avatar HTML inserted here by JS -->
 </div>
 </div>
@@ -98,6 +98,32 @@
     <button onclick="closeModal()" style="background:#ccc;color:#000;">Cancel</button>
   </div>
 </div>
+
+<div id="profileModal" class="profile-modal" style="display:none;">
+  <div class="profile-modal-content">
+    <span class="profile-modal-close" onclick="closeProfileModal()">&times;</span>
+    <h2>Edit Profile</h2>
+    <form id="profileEditForm" onsubmit="return saveProfileEdit();">
+    <div style="text-align:center;">
+    <img id="profilePicPreview" src="images/logo.jpg" alt="Profile Picture"
+       style="width:80px;height:80px;border-radius:50%;margin-bottom:10px;object-fit:cover;">
+        <br>
+    <input type="file" id="profilePicInput" accept="image/*" style="margin-top:10px;">
+</div>
+      <label>Name</label>
+      <input type="text" id="profileEditName" required />
+      <label>Email</label>
+      <input type="email" id="profileEditEmail" required />
+      <label>City</label>
+      <input type="text" id="profileEditCity" />
+      <label>Country</label>
+      <input type="text" id="profileEditCountry" maxlength="2" placeholder="IN" />
+      <button type="submit" class="save-btn">Save Changes</button>
+    </form>
+  </div>
+</div>
+<div id="profileModalBackdrop" class="modal-backdrop" style="display:none;"></div>
+
 
 <!-- Notification Toast -->
 <div id="notification-toast" style="

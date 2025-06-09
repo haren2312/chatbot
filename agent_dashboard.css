@@ -1567,3 +1567,41 @@ width: 0px;
   color: #b71c1c;
   transform: scale(1.2);
 }
+
+.user-dot.green { background: #13d461; }
+.user-dot.orange { background: orange; }
+.user-dot.grey { background: #bbb; }
+
+.profile-avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 1.3rem;
+  color: #fff;
+  box-shadow: 0 1px 8px #15193533;
+  background: linear-gradient(135deg, #2263ec, #3475e3 90%);
+  margin: 0 15px;
+  transition: box-shadow 0.2s, transform 0.2s;
+}
+.profile-avatar:hover {
+  box-shadow: 0 4px 18px #2563eb42;
+  transform: scale(1.07);
+}
+
+.profile-modal { position:fixed; z-index:1000; left:0; top:0; width:100vw; height:100vh; display:flex; align-items:center; justify-content:center;}
+.profile-modal-content {
+  background:#fff; border-radius:16px; padding:36px 32px 24px 32px; min-width:320px; min-height:300px; box-shadow:0 10px 48px #2563eb17; position:relative;
+}
+.profile-modal-close {
+  position:absolute; top:14px; right:22px; font-size:2em; color:#aaa; cursor:pointer;
+}
+.profile-modal input {width:100%;margin:8px 0 20px 0;padding:10px;border:1px solid #e1e7ee;border-radius:6px;}
+.save-btn {
+  padding:10px 20px;background:#2563eb;color:#fff;font-weight:600;border-radius:8px;border:none;cursor:pointer;transition:background 0.18s;}
+.save-btn:hover { background:#1877f2; }
+.modal-backdrop { position:fixed; left:0; top:0; width:100vw; height:100vh; background:#2227; z-index:999; }

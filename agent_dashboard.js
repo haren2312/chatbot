@@ -21,6 +21,103 @@
   window.lastViewedTimestamp = {};
   window.editMessage = editMessage;
   window.deleteMessage = deleteMessage;
+  // Example: If you already have the logged-in user info
+  window.currentUserId = "YOUR_LOGGED_IN_USER_ID";
+  window.currentUserId = "USER_ID"; // Replace with actual user ID
+  
+
+  const profilePicInput = document.getElementById('profilePicInput');
+const profilePicPreview = document.getElementById('profilePicPreview');
+
+profilePicInput.addEventListener('change', function() {
+  const file = this.files[0];
+  if (file) {
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      profilePicPreview.src = e.target.result;
+      // Optionally, store the base64 in a variable for saving to Firebase
+      window.newProfilePicData = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  }
+});
+
+
+// === Firebase Presence Tracking ===
+const userId = "USER_ID"; // Replace this dynamically for each logged-in user
+
+const userStatusDatabaseRef = db.ref('/status/' + userId);
+
+const isOfflineForDatabase = {
+  state: 'offline',
+  last_changed: firebase.database.ServerValue.TIMESTAMP,
+};
+
+const isOnlineForDatabase = {
+  state: 'online',
+  last_changed: firebase.database.ServerValue.TIMESTAMP,
+};
+
+const isAwayForDatabase = {
+  state: 'away',
+  last_changed: firebase.database.ServerValue.TIMESTAMP,
+};
+
+// 1. Listen to .info/connected, this is magic from Firebase!
+const connectedRef = db.ref('.info/connected');
+connectedRef.on('value', function(snapshot) {
+  if (snapshot.val() === false) {
+    // Not connected: do nothing (user is offline, or not loaded yet)
+    return;
+  }
+
+  // On disconnect (browser/tab close, network loss): mark as offline
+  userStatusDatabaseRef.onDisconnect().set(isOfflineForDatabase).then(function() {
+    // When connected: set as online
+    userStatusDatabaseRef.set(isOnlineForDatabase);
+  });
+});
+
+// 2. Optional: Idle/away tracking (shows "away" if inactive for X seconds)
+let idleTimeout = null;
+function setAway() {
+  userStatusDatabaseRef.set(isAwayForDatabase);
+}
+function setOnline() {
+  userStatusDatabaseRef.set(isOnlineForDatabase);
+}
+function resetIdleTimer() {
+  clearTimeout(idleTimeout);
+  setOnline();
+  // Set to away after 60 seconds of no activity (change as you like)
+  idleTimeout = setTimeout(setAway, 60 * 1000);
+}
+window.onmousemove = window.onkeydown = resetIdleTimer;
+resetIdleTimer(); // Kick off on load
+
+
+// Reference to your users node (adjust if your users are elsewhere)
+const usersRef = db.ref('/users');
+
+// Fetch all users
+// After fetching all users:
+usersRef.once('value', function(snapshot) {
+  const users = snapshot.val();
+  for (const userId in users) {
+    setupPresenceListener(userId);
+  }
+});
+
+// Listen to all users' presence
+function setupPresenceListener(userId) {
+  const statusRef = db.ref('/status/' + userId);
+  statusRef.on('value', function(snapshot) {
+    window.userPresence[userId] = snapshot.val() || {state: "offline"};
+    // Rerender the UI if needed (dot/status)
+    renderSessions(document.getElementById("searchInput").value.toLowerCase());
+    renderUserInfoPanel(); // if you want user detail panel to update
+  });
+}
 
 
   
@@ -36,19 +133,28 @@
     if (parts.length === 1) return parts[0][0].toUpperCase();
     return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
   }
-  
+
+
+
  // Place this with your other utils at the top
 function getAvatarGradient(name = "") {
   const gradients = [
-  "linear-gradient(135deg, #8eaee6 0%, #5175b9 100%)",   // Muted strong blue
-  "linear-gradient(135deg, #a684b4 0%, #71688a 100%)",   // Subtle deep lavender
-  "linear-gradient(135deg, #74b8a3 0%, #418172 100%)",   // Matte teal/green
-  "linear-gradient(135deg, #dfbf71 0%, #ad9860 100%)",   // Muted gold/sand
-  "linear-gradient(135deg, #e4a692 0%, #b8816a 100%)",   // Earthy peach
-  "linear-gradient(135deg, #779fc6 0%, #466181 100%)",   // Blue-grey
-  "linear-gradient(135deg, #b5b7c7 0%, #757a8d 100%)"    // Steely matte
-];
-
+    "linear-gradient(135deg, #B993D6 0%, #8CA6DB 100%)",   // matte purple-blue
+    "linear-gradient(135deg, #89F7FE 0%, #66A6FF 100%)",   // pastel teal-blue
+    "linear-gradient(135deg, #F6D365 0%, #FDA085 100%)",   // modern orange/peach
+    "linear-gradient(135deg, #A1FFCE 0%, #FAFFD1 100%)",   // mint to pale yellow
+    "linear-gradient(135deg, #FBC2EB 0%, #A6C1EE 100%)",   // blush pink to blue
+    "linear-gradient(135deg, #FCE38A 0%, #F38181 100%)",   // yellow to matte pink
+    "linear-gradient(135deg, #43E97B 0%, #38F9D7 100%)",   // green to teal
+    "linear-gradient(135deg, #667EEA 0%, #764BA2 100%)",   // blue-mauve matte
+    "linear-gradient(135deg, #C9FFBF 0%, #FFAFBD 100%)",   // mint to rose
+    "linear-gradient(135deg, #FAD0C4 0%, #FFD1FF 100%)",   // peach pink
+    "linear-gradient(135deg, #B5FFFC 0%, #6EE7FF 100%)",   // aqua blue matte
+    "linear-gradient(135deg, #FFDEE9 0%, #B5FFFC 100%)",   // soft pink to blue
+    "linear-gradient(135deg, #8EC5FC 0%, #E0C3FC 100%)",   // blue to light purple
+    "linear-gradient(135deg, #FCEABB 0%, #F8B500 100%)",   // light gold
+    "linear-gradient(135deg, #FFB88C 0%, #DE6262 100%)"    // orange to muted red
+  ];
 
   let hash = 0;
   for (let i = 0; i < name.length; i++) {
@@ -56,6 +162,9 @@ function getAvatarGradient(name = "") {
   }
   return gradients[Math.abs(hash) % gradients.length];
 }
+
+
+
 function getCountryFlagImg(countryCode = "IN", size = 20) {
   return `<img src="https://flagcdn.com/${size}x${Math.round(size*0.75)}/${countryCode.toLowerCase()}.png" 
     alt="${countryCode.toUpperCase()} flag" style=vertical-align:middle;" />`;
@@ -160,6 +269,48 @@ function editMessage(msgId) {
   });
 }
 
+function renderNavProfileAvatar(user) {
+  const el = document.getElementById("navProfileAvatar");
+  const initials = getInitials(user?.name || "U");
+  const bg = getAvatarGradient(user?.name || "");
+  el.style.background = bg;
+  el.innerHTML = initials;
+}
+
+function openProfileModal() {
+  // Fill modal fields from current user
+  const user = allUserData[currentUserId] || {};
+  document.getElementById("profileEditName").value = user.name || "";
+  document.getElementById("profileEditEmail").value = user.email || "";
+  document.getElementById("profileEditCity").value = user.city || "";
+  document.getElementById("profileEditCountry").value = user.country || "IN";
+  document.getElementById("profileModal").style.display = "flex";
+  document.getElementById("profileModalBackdrop").style.display = "block";
+}
+function closeProfileModal() {
+  document.getElementById("profileModal").style.display = "none";
+  document.getElementById("profileModalBackdrop").style.display = "none";
+}
+// Save and update in Firebase
+function saveProfileEdit() {
+  const name = document.getElementById("profileEditName").value.trim();
+  const email = document.getElementById("profileEditEmail").value.trim();
+  const city = document.getElementById("profileEditCity").value.trim();
+  const country = document.getElementById("profileEditCountry").value.trim().toUpperCase();
+  if (!currentUserId) { alert("User not logged in"); return false; }
+  db.ref("users/" + currentUserId).update({ name, email, city, country }).then(() => {
+    closeProfileModal();
+    notify("Profile updated!", { type: "success" });
+    // Rerender avatar with new info
+    renderNavProfileAvatar({ name, country });
+  }).catch((err) => {
+    notify("Error: " + err.message, { type: "error" });
+  });
+  return false; // Prevent form submit reload
+}
+// Also close modal on backdrop click:
+document.getElementById("profileModalBackdrop").onclick = closeProfileModal;
+
 
   // --- SIDEBAR: Session List ---
   function renderSessions(filter = "") {
@@ -259,7 +410,7 @@ function editMessage(msgId) {
       <div style="display:flex;align-items:center;gap:11px;position:relative;">
         <div style="position:relative;width:45px;height:45px;">
           <div class="user-avatar"
-            style="width:45px;height:45px;border-radius:50%;background:${avatarGradient};display:flex;align-items:center;justify-content:center;font-weight:700;color:#fff;font-size:1.1rem;box-shadow:0 1px 8px #15193544;">
+            style="width:45px;height:45px;border-radius:50%;background:${avatarGradient};display:flex;align-items:center;justify-content:center;font-weight:700;color:#fff;font-size:1.4rem;box-shadow:0 1px 8px #15193544;">
             ${escapeHtml(initials)}
              <span style="position:absolute;bottom:0;right:0;transform:translate(40%,40%);">${statusDot}</span>
           </div>
@@ -282,12 +433,12 @@ function editMessage(msgId) {
       </div>
     `;
     sessionBtn.onclick = () => {
-      // Mark as viewed
-      window.lastViewedTimestamp = window.lastViewedTimestamp || {};
-      window.lastViewedTimestamp[sid] = Date.now();
-      loadChat(sid);
-      renderSessions(filter); // Refresh badge immediately
-    };
+  // Mark as viewed right away if you want
+  window.lastViewedTimestamp = window.lastViewedTimestamp || {};
+  window.lastViewedTimestamp[sid] = Date.now();
+  // Only call loadChat
+  loadChat(sid);
+};
     sessionList.appendChild(sessionBtn);
   }
 
@@ -296,14 +447,43 @@ function editMessage(msgId) {
   }
 }
 
+// For each user/session ID:
+db.ref("chats/" + userId)
+  .orderByChild("timestamp")
+  .limitToLast(1)
+  .once("value", function(snapshot) {
+    // Only handle/display the latest message
+  });
+
+
+function getLastMessage(sessionId, callback) {
+  db.ref("chats/" + sessionId)
+    .orderByChild("timestamp")
+    .limitToLast(1)
+    .once("value", (snapshot) => {
+      const val = snapshot.val();
+      if (val) {
+        const lastMsg = Object.values(val)[0];
+        callback(lastMsg);
+      } else {
+        callback(null);
+      }
+    });
+}
+
+
+
+window.userPresence = {};
 
 // Add a status indicator (dot) based on presence
 function getStatusDotHtml(userId) {
   const state = window.userPresence?.[userId]?.state;
   if (state === "online") {
     return `<span class="user-status-dot" style="background:#13d157"></span>`;
+  } else if (state === "away") {
+    return `<span class="user-status-dot" style="background:orange"></span>`;
   } else if (state === "offline") {
-    return `<span class="user-status-dot" style="background:#fd7e14"></span>`;
+    return `<span class="user-status-dot" style="background:#bbb"></span>`;
   }
   // Default: gray for unknown/offline
   return `<span class="user-status-dot" style="background:#bbb"></span>`;
@@ -311,7 +491,7 @@ function getStatusDotHtml(userId) {
 
 
 
-window.userPresence = {};
+
 
 function listenToPresence() {
   firebase.database().ref("presence").on("value", function(snapshot) {
@@ -469,30 +649,35 @@ function setUserPresence(userId) {
     document.getElementById("editModal").style.display = "none";
     document.getElementById("modalBackdrop").style.display = "none";
   }
-  function saveUserEdit() {
-    const sessionId = document.getElementById("editModal").getAttribute("data-session-id");
-    const name = document.getElementById("editName").value.trim();
-    const email = document.getElementById("editEmail").value.trim();
-    const latitude = document.getElementById("editLat").value.trim();
-    const longitude = document.getElementById("editLng").value.trim();
-    if (!sessionId || !db) return notify("Invalid session or database not initialized.", { type: "error" });
-    if (!name || !email) {
-      notify("Name and email are required.", { type: "error" }); return;
-    }
-    // Safe update
-    const userData = {
-      name, email,
-      location: { latitude: latitude || "", longitude: longitude || "" }
-    };
-    db.ref("users/" + sessionId).update(userData)
-      .then(() => {
-        notify("User profile updated!", { type: "success" });
-        closeModal();
-      })
-      .catch((err) => {
-        notify("Failed to update user profile: " + err.message, { type: "error" });
-      });
+ function saveUserEdit() {
+  const sessionId = document.getElementById("editModal").getAttribute("data-session-id");
+  const name = document.getElementById("editName").value.trim();
+  const email = document.getElementById("editEmail").value.trim();
+  const latitude = document.getElementById("editLat").value.trim();
+  const longitude = document.getElementById("editLng").value.trim();
+  const profilePic = window.newProfilePicData || ""; // base64 or empty
+
+  if (!sessionId || !db) return notify("Invalid session or database not initialized.", { type: "error" });
+  if (!name || !email) {
+    notify("Name and email are required.", { type: "error" }); return;
   }
+  // Safe update
+  const userData = {
+    name, email,
+    location: { latitude: latitude || "", longitude: longitude || "" },
+    ...(profilePic && { profilePic }) // Only set if changed
+  };
+  db.ref("users/" + sessionId).update(userData)
+    .then(() => {
+      notify("User profile updated!", { type: "success" });
+      closeModal();
+      window.newProfilePicData = undefined; // Reset
+    })
+    .catch((err) => {
+      notify("Failed to update user profile: " + err.message, { type: "error" });
+    });
+}
+
 
   function markMessagesAsRead(sessionId, currentUserType) {
   const messagesRef = db.ref("chats/" + sessionId);
@@ -676,40 +861,33 @@ document.addEventListener("click", function(e){
 
 
   // --- Chat selection & loading ---
-  function loadChat(sessionId) {
-  if (!sessionId || !db) return;
+ function loadChat(sessionId) {
+  // Remove previous listeners first if any!
   if (currentChatListener && selectedSessionId) {
     db.ref("chats/" + selectedSessionId).off("value", currentChatListener);
   }
   selectedSessionId = sessionId;
-  markAllAdminMessagesAsRead(sessionId);
-  document.getElementById("inputGroup").style.display = "flex";
-  document.querySelectorAll(".session-item").forEach(item => {
-    item.classList.remove("selected");
-  });
-  renderUserInfoPanel();
 
-  // ----> This is the important line! <----
-  markMessagesAsRead(sessionId, "agent"); // or "user", depending on who's logged in
-
-  // IN USER PANEL ONLY (not admin)
-currentChatListener = (snapshot) => {
-  const chatData = snapshot.val();
-  renderChatMessages(chatData);
-  renderUserInfoPanel();
-  markAllAdminMessagesAsRead(selectedSessionId); // <-- ONLY HERE, ONLY USER!
-};
-
+  // Only now, listen to this chat's full message stream
+  currentChatListener = (snapshot) => {
+    const chatData = snapshot.val();
+    renderChatMessages(chatData);
+    renderUserInfoPanel();
+  };
   db.ref("chats/" + sessionId).on("value", currentChatListener);
-  renderUserInfoPanel();
 }
+
+
+
+
 
   // --- Firebase listeners ---
   function initializeApp() {
-    db.ref("chats").on("value", (snapshot) => {
-      allSessions = snapshot.val() || {};
-      renderSessions(document.getElementById("searchInput").value.toLowerCase());
-    });
+    db.ref("chats").once("value", (snapshot) => {
+    allSessions = snapshot.val() || {};
+    renderSessions(document.getElementById("searchInput").value.toLowerCase());
+});
+
     db.ref("users").on("value", (snapshot) => {
       allUserData = snapshot.val() || {};
       renderSessions(document.getElementById("searchInput").value.toLowerCase());
