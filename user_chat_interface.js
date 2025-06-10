@@ -221,7 +221,7 @@ function initializeChat() {
         if (db && sessionId) {
           db.ref("chats/" + sessionId).push({
             sender: "bot",
-            message: `Hi ${userName}! 👋 How can I help you today?`,
+            message: `Hi ${userName}! 👋 How can I help you ?`,
             type: "text",
             timestamp: Date.now()
           });
@@ -258,7 +258,7 @@ function loadChatMessages() {
   // After short delay, if still empty, greet
   setTimeout(() => {
     if (isEmpty) {
-      botMessage(`Hi ${userName}! 👋 How can I help you today?`);
+      botMessage(`Hi ${userName}! 👋 How can I help you ?`);
     }
   }, 900);
 }
