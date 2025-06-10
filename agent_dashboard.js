@@ -21,79 +21,157 @@
   window.lastViewedTimestamp = {};
   window.editMessage = editMessage;
   window.deleteMessage = deleteMessage;
-  // Example: If you already have the logged-in user info
-  window.currentUserId = "YOUR_LOGGED_IN_USER_ID";
-  window.currentUserId = "USER_ID"; // Replace with actual user ID
+  window.userPresence = {};
+
+
+  window.currentUserId = "userId"; // Replace with actual user ID
+
+
+
+function startPresenceTracking() {
+  const userId = window.currentUserId;
+  const isOfflineForDatabase = { state: 'offline', last_changed: firebase.database.ServerValue.TIMESTAMP };
+  const isOnlineForDatabase  = { state: 'online', last_changed: firebase.database.ServerValue.TIMESTAMP };
+  const isAwayForDatabase    = { state: 'away', last_changed: firebase.database.ServerValue.TIMESTAMP };
+
+  const connectedRef = db.ref('.info/connected');
+  connectedRef.on('value', function(snapshot) {
+    if (snapshot.val() === false) return;
+    userStatusDatabaseRef.onDisconnect().set(isOfflineForDatabase).then(function() {
+      userStatusDatabaseRef.set(isOnlineForDatabase);
+    });
+  });
+
+  let idleTimeout = null;
+  function setAway() { userStatusDatabaseRef.set(isAwayForDatabase); }
+  function setOnline() { userStatusDatabaseRef.set(isOnlineForDatabase); }
+  function resetIdleTimer() {
+    clearTimeout(idleTimeout);
+    setOnline();
+    idleTimeout = setTimeout(setAway, 60 * 1000);
+  }
+  window.onmousemove = window.onkeydown = resetIdleTimer;
+  resetIdleTimer();
+}
+
+
+
   
 
-  const profilePicInput = document.getElementById('profilePicInput');
-const profilePicPreview = document.getElementById('profilePicPreview');
+document.addEventListener('DOMContentLoaded', function() {
+  // Grab all relevant elements, log errors if missing
+  const profilePicInput   = document.getElementById('profilePicInput');
+  const profilePicPreview = document.getElementById('profilePicPreview');
+  const profileModal      = document.getElementById('profileModal');
+  const modalBackdrop     = document.getElementById('profileModalBackdrop');
+  const profileEditName   = document.getElementById('profileEditName');
+  const profileEditEmail  = document.getElementById('profileEditEmail');
+  const profileEditCity   = document.getElementById('profileEditCity');
+  const profileEditCountry= document.getElementById('profileEditCountry');
+  const saveProfileEdit    = document.getElementById('save-btn');
 
-profilePicInput.addEventListener('change', function() {
-  const file = this.files[0];
-  if (file) {
-    const reader = new FileReader();
-    reader.onload = function(e) {
-      profilePicPreview.src = e.target.result;
-      // Optionally, store the base64 in a variable for saving to Firebase
-      window.newProfilePicData = e.target.result;
+  // Null-check all elements
+  if (!profilePicInput)    console.warn('[profilePicInput] not found');
+  if (!profilePicPreview)  console.warn('[profilePicPreview] not found');
+  if (!profileModal)       console.warn('[profileModal] not found');
+  if (!modalBackdrop)      console.warn('[profileModalBackdrop] not found');
+  if (!profileEditName)    console.warn('[profileEditName] not found');
+  if (!profileEditEmail)   console.warn('[profileEditEmail] not found');
+  if (!profileEditCity)    console.warn('[profileEditCity] not found');
+  if (!profileEditCountry) console.warn('[profileEditCountry] not found');
+  if (!saveProfileEdit)     console.warn('[save-btn] not found');
+
+  // Profile Picture Change: Preview logic
+  if (profilePicInput && profilePicPreview) {
+    profilePicInput.addEventListener('change', function() {
+      const file = this.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          profilePicPreview.src = e.target.result;
+          window.newProfilePicData = e.target.result;
+        };
+        reader.readAsDataURL(file);
+      }
+    });
+  }
+
+  // Expose modal open/close globally, defensively
+  window.openProfileModal = function() {
+    if (profileModal) profileModal.style.display = "flex";
+    if (modalBackdrop) modalBackdrop.style.display = "block";
+  };
+  window.closeProfileModal = function() {
+    if (profileModal) profileModal.style.display = "none";
+    if (modalBackdrop) modalBackdrop.style.display = "none";
+  };
+
+  // Close modal when clicking backdrop
+  if (modalBackdrop) {
+    modalBackdrop.onclick = window.closeProfileModal;
+  }
+
+  // Save profile logic (replace with your Firebase logic as needed)
+  if (saveProfileEdit) {
+    saveProfileEdit.onclick = function() {
+      // Defensive: get field values only if fields exist
+      const name    = profileEditName   ? profileEditName.value.trim()   : '';
+      const email   = profileEditEmail  ? profileEditEmail.value.trim()  : '';
+      const city    = profileEditCity   ? profileEditCity.value.trim()   : '';
+      const country = profileEditCountry? profileEditCountry.value.trim(): '';
+
+      // Validation: show warning if required fields are missing
+      if (!name || !email) {
+        alert("Name and Email are required");
+        return;
+      }
+
+      // You can plug in your Firebase/database logic here, e.g.:
+      // db.ref("users/" + userId).update({ name, email, city, country, ... })
+      //   .then(() => alert("Profile updated!"))
+      //   .catch((err) => alert("Update failed: " + err.message));
+      
+      // Just close modal for demo:
+      window.closeProfileModal();
     };
-    reader.readAsDataURL(file);
   }
 });
 
 
-// === Firebase Presence Tracking ===
-const userId = "USER_ID"; // Replace this dynamically for each logged-in user
 
+
+
+// === Firebase Presence Tracking ===
+const userId = window.currentUserId;
 const userStatusDatabaseRef = db.ref('/status/' + userId);
 
-const isOfflineForDatabase = {
-  state: 'offline',
-  last_changed: firebase.database.ServerValue.TIMESTAMP,
-};
+const isOfflineForDatabase = { state: 'offline', last_changed: firebase.database.ServerValue.TIMESTAMP };
+const isOnlineForDatabase  = { state: 'online', last_changed: firebase.database.ServerValue.TIMESTAMP };
+const isAwayForDatabase    = { state: 'away', last_changed: firebase.database.ServerValue.TIMESTAMP };
 
-const isOnlineForDatabase = {
-  state: 'online',
-  last_changed: firebase.database.ServerValue.TIMESTAMP,
-};
-
-const isAwayForDatabase = {
-  state: 'away',
-  last_changed: firebase.database.ServerValue.TIMESTAMP,
-};
-
-// 1. Listen to .info/connected, this is magic from Firebase!
 const connectedRef = db.ref('.info/connected');
 connectedRef.on('value', function(snapshot) {
-  if (snapshot.val() === false) {
-    // Not connected: do nothing (user is offline, or not loaded yet)
-    return;
-  }
-
-  // On disconnect (browser/tab close, network loss): mark as offline
+  if (snapshot.val() === false) return;
   userStatusDatabaseRef.onDisconnect().set(isOfflineForDatabase).then(function() {
-    // When connected: set as online
     userStatusDatabaseRef.set(isOnlineForDatabase);
   });
 });
 
+
+
+
 // 2. Optional: Idle/away tracking (shows "away" if inactive for X seconds)
 let idleTimeout = null;
-function setAway() {
-  userStatusDatabaseRef.set(isAwayForDatabase);
-}
-function setOnline() {
-  userStatusDatabaseRef.set(isOnlineForDatabase);
-}
+function setAway() { userStatusDatabaseRef.set(isAwayForDatabase); }
+function setOnline() { userStatusDatabaseRef.set(isOnlineForDatabase); }
 function resetIdleTimer() {
   clearTimeout(idleTimeout);
   setOnline();
-  // Set to away after 60 seconds of no activity (change as you like)
   idleTimeout = setTimeout(setAway, 60 * 1000);
 }
 window.onmousemove = window.onkeydown = resetIdleTimer;
-resetIdleTimer(); // Kick off on load
+resetIdleTimer();
+
 
 
 // Reference to your users node (adjust if your users are elsewhere)
@@ -108,14 +186,53 @@ usersRef.once('value', function(snapshot) {
   }
 });
 
+
 // Listen to all users' presence
 function setupPresenceListener(userId) {
+  if (!userId) return;
+  
   const statusRef = db.ref('/status/' + userId);
   statusRef.on('value', function(snapshot) {
-    window.userPresence[userId] = snapshot.val() || {state: "offline"};
-    // Rerender the UI if needed (dot/status)
+    const presenceData = snapshot.val();
+    
+    // Initialize userPresence object if it doesn't exist
+    if (!window.userPresence) {
+      window.userPresence = {};
+    }
+    
+    // Update the presence data
+    window.userPresence[userId] = presenceData || { state: "offline" };
+    
+    console.log(`User ${userId} presence updated:`, window.userPresence[userId]);
+    
+    // Re-render UI components that show status
     renderSessions(document.getElementById("searchInput").value.toLowerCase());
-    renderUserInfoPanel(); // if you want user detail panel to update
+    
+    // Only render user info panel if this user is currently selected
+    if (selectedSessionId === userId) {
+      renderUserInfoPanel();
+    }
+  });
+}
+
+function initializePresenceTracking() {
+  // First, get all users and set up listeners
+  db.ref('/users').once('value', function(snapshot) {
+    const users = snapshot.val() || {};
+    
+    console.log('Setting up presence listeners for users:', Object.keys(users));
+    
+    // Set up presence listener for each user
+    Object.keys(users).forEach(userId => {
+      setupPresenceListener(userId);
+    });
+  });
+  
+  // Also listen for new users being added
+  db.ref('/users').on('child_added', function(snapshot) {
+    const userId = snapshot.key;
+    console.log('New user detected, setting up presence listener:', userId);
+    setupPresenceListener(userId);
   });
 }
 
@@ -139,23 +256,15 @@ function setupPresenceListener(userId) {
  // Place this with your other utils at the top
 function getAvatarGradient(name = "") {
   const gradients = [
-    "linear-gradient(135deg, #B993D6 0%, #8CA6DB 100%)",   // matte purple-blue
-    "linear-gradient(135deg, #89F7FE 0%, #66A6FF 100%)",   // pastel teal-blue
-    "linear-gradient(135deg, #F6D365 0%, #FDA085 100%)",   // modern orange/peach
-    "linear-gradient(135deg, #A1FFCE 0%, #FAFFD1 100%)",   // mint to pale yellow
-    "linear-gradient(135deg, #FBC2EB 0%, #A6C1EE 100%)",   // blush pink to blue
-    "linear-gradient(135deg, #FCE38A 0%, #F38181 100%)",   // yellow to matte pink
-    "linear-gradient(135deg, #43E97B 0%, #38F9D7 100%)",   // green to teal
-    "linear-gradient(135deg, #667EEA 0%, #764BA2 100%)",   // blue-mauve matte
-    "linear-gradient(135deg, #C9FFBF 0%, #FFAFBD 100%)",   // mint to rose
-    "linear-gradient(135deg, #FAD0C4 0%, #FFD1FF 100%)",   // peach pink
-    "linear-gradient(135deg, #B5FFFC 0%, #6EE7FF 100%)",   // aqua blue matte
-    "linear-gradient(135deg, #FFDEE9 0%, #B5FFFC 100%)",   // soft pink to blue
-    "linear-gradient(135deg, #8EC5FC 0%, #E0C3FC 100%)",   // blue to light purple
-    "linear-gradient(135deg, #FCEABB 0%, #F8B500 100%)",   // light gold
-    "linear-gradient(135deg, #FFB88C 0%, #DE6262 100%)"    // orange to muted red
-  ];
-
+    "#79b6a1", // Teal/green
+  "#6a8da8", // Blue-grey
+  "#ce9a84", // Peach/tan
+  "#b5aacd", // Lavender/purple
+  "#b9d8b8", // Minty green
+  "#d2c893", // Cream
+  "#c9c3cf", // Muted lilac
+  "##9ba2d1", // Muted rose
+];
   let hash = 0;
   for (let i = 0; i < name.length; i++) {
     hash = name.charCodeAt(i) + ((hash << 5) - hash);
@@ -165,7 +274,7 @@ function getAvatarGradient(name = "") {
 
 
 
-function getCountryFlagImg(countryCode = "IN", size = 20) {
+function getCountryFlagImg(countryCode = "IN", size = 15) {
   return `<img src="https://flagcdn.com/${size}x${Math.round(size*0.75)}/${countryCode.toLowerCase()}.png" 
     alt="${countryCode.toUpperCase()} flag" style=vertical-align:middle;" />`;
 }
@@ -410,9 +519,10 @@ document.getElementById("profileModalBackdrop").onclick = closeProfileModal;
       <div style="display:flex;align-items:center;gap:11px;position:relative;">
         <div style="position:relative;width:45px;height:45px;">
           <div class="user-avatar"
-            style="width:45px;height:45px;border-radius:50%;background:${avatarGradient};display:flex;align-items:center;justify-content:center;font-weight:700;color:#fff;font-size:1.4rem;box-shadow:0 1px 8px #15193544;">
+            style="width:43px;height:43px;border-radius:50%;background:${avatarGradient};display:flex;align-items:center;justify-content:center;font-weight:700;color:#fff;font-size:1rem;box-shadow:0 1px 8px #15193544;">
             ${escapeHtml(initials)}
-             <span style="position:absolute;bottom:0;right:0;transform:translate(40%,40%);">${statusDot}</span>
+             ${statusDot}
+
           </div>
           <span class="country-flag" style="position: absolute; right: -2px; bottom: -3px;">
             ${countryFlag}
@@ -420,7 +530,7 @@ document.getElementById("profileModalBackdrop").onclick = closeProfileModal;
           ${showBadge ? `<span class="badge-notification" style="position:absolute;top:-6px;right:-8px;background:#b30400;color:white;border-radius:9px;padding:0 6px;font-size:0.8em;">1</span>` : ""}
         </div>
         <div style="flex:1;min-width:0;">
-          <div style="font-weight:600;font-size:1em;color:black;text-overflow:ellipsis;overflow:hidden;">
+          <div style="font-weight:600;font-size:.9em;color:black;text-overflow:ellipsis;overflow:hidden;">
             ${escapeHtml(userData.name)}
           </div>
           <div class="session-info" style="text-overflow:ellipsis;white-space:nowrap;overflow:hidden;color:#656e7e;">
@@ -471,35 +581,47 @@ function getLastMessage(sessionId, callback) {
 }
 
 
-
-window.userPresence = {};
-
 // Add a status indicator (dot) based on presence
 function getStatusDotHtml(userId) {
-  const state = window.userPresence?.[userId]?.state;
-  if (state === "online") {
-    return `<span class="user-status-dot" style="background:#13d157"></span>`;
-  } else if (state === "away") {
-    return `<span class="user-status-dot" style="background:orange"></span>`;
-  } else if (state === "offline") {
-    return `<span class="user-status-dot" style="background:#bbb"></span>`;
-  }
-  // Default: gray for unknown/offline
-  return `<span class="user-status-dot" style="background:#bbb"></span>`;
+  // Get the user's presence state from the global userPresence object
+  const userStatus = window.userPresence?.[userId];
+  const state = userStatus?.state || "offline";
+  
+  // Define colors for different states
+  const color = state === "online" ? "#13d157"   // Green for online
+              : state === "away"   ? "#ff9500"   // Orange for away  
+              : "#bbb";                          // Grey for offline
+  
+  return `<span class="user-status-dot"
+    style="
+      position: absolute;
+      bottom: 45px;
+      right: 45px;
+      width: 15px;
+      height: 15px;
+      border-radius: 50%;
+      background: ${color};
+      border: 2px solid white;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+      z-index: 2;
+    "></span>`;
 }
 
 
 
 
 
-function listenToPresence() {
-  firebase.database().ref("presence").on("value", function(snapshot) {
-    window.userPresence = snapshot.val() || {};
-    renderSessions(document.getElementById("searchInput").value.toLowerCase());
-    renderUserInfoPanel(); // <-- make sure you call this here!
-  });
-}
-listenToPresence();
+
+
+
+// function listenToPresence() {
+//   firebase.database().ref("presence").on("value", function(snapshot) {
+//     window.userPresence = snapshot.val() || {};
+//     renderSessions(document.getElementById("searchInput").value.toLowerCase());
+//     renderUserInfoPanel(); // <-- make sure you call this here!
+//   });
+// }
+// listenToPresence();
 
 
 
@@ -527,6 +649,7 @@ function getLocationMapLink(city, country, lat, lng) {
     userInfoList.innerHTML = "";
     return;
   }
+  
   const user = allUserData[selectedSessionId];
   const initials = getInitials(user.name);
   const avatarGradient = getAvatarGradient(user.name + (user.country || "IN"));
@@ -535,6 +658,14 @@ function getLocationMapLink(city, country, lat, lng) {
   const city = user.city || "Unknown City";
   const country = user.country || "IN";
   const countryFlag = getCountryFlagImg(country, 20);
+  
+  // Get user's current status
+  const userStatus = window.userPresence?.[selectedSessionId];
+  const statusText = userStatus?.state || "offline";
+  const statusColor = statusText === "online" ? "#13d157" 
+                    : statusText === "away" ? "#ff9500" 
+                    : "#bbb";
+  
   // Calculate time (for demo, just show current time)
   const now = new Date();
   const localTime = now.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
@@ -542,39 +673,34 @@ function getLocationMapLink(city, country, lat, lng) {
 
   userInfoList.innerHTML = `
     <div class="modern-user-card" id="user-info-${selectedSessionId}">
-     <div class="modern-avatar"
-  style="background:${avatarGradient};color:#fff;position:relative;box-shadow:0 3px 10px #15193533; width: 60px;height: 60px;display:inline-flex;align-items:center;justify-content:center;">
-  ${initials}
-  <span class="country-flag" title="${country}" style="position:absolute;right:-8px;bottom:-5px;">
-    ${countryFlag}
-  </span>
-  <span class="user-status-dot" style="position:absolute;bottom:0;right:0;transform:translate(35%,35%);">
-    ${getStatusDotHtml(selectedSessionId)}
-  </span>
-</div>
-
+      <div class="modern-avatar" style="background:${avatarGradient};color:#fff;position:relative;box-shadow:0 3px 10px #15193533; width: 60px;height: 60px;display:inline-flex;align-items:center;justify-content:center;border-radius:50%;">
+        ${initials}
+        <span class="country-flag" title="${country}" style="position:absolute;right:-8px;bottom:-5px;">
+          ${countryFlag}
+        </span>
+        ${getStatusDotHtml(selectedSessionId)}
+      </div>
 
       <div class="modern-user-details" style="flex:1;">
         <span class="modern-user-name">${escapeHtml(user.name)}</span>
         <span class="modern-user-email">${escapeHtml(user.email || "")}</span>
+        <div style="font-size:0.8em;color:${statusColor};font-weight:600;margin-top:2px;">
+          ${statusText.charAt(0).toUpperCase() + statusText.slice(1)}
+          <button class="modern-edit-btn" onclick="openEditModal('${selectedSessionId}')">✏️</button>
+        </div>
+        
       </div>
-      <button class="modern-edit-btn" onclick="openEditModal('${selectedSessionId}')">✏️</button>
     </div>
     <!-- Extra user info like in the Jira-style panel -->
     <div>
-    <p style="border-bottom: 1px solid lightgray;
-    padding: 0px 0 15px 1px;
-    text-align: center;
-    /* background: #eaeded; */
-    width: 230px;font-weight: 700;
-    color: #aaaaaa;" >Main Information</p><br>
+      <p style="border-bottom: 1px solid lightgray; padding: 0px 0 15px 1px; text-align: center; width: 230px;font-weight: 700; color: #aaaaaa;">Main Information</p><br>
     </div>
     <div class="modern-user-extra">
-    <div style="display:flex;align-items:center;gap:10px;margin-bottom:7px;">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:7px;">
         <span style="font-size:1.2em;">📧</span>
-        <span style="white-space: nowrap;overflow: hidden;text-overflow: ellipsis;" >${escapeHtml(user.email || "")}</span>
+        <span style="white-space: nowrap;overflow: hidden;text-overflow: ellipsis;">${escapeHtml(user.email || "")}</span>
       </div>
-          <div style="display:flex;align-items:center;gap:10px;margin-bottom:7px;">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:7px;">
         <span style="font-size:1.2em;">📍</span>
         <span>${city}, ${country}</span>
       </div>
@@ -587,13 +713,16 @@ function getLocationMapLink(city, country, lat, lng) {
         <span>${countryFlag}</span>
       </div>
       <div style="display:flex;align-items:center;gap:12px;margin-bottom:9px;">
-  <span style="font-size:1.3em;">📆</span>
-  <span>${getFormattedDateByTimezone()}</span>
-</div>
-
+        <span style="font-size:1.3em;">📆</span>
+        <span>${getFormattedDateByTimezone()}</span>
+      </div>
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:7px;">
         <span style="font-size:1.2em;">🌐</span>
         <a href="https://einvite.website/" target="_blank" style="color:#2563eb;text-decoration:underline;">https://einvite.website/</a>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:35px;">
+        <span style="font-size:1.2em;">📊</span>
+        <span style="color:${statusColor};font-weight:600;">Status: ${statusText}</span>
       </div>
     </div>
   `;
@@ -722,16 +851,30 @@ function markAllAdminMessagesAsRead(sessionId) {
 const ADMIN_PROFILE = {
   name: "Admin",
   initials: "A",
-  avatarUrl: "images/admin.png"
+  avatarUrl: "images/logo.jpg" // Default avatar image
 };
 
 function renderAdminSidebarAvatar() {
   const avatarContainer = document.getElementById("navAdminProfile");
-  // If using initials:
-  avatarContainer.innerHTML = `<div class="sidebar-admin-avatar">${ADMIN_PROFILE.initials}</div>`;
-  // If using an image, do this instead:
-  // avatarContainer.innerHTML = `<div class="sidebar-admin-avatar"><img src="${ADMIN_PROFILE.avatarUrl}" alt="Admin" style="width: 100%; height: 100%; border-radius: 50%;" /></div>`;
+  const img = new Image();
+  img.src = ADMIN_PROFILE.avatarUrl;
+  img.onload = function() {
+    const dot = getStatusDotHtml(window.currentUserId || ""); // YOUR OWN STATUS
+    avatarContainer.innerHTML = `
+      <div style="position:relative;">
+        <div class="sidebar-admin-avatar">
+          <img src="${ADMIN_PROFILE.avatarUrl}" alt="Admin" style="width:100%; height:100%; border-radius:50%;" />
+        </div>
+        ${dot}
+      </div>`;
+  };
+  img.onerror = function() {
+    avatarContainer.innerHTML = `<div class="sidebar-admin-avatar">${ADMIN_PROFILE.initials}</div>`;
+  };
 }
+
+
+
 
 renderAdminSidebarAvatar();
 
@@ -893,17 +1036,42 @@ function loadChat(sessionId) {
 
   // --- Firebase listeners ---
   function initializeApp() {
-    db.ref("chats").once("value", (snapshot) => {
-    allSessions = snapshot.val() || {};
-    renderSessions(document.getElementById("searchInput").value.toLowerCase());
-});
+  Promise.all([
+    db.ref("chats").once("value"),
+    db.ref("users").once("value"),
+    db.ref("status").once("value")
+  ]).then(([chatsSnap, usersSnap, statusSnap]) => {
+    allSessions = chatsSnap.val() || {};
+    allUserData = usersSnap.val() || {};
+    window.userPresence = statusSnap.val() || {};
 
-    db.ref("users").on("value", (snapshot) => {
-      allUserData = snapshot.val() || {};
-      renderSessions(document.getElementById("searchInput").value.toLowerCase());
-      renderUserInfoPanel();
+    console.log('Initial data loaded:', {
+      sessions: Object.keys(allSessions).length,
+      users: Object.keys(allUserData).length,
+      presence: Object.keys(window.userPresence).length
     });
+
+    // Initialize presence tracking for all users
+    initializePresenceTracking();
+
+    // Render initial UI
+    renderSessions(document.getElementById("searchInput").value.toLowerCase());
+    renderUserInfoPanel();
+  }).catch(error => {
+    console.error('Error initializing app:', error);
+  });
+}
+
+function debugUserPresence() {
+  console.log('Current userPresence data:', window.userPresence);
+  console.log('Selected session ID:', selectedSessionId);
+  if (selectedSessionId) {
+    console.log('Selected user presence:', window.userPresence?.[selectedSessionId]);
   }
+}
+
+
+
   window.addEventListener('load', initializeApp);
 
   // --- Send message ---

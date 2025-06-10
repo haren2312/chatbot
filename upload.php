@@ -11,7 +11,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['image'])) {
     $targetFile = $uploadDir . $filename;
 
     if (move_uploaded_file($_FILES['image']['tmp_name'], $targetFile)) {
-        echo json_encode(["success" => true, "url" => $targetFile]);
+        $webUrl = '/' . $targetFile;
+        echo json_encode(["success" => true, "url" => $webUrl]);
+
     } else {
         echo json_encode(["success" => false, "error" => "Upload failed"]);
     }
