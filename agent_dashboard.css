@@ -873,18 +873,18 @@ body {
 }
 
 .message-bubble .msg-meta {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  font-size: 0.6em;
-  color: #7a97ba;
-  opacity: 0.84;
-  margin-top: 3px;
+    display: flex;
+    align-items: center;
+    gap: 0;
+    font-size: 0.7em;
+    color: #7a97ba;
+    opacity: 1;
+    margin-top: 3px;
 }
 
 .message-row.self .msg-meta {
-  color: #d2e5ff;
-  opacity: 0.76;
+    color: #5e5e5e;
+    opacity: 1;
 }
 
 .message-avatar {
@@ -1590,3 +1590,60 @@ width: 0px;
 .save-btn:hover { background:#1877f2; }
 .modal-backdrop { position:fixed; left:0; top:0; width:100vw; height:100vh; background:#2227; z-index:999; }
 
+
+/* Message menu (3 dots) */
+.msg-menu {
+    position: absolute;
+    top: 0px;
+    right: 0px;
+    font-size: 1.2em;
+    color: #ababab;
+    /* background: #fff; */
+    border-radius: 50%;
+    width: 25px;
+    height: 25px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    opacity: 0;
+    transition: opacity 0.2s;
+    z-index: 4;
+}
+
+.message-bubble:hover .msg-menu {
+  opacity: 1;
+}
+
+/* The popup action menu */
+.msg-actions {
+    display: none;
+    position: absolute;
+    top: 20px;
+    right: -55px;
+    background: #ffffff;
+    border-radius: 10px;
+    box-shadow: 0 2px 12px #2563eb22;
+    z-index: 999;
+    flex-direction: column;
+    min-width: 80px;
+    border: 1px solid #cfcfcf;
+    overflow: hidden;
+    padding: 4px 0;
+}
+
+.msg-actions button {
+    width: 50%;
+    border: none;
+    background: none;
+    color: #23334d;
+    font-size: 0.9em;
+    padding: 8px 5px;
+    cursor: pointer;
+    text-align: left;
+    transition: background 0.15s, color 0.15s;
+}
+.msg-actions button:hover {
+  background: #f3f6fa;
+  color: #2563eb;
+}

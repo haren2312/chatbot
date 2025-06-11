@@ -408,6 +408,11 @@ function saveProfileEdit() {
   const country = document.getElementById("profileEditCountry").value.trim().toUpperCase();
   if (!currentUserId) { alert("User not logged in"); return false; }
   db.ref("users/" + currentUserId).update({ name, email, city, country }).then(() => {
+
+    window.ADMIN_PROFILE.avatarUrl = newPhotoUrl; // after upload
+    renderAdminSidebarAvatar();
+    renderChatMessages(allSessions[selectedSessionId]);
+
     closeProfileModal();
     notify("Profile updated!", { type: "success" });
     // Rerender avatar with new info
@@ -445,6 +450,12 @@ document.getElementById("profileModalBackdrop").onclick = closeProfileModal;
     }
     return { sid, lastMsgTime, lastMsg, lastMsgType, lastMsgSender };
   });
+
+  window.ADMIN_PROFILE = {
+  name: "Admin",
+  initials: "A",
+  avatarUrl: "images/logo.jpg" // updated when profile changes
+};
 
   // 2. Apply sorting (uses global sessionSortMode)
   if (sessionSortMode === "latest") {
@@ -702,8 +713,13 @@ function getLocationMapLink(city, country, lat, lng) {
       </div>
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:7px;">
         <span style="font-size:1.2em;">📍</span>
-        <span>${city}, ${country}</span>
+        <a href="${getLocationMapLink(city, country, lat, lng)}" 
+          target="_blank" 
+          style="color:#172a4e;text-decoration:none;word-break:break-word;">
+        ${city}, ${country}
+      </a>
       </div>
+
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:7px;">
         <span style="font-size:1.2em;">🕒</span>
         <span>${localTime} <span style="color:#7a8599;font-size:.8em;">(${timezoneOffset})</span></span>
@@ -896,36 +912,43 @@ function renderChatMessages(chatData) {
   let lastMessageDate = null;
   
   messagesArr.forEach((msg) => {
-    // Date & time
-    const dateObj = msg.timestamp ? new Date(msg.timestamp) : new Date();
-    const day = dateObj.toLocaleDateString();
-    const timeString = dateObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true });
+  const dateObj = msg.timestamp ? new Date(msg.timestamp) : new Date();
+  const day = dateObj.toLocaleDateString();
+  const timeString = dateObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true });
 
-    // Date separator
-    if (lastMessageDate !== day) {
-      chatBox.innerHTML += `<div class="date-separator" style="text-align:center;margin:16px 0 8px 0;color:#000000;font-weight:500;background:white;background-color:#eaeded;border-radius:8px;padding:0px 0;">${day}</div>`;
-      lastMessageDate = day;
-    }
+  // FIX: Now includes bot as right side
+  let senderType = (msg.sender || "").toLowerCase();
+  let isRight = senderType === "admin" || senderType === "agent" || senderType === "bot";
+  let avatarHtml = "";
 
-    // Sender info
-    let senderType = (msg.sender || "").toLowerCase();
-    let isRight = senderType === "admin" || senderType === "agent" || senderType === "bot";
-    let avatarHtml = "";
-    if (senderType === "bot") {
-      avatarHtml = `<div class="message-avatar" style="background:#fff;padding:2px;">
-        <img src="images/logo.jpg" alt="Bot" style="width:28px; height:28px; border-radius:50%; display:block;">
-      </div>`;
-    } else if (isRight) {
-      // Admin/Agent avatar
-      avatarHtml = `<div class="message-avatar" style="background:#2563eb;color:#fff;">A</div>`;
-    } else {
-      // User avatar
-      let name = (allUserData[selectedSessionId]?.name || msg.sender || "");
-      let initials = getInitials(name);
-      let avatarColor = getAvatarGradient(name + (allUserData[selectedSessionId]?.country || "IN"));
-      avatarHtml = `<div class="message-avatar" style="background:${avatarColor};color:#fff;">${initials}</div>`;
-    }
-
+  if (isRight) {
+    // Bot/Admin/Agent avatar
+    avatarHtml = `<div class="message-avatar" style="padding:2px;background:#fff;">
+      <img src="${window.ADMIN_PROFILE.avatarUrl}" alt="Bot/Admin" style="width:32px;height:32px;border-radius:50%;" />
+    </div>`;
+} else if (isRight) {
+  // === ADMIN/AGENT AVATAR ===
+  if (window.ADMIN_PROFILE && window.ADMIN_PROFILE.avatarUrl) {
+    avatarHtml = `<div class="message-avatar" style="padding:2px;background:#fff;">
+      <img src="${window.ADMIN_PROFILE.avatarUrl}" alt="Admin" style="width:32px;height:32px;border-radius:50%;" />
+    </div>`;
+  } else {
+    avatarHtml = `<div class="message-avatar" style="background:#2563eb;color:#fff;">A</div>`;
+  }
+} else {
+  // === USER AVATAR ===
+  const userData = allUserData[selectedSessionId] || {};
+  if (userData.profilePic) {
+    avatarHtml = `<div class="message-avatar" style="padding:2px;background:#fff;">
+      <img src="${userData.profilePic}" alt="User" style="width:32px;height:32px;border-radius:50%;" />
+    </div>`;
+  } else {
+    let name = userData.name || msg.sender || "";
+    let initials = getInitials(name);
+    let avatarColor = getAvatarGradient(name + (userData.country || "IN"));
+    avatarHtml = `<div class="message-avatar" style="background:${avatarColor};color:#fff;">${initials}</div>`;
+  }
+}
     // Message Content
     let messageContent = "";
     if (msg.type === "image" && msg.message) {
@@ -940,70 +963,87 @@ function renderChatMessages(chatData) {
       : "background:linear-gradient(98deg, #2563eb 90%, #1877f2 100%);color:#fff;";
 
     // Message bubble HTML
-    chatBox.innerHTML += `
-      <div style="display:flex;align-items:flex-end;justify-content:${isRight ? "flex-end" : "flex-start"};margin-bottom:14px;position:relative;">
-        ${!isRight ? avatarHtml : ""}
-        <div class="message-bubble" style="${bubbleColor};position:relative;${isRight ? "margin-left:auto;" : ""}" data-msg-id="${msg._id}">
-          <div>${messageContent}</div>
-         <div class="msg-time">
-  ${timeString}
-  ${getMessageStatusIcon(msg, isRight)}
-</div>
+    // At the top of your .forEach((msg) => { ... })
+const canEditDelete = senderType === "admin" || senderType === "agent" || senderType === "bot"; // or whatever logic you want
+
+// Message bubble HTML, add 3-dot menu if right-side (admin/bot/agent), can do for user too if desired
+ chatBox.innerHTML += `
+    <div class="message-row ${isRight ? "self" : senderType}" style="position:relative;">
+      ${!isRight ? avatarHtml : ""}
+      <div class="message-bubble" style="${bubbleColor};position:relative;" data-msg-id="${msg._id}">
+        <div class="msg-content">${messageContent}</div>
+        <div class="msg-meta">${timeString} ${getMessageStatusIcon(msg, isRight)}</div>
+        <span class="msg-menu" title="More" data-msg-id="${msg._id}">⋮</span>
+        <div class="msg-actions" data-msg-id="${msg._id}" style="display:none;">
+          <button class="edit-btn" data-msg-id="${msg._id}" title="Edit">Eidt</button>
+          <button class="delete-btn" data-msg-id="${msg._id}" title="Delete">Delete</button>
+          <button class="copy-btn" data-msg-id="${msg._id}" title="Copy">Copy</button>
         </div>
-        ${isRight ? avatarHtml : ""}
-        ${isRight && senderType !== "bot" ? `
-          <div class="msg-actions" style="display:none;position:absolute;top:35px;right:6px;z-index:10;">
-            <button onclick="editMessage('${msg._id}')" title="Edit"><i class="fa fa-pencil"></i></button>
-            <button onclick="deleteMessage('${msg._id}')" title="Delete"><i class="fa fa-trash"></i></button>
-          </div>
-        ` : ""}
       </div>
-    `;
-  });
+      ${isRight ? avatarHtml : ""}
+    </div>
+  `;
+});
 
   chatBox.scrollTop = chatBox.scrollHeight;
+   chatBox.querySelectorAll('.msg-menu').forEach(menu => {
+    menu.onclick = function(e) {
+      e.stopPropagation();
+      const msgId = this.getAttribute('data-msg-id');
+      chatBox.querySelectorAll('.msg-actions').forEach(a => a.style.display = "none");
+      const actions = chatBox.querySelector(`.msg-actions[data-msg-id="${msgId}"]`);
+      if (actions) actions.style.display = "flex";
+    };
+  });
+
+  // Edit
+  chatBox.querySelectorAll('.edit-btn').forEach(btn => {
+    btn.onclick = function(e) {
+      e.stopPropagation();
+      const msgId = this.getAttribute('data-msg-id');
+      editMessage(msgId);
+      chatBox.querySelectorAll('.msg-actions').forEach(a => a.style.display = "none");
+    };
+  });
+
+  // Delete
+  chatBox.querySelectorAll('.delete-btn').forEach(btn => {
+    btn.onclick = function(e) {
+      e.stopPropagation();
+      const msgId = this.getAttribute('data-msg-id');
+      deleteMessage(msgId);
+      chatBox.querySelectorAll('.msg-actions').forEach(a => a.style.display = "none");
+    };
+  });
+
+  // Copy
+  chatBox.querySelectorAll('.copy-btn').forEach(btn => {
+    btn.onclick = function(e) {
+      e.stopPropagation();
+      const msgId = this.getAttribute('data-msg-id');
+      const msgContent = chatBox.querySelector(`.message-bubble[data-msg-id="${msgId}"] .msg-content`).textContent || "";
+      navigator.clipboard.writeText(msgContent).then(() => {
+        notify("Message copied!", { type: "success" });
+      });
+      chatBox.querySelectorAll('.msg-actions').forEach(a => a.style.display = "none");
+    };
+  });
+
+  // Hide all menus if clicking outside
+  document.addEventListener('click', function outsideClickHandler(e) {
+    chatBox.querySelectorAll('.msg-actions').forEach(actions => {
+      actions.style.display = "none";
+    });
+    // Remove this handler after run to avoid stacking
+    document.removeEventListener('click', outsideClickHandler);
+  });
+
 }
 
 // Re-attach menu listeners
 // After chatBox.innerHTML += ... (i.e., after building all messages)
-chatBox.querySelectorAll('.msg-menu').forEach(menu => {
-  menu.onclick = function(e) {
-    e.stopPropagation();
-    // This menu's parent is the flex div, which contains both .msg-menu and .msg-actions
-    const actions = this.parentElement.querySelector('.msg-actions');
-    if (!actions) return;
-    // Hide all other open menus
-    chatBox.querySelectorAll('.msg-actions').forEach(other => {
-      if (other !== actions) other.style.display = "none";
-    });
-    actions.style.display = actions.style.display === "flex" ? "none" : "flex";
-  };
-});
-
-
-// Hide the menu when clicking anywhere else
-document.addEventListener("click", function (e) {
-  // If you click anywhere else, close all msg-actions
-  document.querySelectorAll('.msg-actions').forEach(actions => {
-    actions.style.display = "none";
-  });
-});
-
-
-
-navToggle.onclick = () => {
-  navBar.classList.toggle("collapsed");
-};
-
-// Optionally collapse on outside click (small screens)
-document.addEventListener("click", function(e){
-  if (window.innerWidth < 700 &&
-      !navBar.contains(e.target) &&
-      !navToggle.contains(e.target)) {
-    navBar.classList.add("collapsed");
-  }
-});
-
+// Add event listeners to msg-menu buttons
+// Attach menu toggle
 
 
   // --- Chat selection & loading ---
