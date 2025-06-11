@@ -713,13 +713,8 @@ function getLocationMapLink(city, country, lat, lng) {
       </div>
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:7px;">
         <span style="font-size:1.2em;">📍</span>
-        <a href="${getLocationMapLink(city, country, lat, lng)}" 
-          target="_blank" 
-          style="color:#172a4e;text-decoration:none;word-break:break-word;">
-        ${city}, ${country}
-      </a>
+        <span>${city}, ${country}</span>
       </div>
-
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:7px;">
         <span style="font-size:1.2em;">🕒</span>
         <span>${localTime} <span style="color:#7a8599;font-size:.8em;">(${timezoneOffset})</span></span>
