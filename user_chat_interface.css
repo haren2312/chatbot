@@ -753,3 +753,48 @@ body, input, button, .bubble, .sender-name {
 .header-menu-btn:hover {
   background: rgba(255,255,255,0.15);
 }
+
+.bubble {
+  position: relative;
+}
+.msg-actions {
+  position: absolute;
+  top: 8px;
+  right: 12px;
+  z-index: 2;
+  /* Ensures menu is always in the top-right of bubble */
+}
+.msg-menu {
+    background: none;
+    border: none;
+    font-size: 13px;
+    color: #000000;
+    cursor: pointer;
+    outline: none;
+    display: none;
+}
+.msg.user .bubble:hover .msg-menu {
+  display: inline-block; /* Only show on hover for user messages */
+}
+.msg-dropdown {
+  background: #fff;
+  border: 1px solid #eee;
+  border-radius: 6px;
+  box-shadow: 0 2px 8px rgba(40,60,90,0.12);
+  position: absolute;
+  right: 0;
+  top: 26px;
+  min-width: 110px;
+  display: none;
+  z-index: 10;
+}
+.msg-dropdown-item {
+    padding: 5px 5px;
+    cursor: pointer;
+    font-size: 10px;
+    color: #222;
+    transition: background 0.14s;
+}
+.msg-dropdown-item:hover {
+  background: #f0f3fa;
+}

@@ -210,6 +210,17 @@ function initializeChat() {
   document.getElementById("chat").style.display = "flex";
   chatInitialized = true;
 
+  // New: Check if we've greeted this user in THIS browser session
+  if (sessionStorage.getItem('greeted')) {
+    // User already greeted, just load messages and focus input
+    loadChatMessages(() => {
+      setTimeout(() => {
+        document.getElementById("input").focus();
+      }, 100);
+    });
+    return; // <-- Don't run greeting logic again
+  }
+
   loadChatMessages(() => {
     // If no messages exist, push the greeting ONLY to Firebase
     const chatRef = db.ref("chats/" + sessionId);
@@ -223,6 +234,8 @@ function initializeChat() {
             type: "text",
             timestamp: Date.now()
           });
+          // Mark greeted for this session (don't greet again)
+          sessionStorage.setItem('greeted', 'true');
         }
       }
     });
@@ -233,40 +246,71 @@ function initializeChat() {
   }, 100);
 }
 
-function loadChatMessages() {
+
+function loadChatMessages(callback) {
   const chatRef = db.ref("chats/" + sessionId);
   const messagesContainer = document.getElementById("messages");
   messagesContainer.innerHTML = ""; // Clear chat
 
-  let isEmpty = true;
   chatRef.off(); // Remove previous listeners
 
+  // Track messages in a map for efficient DOM updates
+  const messageElements = {};
+
+  // Add message
   chatRef.on("child_added", (snapshot) => {
     const data = snapshot.val();
     if (data && data.message) {
-      isEmpty = false;
-      if (data.type === "image") {
-        addImageMessage(data.message, data.sender, null, data.timestamp, snapshot.key);
-      } else {
-        addMessage(data.message, data.sender, null, data.timestamp, snapshot.key);
-      }
+      // Create and store element for later updates/deletes
+      const msgDiv = createOrUpdateMessageElement(data, snapshot.key);
+      messagesContainer.appendChild(msgDiv);
+      messageElements[snapshot.key] = msgDiv;
+      messagesContainer.scrollTop = messagesContainer.scrollHeight;
     }
   });
 
-  // After short delay, if still empty, greet
-  setTimeout(() => {
-    if (isEmpty) {
-      botMessage(`Hi ${userName}! 👋 How can I help you ?`);
+  // Update message (edit)
+  chatRef.on("child_changed", (snapshot) => {
+    const data = snapshot.val();
+    if (data && data.message && messageElements[snapshot.key]) {
+      const msgDiv = createOrUpdateMessageElement(data, snapshot.key, true);
+      messagesContainer.replaceChild(msgDiv, messageElements[snapshot.key]);
+      messageElements[snapshot.key] = msgDiv;
+      messagesContainer.scrollTop = messagesContainer.scrollHeight;
     }
-  }, 900);
+  });
+
+  // Remove message (delete)
+  chatRef.on("child_removed", (snapshot) => {
+    if (messageElements[snapshot.key]) {
+      messageElements[snapshot.key].remove();
+      delete messageElements[snapshot.key];
+      messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    }
+  });
+
+  if (typeof callback === "function") callback();
+}
+
+// Helper to create/update message DOM
+function createOrUpdateMessageElement(data, messageKey, isUpdate = false) {
+  // Remove old date separators only if isUpdate is true, otherwise you may get date duplicates
+  // (if you want ultra-clean logic, you may want to refactor date separators later)
+
+  // For now, we'll just re-use your addMessage logic:
+  const tempDiv = document.createElement('div');
+  addMessage(data.message, data.sender, null, data.timestamp, messageKey, tempDiv);
+  return tempDiv.firstChild; // addMessage appends to container, so use first child
 }
 
 
 
 
 
-function addMessage(text, sender, name, timestamp = Date.now(), messageKey = null) {
-  const messagesContainer = document.getElementById("messages");
+
+// Add optional container argument
+function addMessage(text, sender, name, timestamp = Date.now(), messageKey = null, container = null) {
+  const messagesContainer = container || document.getElementById("messages");
 
   // DATE and TIME
   const now = new Date(timestamp);
@@ -295,7 +339,7 @@ function addMessage(text, sender, name, timestamp = Date.now(), messageKey = nul
     avatarDiv.className = "avatar";
     let avatarSrc = "";
     if (sender === "bot") avatarSrc = "images/logo.jpg";
-    else avatarSrc = "images/agent-avatar.png";
+    else avatarSrc = "images/logo.jpg";
     avatarDiv.innerHTML = `<img src="${avatarSrc}" alt="${sender}" />`;
 
     const nameSpan = document.createElement("span");
@@ -336,42 +380,101 @@ function addMessage(text, sender, name, timestamp = Date.now(), messageKey = nul
   bubbleDiv.appendChild(timeLabel);
 
   // --- 3-dot menu for user's own messages ---
-  if (sender === "user" && messageKey) {
-    const msgActions = document.createElement("div");
-    msgActions.className = "msg-actions";
+if (sender === "user" && messageKey) {
+  const msgActions = document.createElement("div");
+  msgActions.className = "msg-actions";
 
-    // 3-dot icon
-    const menuBtn = document.createElement("button");
-    menuBtn.className = "msg-menu";
-    menuBtn.innerHTML = "&#8942;"; // vertical ellipsis
+  // 3-dot menu button
+  const menuBtn = document.createElement("button");
+  menuBtn.className = "msg-menu";
+  menuBtn.innerHTML = "&#8942;";
 
-    // Dropdown
-    const dropdown = document.createElement("div");
-    dropdown.className = "msg-dropdown";
+  // Dropdown menu
+  const dropdown = document.createElement("div");
+  dropdown.className = "msg-dropdown";
+  dropdown.style.display = "none";
+  dropdown.innerHTML = `
+    <div class="msg-dropdown-item" data-action="edit">Edit</div>
+    <div class="msg-dropdown-item" data-action="delete">Delete</div>
+    <div class="msg-dropdown-item" data-action="copy">Copy</div>
+  `;
+
+  // Toggle dropdown (show/hide)
+  menuBtn.onclick = (e) => {
+    e.stopPropagation();
+    // First, close all open dropdowns
+    document.querySelectorAll('.msg-dropdown').forEach(el => el.style.display = "none");
+    dropdown.style.display = dropdown.style.display === "block" ? "none" : "block";
+  };
+
+  // Click outside to close any dropdown
+  document.addEventListener("click", (event) => {
+    if (!msgActions.contains(event.target)) {
+      dropdown.style.display = "none";
+    }
+  });
+
+  // Handle dropdown actions
+  dropdown.addEventListener("click", function(e) {
+    if (!e.target.classList.contains("msg-dropdown-item")) return;
     dropdown.style.display = "none";
-    dropdown.innerHTML = `<div class="msg-dropdown-item">Delete for everyone</div>`;
+    const action = e.target.dataset.action;
+    if (action === "edit") {
+      editMessageFromFirebase(messageKey, msgContent, bubbleDiv);
+    } else if (action === "delete") {
+      deleteMessageFromFirebase(messageKey);
+    } else if (action === "copy") {
+      copyMessageToClipboard(msgContent);
+    }
+  });
 
-    // Toggle dropdown
-    menuBtn.onclick = (e) => {
-      e.stopPropagation();
-      dropdown.style.display = dropdown.style.display === "block" ? "none" : "block";
-    };
-    // Click outside closes
-    document.addEventListener("click", () => { dropdown.style.display = "none"; });
+  msgActions.appendChild(menuBtn);  
+  msgActions.appendChild(dropdown);
+  bubbleDiv.appendChild(msgActions);
+}
 
-    // Delete click
-    dropdown.querySelector(".msg-dropdown-item").onclick = () => {
-      if (messageKey) deleteMessageFromFirebase(messageKey);
-    };
 
-    msgActions.appendChild(menuBtn);
-    msgActions.appendChild(dropdown);
-    bubbleDiv.appendChild(msgActions);
-  }
 
   msgDiv.appendChild(bubbleDiv);
   messagesContainer.appendChild(msgDiv);
   messagesContainer.scrollTop = messagesContainer.scrollHeight;
+}
+
+// Edit message (user’s own)
+function editMessageFromFirebase(messageKey, msgContent, bubbleDiv) {
+  // Show a prompt with current text
+  const currentText = msgContent.textContent || "";
+  const newText = prompt("Edit your message:", currentText);
+  if (newText !== null && newText.trim() !== "" && newText !== currentText) {
+    db.ref("chats/" + sessionId + "/" + messageKey).update({
+      message: newText,
+      edited: true
+    }).then(() => {
+      // Update in UI right away (optional, will update anyway from realtime DB)
+      msgContent.textContent = newText;
+    });
+  }
+}
+
+// Delete message (already present, leave unchanged)
+function deleteMessageFromFirebase(messageKey) {
+  if (!sessionId || !messageKey) return;
+  if (confirm("Are you sure you want to delete this message for everyone?")) {
+    db.ref("chats/" + sessionId + "/" + messageKey).remove().then(() => {
+      // Remove from UI
+      const msgDiv = document.querySelector(`[data-key="${messageKey}"]`);
+      if (msgDiv) msgDiv.remove();
+    });
+  }
+}
+
+// Copy message
+function copyMessageToClipboard(msgContent) {
+  const text = typeof msgContent === "string" ? msgContent : msgContent.textContent;
+  navigator.clipboard.writeText(text).then(() => {
+    // Optionally show a toast
+    // alert("Copied to clipboard!");
+  });
 }
 
 
@@ -447,14 +550,13 @@ function uploadImage() {
   const fileInput = document.getElementById("imageUpload");
   const file = fileInput.files[0];
 
-  if (!file || !sessionId) {
+  if (!file) {
     alert("Please select an image.");
     return;
   }
 
   const formData = new FormData();
   formData.append("image", file);
-  formData.append("sessionId", sessionId);
 
   fetch("upload.php", {
     method: "POST",
@@ -463,14 +565,13 @@ function uploadImage() {
     .then((response) => response.json())
     .then((data) => {
       if (data.success) {
-        // JUST push to Firebase:
+        // Just push to Firebase or wherever you need:
         db.ref("chats/" + sessionId).push({
           sender: "user",
-          message: data.url,
+          message: data.url,   // <-- this will be "/uploads/xxxx.jpg"
           type: "image",
           timestamp: Date.now()
         });
-        // DO NOT call addImageMessage() here!
       } else {
         alert("Upload failed: " + data.error);
       }
@@ -480,6 +581,7 @@ function uploadImage() {
       alert("An error occurred.");
     });
 }
+
 
 
 

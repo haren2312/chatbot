@@ -142,7 +142,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
 
 // === Firebase Presence Tracking ===
-const userId = window.currentUserId;
+const userId = 'userId';
 const userStatusDatabaseRef = db.ref('/status/' + userId);
 
 const isOfflineForDatabase = { state: 'offline', last_changed: firebase.database.ServerValue.TIMESTAMP };
@@ -712,8 +712,15 @@ function getLocationMapLink(city, country, lat, lng) {
         <span style="white-space: nowrap;overflow: hidden;text-overflow: ellipsis;">${escapeHtml(user.email || "")}</span>
       </div>
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:7px;">
-        <span style="font-size:1.2em;">📍</span>
-        <span>${city}, ${country}</span>
+        📍<span>
+  <a href="${getLocationMapLink(city, country, lat, lng)}" target="_blank" style="color: #000000;
+    text-decoration: none;
+    font-size: .9em;
+    padding-left: 3.5px;">
+    ${city}, ${country}
+  </a>
+</span>
+
       </div>
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:7px;">
         <span style="font-size:1.2em;">🕒</span>
@@ -1042,26 +1049,184 @@ const canEditDelete = senderType === "admin" || senderType === "agent" || sender
 
 
   // --- Chat selection & loading ---
+let currentChatListeners = {};
+
 function loadChat(sessionId) {
-    selectedSessionId = sessionId; // <--- This is CRITICAL!
+  selectedSessionId = sessionId;
+  const chatRef = db.ref("chats/" + selectedSessionId);
 
-    // Remove old listeners
-    if (currentChatListener && selectedSessionId) {
-        db.ref("chats/" + selectedSessionId).off("value", currentChatListener);
-    }
+  // --- Remove old listeners if present ---
+  if (currentChatListeners.added) chatRef.off("child_added", currentChatListeners.added);
+  if (currentChatListeners.changed) chatRef.off("child_changed", currentChatListeners.changed);
+  if (currentChatListeners.removed) chatRef.off("child_removed", currentChatListeners.removed);
 
-    // Set up the new listener
-    currentChatListener = (snapshot) => {
-        const chatData = snapshot.val();
-        renderChatMessages(chatData);
-        renderUserInfoPanel(); // <-- MAKE SURE THIS IS CALLED!
-        document.getElementById("inputGroup").style.display = "flex"; // <--- Force show input!
-    };
-    db.ref("chats/" + sessionId).on("value", currentChatListener);
+  // --- Clear chatBox and initialize our message map ---
+  const chatBox = document.getElementById('chatBox');
+  chatBox.innerHTML = "";
+  let messagesMap = {}; // key: msgId, value: msgObj
 
-    // Show input bar (just in case)
-    document.getElementById("inputGroup").style.display = "flex";
+  // --- Child Added (new message) ---
+  currentChatListeners.added = chatRef.on("child_added", snapshot => {
+    const msg = snapshot.val();
+    const msgId = snapshot.key;
+    messagesMap[msgId] = { ...msg, _id: msgId };
+    renderSingleMessage(msg, msgId, chatBox, messagesMap);
+  });
+
+  // --- Child Changed (edited message) ---
+  currentChatListeners.changed = chatRef.on("child_changed", snapshot => {
+    // Option 1: re-render entire chat
+    chatRef.once("value", snap => {
+        renderChatMessages(snap.val());
+    });
+});
+
+  // --- Child Removed (deleted message) ---
+  currentChatListeners.removed = chatRef.on("child_removed", snapshot => {
+    const msgId = snapshot.key;
+    delete messagesMap[msgId];
+    removeSingleMessage(msgId, chatBox);
+  });
+
+  // --- Also refresh user info panel ---
+  renderUserInfoPanel();
+  document.getElementById("inputGroup").style.display = "flex";
 }
+
+function renderSingleMessage(msg, msgId, chatBox, messagesMap) {
+  // Prevent duplicates
+  if (chatBox.querySelector(`[data-msg-id="${msgId}"]`)) return;
+
+  // Message meta
+  const dateObj = msg.timestamp ? new Date(msg.timestamp) : new Date();
+  const timeString = dateObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true });
+  let senderType = (msg.sender || "").toLowerCase();
+  let isRight = senderType === "admin" || senderType === "agent" || senderType === "bot";
+  let avatarHtml = "";
+
+  if (isRight) {
+    avatarHtml = `<div class="message-avatar" style="padding:2px;background:#fff;">
+      <img src="${window.ADMIN_PROFILE.avatarUrl}" alt="Bot/Admin" style="width:32px;height:32px;border-radius:50%;" />
+    </div>`;
+  } else {
+    const userData = allUserData[selectedSessionId] || {};
+    if (userData.profilePic) {
+      avatarHtml = `<div class="message-avatar" style="padding:2px;background:#fff;">
+        <img src="${userData.profilePic}" alt="User" style="width:32px;height:32px;border-radius:50%;" />
+      </div>`;
+    } else {
+      let name = userData.name || msg.sender || "";
+      let initials = getInitials(name);
+      let avatarColor = getAvatarGradient(name + (userData.country || "IN"));
+      avatarHtml = `<div class="message-avatar" style="background:${avatarColor};color:#fff;">${initials}</div>`;
+    }
+  }
+
+  let messageContent = "";
+  if (msg.type === "image" && msg.message) {
+    messageContent = `<img src="${escapeHtml(msg.message)}" alt="image" style="max-width:160px;max-height:110px;border-radius:7px;cursor:pointer;box-shadow:0 1px 5px #2563eb1a;" onclick="window.open('${escapeHtml(msg.message)}','_blank')"/>`;
+  } else {
+    messageContent = escapeHtml(msg.message || "");
+  }
+
+  let bubbleColor = isRight
+    ? "background:#fff;color:#2563eb;"
+    : "background:linear-gradient(98deg, #2563eb 90%, #1877f2 100%);color:#fff;";
+
+  // Build the whole row
+  const row = document.createElement("div");
+  row.className = `message-row ${isRight ? "self" : senderType}`;
+  row.setAttribute("data-msg-id", msgId);
+  row.innerHTML = `
+    ${!isRight ? avatarHtml : ""}
+    <div class="message-bubble" style="${bubbleColor};position:relative;" data-msg-id="${msgId}">
+      <div class="msg-content">${messageContent}</div>
+      <div class="msg-meta">${timeString} ${getMessageStatusIcon(msg, isRight)}</div>
+      <span class="msg-menu" title="More" data-msg-id="${msgId}">⋮</span>
+      <div class="msg-actions" data-msg-id="${msgId}" style="display:none;">
+        <button class="edit-btn" data-msg-id="${msgId}" title="Edit">Edit</button>
+        <button class="delete-btn" data-msg-id="${msgId}" title="Delete">Delete</button>
+        <button class="copy-btn" data-msg-id="${msgId}" title="Copy">Copy</button>
+      </div>
+    </div>
+    ${isRight ? avatarHtml : ""}
+  `;
+
+  // --- Event Listeners (same as before) ---
+  // Menu
+  row.querySelector('.msg-menu').onclick = function(e) {
+    e.stopPropagation();
+    const msgId = this.getAttribute('data-msg-id');
+    chatBox.querySelectorAll('.msg-actions').forEach(a => a.style.display = "none");
+    const actions = row.querySelector(`.msg-actions[data-msg-id="${msgId}"]`);
+    if (actions) actions.style.display = "flex";
+  };
+  // Edit
+  row.querySelector('.edit-btn').onclick = function(e) {
+    e.stopPropagation();
+    editMessage(msgId);
+    chatBox.querySelectorAll('.msg-actions').forEach(a => a.style.display = "none");
+  };
+  // Delete
+  row.querySelector('.delete-btn').onclick = function(e) {
+    e.stopPropagation();
+    deleteMessage(msgId);
+    chatBox.querySelectorAll('.msg-actions').forEach(a => a.style.display = "none");
+  };
+  // Copy
+  row.querySelector('.copy-btn').onclick = function(e) {
+    e.stopPropagation();
+    const msgContent = row.querySelector('.msg-content').textContent || "";
+    navigator.clipboard.writeText(msgContent).then(() => {
+      notify("Message copied!", { type: "success" });
+    });
+    chatBox.querySelectorAll('.msg-actions').forEach(a => a.style.display = "none");
+  };
+  // Hide all menus on outside click
+  document.addEventListener('click', function outsideClickHandler(e) {
+    chatBox.querySelectorAll('.msg-actions').forEach(actions => {
+      actions.style.display = "none";
+    });
+    document.removeEventListener('click', outsideClickHandler);
+  });
+
+  // --- Append and scroll ---
+  chatBox.appendChild(row);
+  chatBox.scrollTop = chatBox.scrollHeight;
+}
+
+// Update message (on edit)
+function updateSingleMessage(msg, msgId, chatBox, messagesMap) {
+    // Find the message DOM node
+    const bubble = chatBox.querySelector(`.message-bubble[data-msg-id="${msgId}"]`);
+    if (!bubble) return; // If not found, skip
+
+    // Update content (you may need to match this to your exact template!)
+    let messageContent = "";
+    if (msg.type === "image" && msg.message) {
+      messageContent = `<img src="${escapeHtml(msg.message)}" ...>`;
+    } else {
+      messageContent = escapeHtml(msg.message || "");
+    }
+    // Bubble color logic
+    let senderType = (msg.sender || "").toLowerCase();
+    let isRight = senderType === "admin" || senderType === "agent" || senderType === "bot";
+    let bubbleColor = isRight
+      ? "background:#fff;color:#2563eb;"
+      : "background:linear-gradient(98deg, #2563eb 90%, #1877f2 100%);color:#fff;";
+    bubble.style = bubbleColor + "position:relative;";
+    bubble.querySelector(".msg-content").innerHTML = messageContent;
+    // Optionally update time/status
+    // (similarly update .msg-meta if needed)
+}
+
+
+// Remove message (on delete)
+function removeSingleMessage(msgId, chatBox) {
+  const oldRow = chatBox.querySelector(`[data-msg-id="${msgId}"]`);
+  if (oldRow) oldRow.remove();
+}
+
 
 
 
