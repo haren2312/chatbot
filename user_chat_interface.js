@@ -26,7 +26,31 @@ let sessionId = "";
 let userName = "";
 let userEmail = "";
 let userLocation = null;
-let chatInitialized = false;
+let chatInitialized = false; 
+
+
+let presenceTimers = { away: null, offline: null };
+
+function setPresence(state) {
+  if (!sessionId) return;
+  db.ref('status/' + sessionId).set({
+    state: state,
+    last_changed: firebase.database.ServerValue.TIMESTAMP
+  });
+}
+
+function refreshPresenceOnActivity() {
+  if (presenceTimers.away) clearTimeout(presenceTimers.away);
+  if (presenceTimers.offline) clearTimeout(presenceTimers.offline);
+
+  setPresence("online");
+
+  // 2 min idle -> away
+  presenceTimers.away = setTimeout(() => setPresence("away"), 2 * 60 * 1000);
+  // 5 min idle -> offline
+  presenceTimers.offline = setTimeout(() => setPresence("offline"), 5 * 60 * 1000);
+}
+
 
 // Preset Replies
 const presetReplies = {
@@ -200,6 +224,7 @@ setTimeout(initializeChat, 500);
 }
 
 function skipLocation() {
+  listenForAgentTyping();
   document.getElementById("location-prompt").style.display = "none";
   initializeChat();
 }
@@ -243,11 +268,26 @@ function initializeChat() {
       }
     });
   });
+  refreshPresenceOnActivity();
+
 
   setTimeout(() => {
     document.getElementById("input").focus();
   }, 100);
 }
+
+function listenForAgentTyping() {
+  if (!db || !sessionId) return;
+  const typingRef = db.ref("typing/" + sessionId + "/agent");
+  typingRef.on("value", (snapshot) => {
+    if (snapshot.val()) {
+      showTypingIndicator("agent");
+    } else {
+      hideTypingIndicator();
+    }
+  });
+}
+
 
 
 function loadChatMessages(callback) {
@@ -545,9 +585,12 @@ function sendMsg(customText) {
       type: "text",
       timestamp: Date.now()
     });
+    refreshPresenceOnActivity(); // <-- ADD THIS
   }
   if (!customText) input.value = "";
 }
+
+
 
 
 
@@ -585,6 +628,7 @@ function uploadImage() {
           type: "image",
           timestamp: Date.now()
         });
+        refreshPresenceOnActivity();
       } else {
         alert("Upload failed: " + data.error);
       }
@@ -664,6 +708,20 @@ document.addEventListener("DOMContentLoaded", function() {
   const input = document.getElementById('input');
   const picker = document.getElementById('emoji-picker');
 
+  let typingTimeout;
+function setTyping(isTyping) {
+  if (!db || !sessionId) return;
+  db.ref("typing/" + sessionId + "/user").set(isTyping);
+}
+input.addEventListener("input", () => {
+  refreshPresenceOnActivity();
+  setTyping(true);
+  clearTimeout(typingTimeout);
+  typingTimeout = setTimeout(() => setTyping(false), 1200);
+});
+input.addEventListener("blur", () => setTyping(false));
+
+
   // Basic emoji list (you can add many more!)
   const emojis = ["😀","😂","😍","🥰","😎","😭","😡","😱","👍","🙏","🎉","🎂","🔥","🤔","🤖","❤️"];
   picker.innerHTML = emojis.map(e => `<span style="cursor:pointer;font-size:22px;padding:2px;">${e}</span>`).join('');
@@ -691,3 +749,22 @@ document.addEventListener("DOMContentLoaded", function() {
     }
   });
 });
+
+function showTypingIndicator(who) {
+  const el = document.getElementById("typing-indicator");
+  el.style.display = "block";
+  el.innerHTML = `
+    <span style="display:inline-block;">
+      <span style="color:#1877f2;font-weight:600;">
+        ${who === "agent" ? "Agent" : "User"} is typing
+      </span>
+      <span class="typing-dots">
+        <span>.</span><span>.</span><span>.</span>
+      </span>
+    </span>
+  `;
+}
+
+function hideTypingIndicator() {
+  document.getElementById("typing-indicator").style.display = "none";
+}

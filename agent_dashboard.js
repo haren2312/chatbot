@@ -23,8 +23,31 @@
   window.deleteMessage = deleteMessage;
   window.userPresence = {};
 
+  let presenceTimers = {
+  away: null,
+  offline: null
+};
+window.currentUserId = "userId"; // Replace with actual user ID
 
-  window.currentUserId = "userId"; // Replace with actual user ID
+
+
+function refreshPresenceOnActivity() {
+  // Clear old timers
+  if (presenceTimers.away) clearTimeout(presenceTimers.away);
+  if (presenceTimers.offline) clearTimeout(presenceTimers.offline);
+
+  setPresence("online");
+
+  // After 2 min of inactivity, set as away
+  presenceTimers.away = setTimeout(() => {
+    setPresence("away");
+  }, 2 * 60 * 1000);
+
+  // After 5 min of inactivity, set as offline
+  presenceTimers.offline = setTimeout(() => {
+    setPresence("offline");
+  }, 5 * 60 * 1000);
+}
 
 
 
@@ -1075,11 +1098,11 @@ function loadChat(sessionId) {
 
   // --- Child Changed (edited message) ---
   currentChatListeners.changed = chatRef.on("child_changed", snapshot => {
-    // Option 1: re-render entire chat
-    chatRef.once("value", snap => {
-        renderChatMessages(snap.val());
-    });
-});
+    const msg = snapshot.val();
+    const msgId = snapshot.key;
+    messagesMap[msgId] = { ...msg, _id: msgId };
+    updateSingleMessage(msg, msgId, chatBox, messagesMap);
+  });
 
   // --- Child Removed (deleted message) ---
   currentChatListeners.removed = chatRef.on("child_removed", snapshot => {
@@ -1197,29 +1220,14 @@ function renderSingleMessage(msg, msgId, chatBox, messagesMap) {
 
 // Update message (on edit)
 function updateSingleMessage(msg, msgId, chatBox, messagesMap) {
-    // Find the message DOM node
-    const bubble = chatBox.querySelector(`.message-bubble[data-msg-id="${msgId}"]`);
-    if (!bubble) return; // If not found, skip
-
-    // Update content (you may need to match this to your exact template!)
-    let messageContent = "";
-    if (msg.type === "image" && msg.message) {
-      messageContent = `<img src="${escapeHtml(msg.message)}" ...>`;
-    } else {
-      messageContent = escapeHtml(msg.message || "");
-    }
-    // Bubble color logic
-    let senderType = (msg.sender || "").toLowerCase();
-    let isRight = senderType === "admin" || senderType === "agent" || senderType === "bot";
-    let bubbleColor = isRight
-      ? "background:#fff;color:#2563eb;"
-      : "background:linear-gradient(98deg, #2563eb 90%, #1877f2 100%);color:#fff;";
-    bubble.style = bubbleColor + "position:relative;";
-    bubble.querySelector(".msg-content").innerHTML = messageContent;
-    // Optionally update time/status
-    // (similarly update .msg-meta if needed)
+  const oldRow = chatBox.querySelector(`[data-msg-id="${msgId}"]`);
+  if (oldRow) {
+    const newRow = document.createElement("div");
+    // Reuse above function, but manually since it's not returned as string
+    renderSingleMessage(msg, msgId, chatBox, messagesMap); // This will append a duplicate
+    chatBox.replaceChild(chatBox.lastChild, oldRow); // Replace old with new
+  }
 }
-
 
 // Remove message (on delete)
 function removeSingleMessage(msgId, chatBox) {
