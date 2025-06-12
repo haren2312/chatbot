@@ -204,6 +204,9 @@ function skipLocation() {
   initializeChat();
 }
 
+window.lastMessageDate = undefined;
+
+
 function initializeChat() {
   if (chatInitialized) return;
 
@@ -252,6 +255,8 @@ function loadChatMessages(callback) {
   const messagesContainer = document.getElementById("messages");
   messagesContainer.innerHTML = ""; // Clear chat
 
+  window.lastMessageDate = undefined; // <-- RESET DATE SEPARATOR
+
   chatRef.off(); // Remove previous listeners
 
   // Track messages in a map for efficient DOM updates
@@ -261,7 +266,6 @@ function loadChatMessages(callback) {
   chatRef.on("child_added", (snapshot) => {
     const data = snapshot.val();
     if (data && data.message) {
-      // Create and store element for later updates/deletes
       const msgDiv = createOrUpdateMessageElement(data, snapshot.key);
       messagesContainer.appendChild(msgDiv);
       messageElements[snapshot.key] = msgDiv;
@@ -272,10 +276,17 @@ function loadChatMessages(callback) {
   // Update message (edit)
   chatRef.on("child_changed", (snapshot) => {
     const data = snapshot.val();
-    if (data && data.message && messageElements[snapshot.key]) {
-      const msgDiv = createOrUpdateMessageElement(data, snapshot.key, true);
-      messagesContainer.replaceChild(msgDiv, messageElements[snapshot.key]);
-      messageElements[snapshot.key] = msgDiv;
+    if (data && data.message) {
+      if (!messageElements[snapshot.key]) {
+        // Fallback: message not seen yet, add it
+        const msgDiv = createOrUpdateMessageElement(data, snapshot.key, true);
+        messagesContainer.appendChild(msgDiv);
+        messageElements[snapshot.key] = msgDiv;
+      } else {
+        const msgDiv = createOrUpdateMessageElement(data, snapshot.key, true);
+        messagesContainer.replaceChild(msgDiv, messageElements[snapshot.key]);
+        messageElements[snapshot.key] = msgDiv;
+      }
       messagesContainer.scrollTop = messagesContainer.scrollHeight;
     }
   });
@@ -291,6 +302,7 @@ function loadChatMessages(callback) {
 
   if (typeof callback === "function") callback();
 }
+
 
 // Helper to create/update message DOM
 function createOrUpdateMessageElement(data, messageKey, isUpdate = false) {
@@ -564,6 +576,7 @@ function uploadImage() {
   })
     .then((response) => response.json())
     .then((data) => {
+      console.log(data);
       if (data.success) {
         // Just push to Firebase or wherever you need:
         db.ref("chats/" + sessionId).push({
