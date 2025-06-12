@@ -231,50 +231,77 @@ function skipLocation() {
 
 window.lastMessageDate = undefined;
 
+function setupUserPresence() {
+  if (!sessionId) return;
+  const statusRef = db.ref('status/' + sessionId);
+
+  db.ref('.info/connected').on('value', function(snapshot) {
+    if (snapshot.val() === false) return;
+
+    // Set offline when connection drops or tab closes
+    statusRef.onDisconnect().set({
+      state: "offline",
+      last_changed: firebase.database.ServerValue.TIMESTAMP
+    });
+
+    // Set online when connected
+    statusRef.set({
+      state: "online",
+      last_changed: firebase.database.ServerValue.TIMESTAMP
+    });
+  });
+
+  // Idle: set "away"
+  let idleTimer;
+  function goAway() {
+    statusRef.set({ state: "away", last_changed: firebase.database.ServerValue.TIMESTAMP });
+  }
+  function activity() {
+    statusRef.set({ state: "online", last_changed: firebase.database.ServerValue.TIMESTAMP });
+    if (idleTimer) clearTimeout(idleTimer);
+    idleTimer = setTimeout(goAway, 2 * 60 * 1000); // 2 min
+  }
+  window.onmousemove = window.onkeydown = activity;
+  activity(); // Trigger immediately
+}
+
+
+
 
 function initializeChat() {
   if (chatInitialized) return;
-
   document.getElementById("chat").style.display = "flex";
   chatInitialized = true;
 
-  // New: Check if we've greeted this user in THIS browser session
-  if (sessionStorage.getItem('greeted')) {
-    // User already greeted, just load messages and focus input
-    loadChatMessages(() => {
-      setTimeout(() => {
-        document.getElementById("input").focus();
-      }, 100);
-    });
-    return; // <-- Don't run greeting logic again
-  }
-
-  loadChatMessages(() => {
-    // If no messages exist, push the greeting ONLY to Firebase
-    const chatRef = db.ref("chats/" + sessionId);
-    chatRef.once("value", (snapshot) => {
-      if (!snapshot.exists()) {
-        // Only push greeting, do NOT call addMessage()
-        if (db && sessionId) {
-          db.ref("chats/" + sessionId).push({
-            sender: "bot",
-            message: `Hi ${userName}! 👋 How can I help you ?`,
-            type: "text",
-            timestamp: Date.now()
-          });
-          // Mark greeted for this session (don't greet again)
-          sessionStorage.setItem('greeted', 'true');
-        }
-      }
-    });
+  const chatRef = db.ref("chats/" + sessionId);
+  chatRef.once("value", (snapshot) => {
+    if (!snapshot.exists()) {
+      // Only push greeting if chat is empty
+      db.ref("chats/" + sessionId).push({
+        sender: "bot",
+        message: `Hi ${userName}! 👋 How can I help you ?`,
+        type: "text",
+        timestamp: Date.now()
+      }).then(() => {
+        // Now load messages, greeting will be included
+        loadChatMessages();
+      });
+      sessionStorage.setItem('greeted', 'true');
+    } else {
+      // Just load messages if chat exists
+      loadChatMessages();
+    }
   });
-  refreshPresenceOnActivity();
 
+  refreshPresenceOnActivity();
+  setupUserPresence();
 
   setTimeout(() => {
     document.getElementById("input").focus();
   }, 100);
 }
+
+
 
 function listenForAgentTyping() {
   if (!db || !sessionId) return;

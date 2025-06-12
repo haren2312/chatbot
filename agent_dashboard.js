@@ -27,7 +27,7 @@
   away: null,
   offline: null
 };
-window.currentUserId = "userId"; // Replace with actual user ID
+// window.currentUserId = "userId"; // Replace with actual user ID
 
 
 
@@ -41,18 +41,17 @@ function refreshPresenceOnActivity() {
   // After 2 min of inactivity, set as away
   presenceTimers.away = setTimeout(() => {
     setPresence("away");
-  }, 2 * 60 * 1000);
+  }, 1 * 60 * 1000);
 
   // After 5 min of inactivity, set as offline
   presenceTimers.offline = setTimeout(() => {
     setPresence("offline");
-  }, 5 * 60 * 1000);
+  }, 2 * 60 * 1000);
 }
 
 
 
 function startPresenceTracking() {
-  const userId = window.currentUserId;
   const isOfflineForDatabase = { state: 'offline', last_changed: firebase.database.ServerValue.TIMESTAMP };
   const isOnlineForDatabase  = { state: 'online', last_changed: firebase.database.ServerValue.TIMESTAMP };
   const isAwayForDatabase    = { state: 'away', last_changed: firebase.database.ServerValue.TIMESTAMP };
@@ -212,31 +211,14 @@ usersRef.once('value', function(snapshot) {
 
 // Listen to all users' presence
 function setupPresenceListener(userId) {
-  if (!userId) return;
-  
   const statusRef = db.ref('/status/' + userId);
   statusRef.on('value', function(snapshot) {
-    const presenceData = snapshot.val();
-    
-    // Initialize userPresence object if it doesn't exist
-    if (!window.userPresence) {
-      window.userPresence = {};
-    }
-    
-    // Update the presence data
-    window.userPresence[userId] = presenceData || { state: "offline" };
-    
-    console.log(`User ${userId} presence updated:`, window.userPresence[userId]);
-    
-    // Re-render UI components that show status
+    window.userPresence[userId] = snapshot.val() || { state: "offline" };
     renderSessions(document.getElementById("searchInput").value.toLowerCase());
-    
-    // Only render user info panel if this user is currently selected
-    if (selectedSessionId === userId) {
-      renderUserInfoPanel();
-    }
+    if (selectedSessionId === userId) renderUserInfoPanel();
   });
 }
+
 
 function initializePresenceTracking() {
   // First, get all users and set up listeners
