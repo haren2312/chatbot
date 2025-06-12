@@ -21,6 +21,27 @@ try {
   console.error("Firebase initialization error:", error);
 }
 
+document.addEventListener("DOMContentLoaded", function() {
+  // Try to get saved name/email from localStorage
+  let savedName = localStorage.getItem("einvite_user_name") || "";
+  let savedEmail = localStorage.getItem("einvite_user_email") || "";
+
+  if (document.getElementById("nameInput")) {
+    document.getElementById("nameInput").value = savedName;
+  }
+  if (document.getElementById("emailInput")) {
+    document.getElementById("emailInput").value = savedEmail;
+  }
+  // Always show name prompt first, and let the normal flow continue
+  document.getElementById("name-prompt").style.display = "block";
+  document.getElementById("email-prompt").style.display = "none";
+  document.getElementById("location-prompt").style.display = "none";
+  document.getElementById("chat").style.display = "none";
+});
+
+
+
+
 // Global Variables
 let sessionId = "";
 let userName = "";
@@ -114,25 +135,18 @@ function hideLoading(elementId, originalText) {
 function startChat() {
   const nameInput = document.getElementById("nameInput");
   userName = nameInput.value.trim();
-  
+
   if (userName === "") {
     showError("Please enter your name");
     nameInput.focus();
     return;
   }
-function sanitizeEmail(email) {
-    return email.trim().toLowerCase().replace(/[^a-z0-9]/g, "_");
-}
-// After email input/validation:
-userEmail = emailInput.value.trim().toLowerCase();
-sessionId = sanitizeEmail(userEmail);
 
-  
-  // Hide name prompt, show email prompt
+  // Save to localStorage
+  localStorage.setItem("einvite_user_name", userName);
+
   document.getElementById("name-prompt").style.display = "none";
   document.getElementById("email-prompt").style.display = "block";
-  
-  // Focus on email input
   setTimeout(() => {
     document.getElementById("emailInput").focus();
   }, 100);
@@ -148,10 +162,13 @@ function submitEmail() {
     return;
   }
 
-  // The magic: generate sessionId from email
-  sessionId = sanitizeEmail(userEmail); // "raj09_gmail_com"
+  // Save to localStorage
+  localStorage.setItem("einvite_user_email", userEmail);
+
+  sessionId = sanitizeEmail(userEmail); // Continue as before...
 
   showLoading("email-prompt", "Saving...");
+
 
   // Save user data to Firebase with email-based sessionId
   if (db) {
