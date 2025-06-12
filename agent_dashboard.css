@@ -1430,7 +1430,7 @@ width: 0px;
   box-shadow: 2px 0 10px #0001;
 }
 .nav-bar.collapsed {
-  width: 56px;                 /* Icon-only width */
+  width: 200px;                 /* Icon-only width */
 }
 .nav-bar .nav-toggle {
   background: none;

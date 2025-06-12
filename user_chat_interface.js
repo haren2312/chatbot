@@ -106,7 +106,7 @@ function sanitizeEmail(email) {
 
 
 function showError(message) {
-  alert(message);
+  Swal.fire(message);
 }
 
 function showLoading(elementId, message) {
@@ -137,7 +137,7 @@ function startChat() {
   userName = nameInput.value.trim();
 
   if (userName === "") {
-    showError("Please enter your name");
+    Swal.fire("Please enter your name");
     nameInput.focus();
     return;
   }
@@ -157,7 +157,7 @@ function submitEmail() {
   userEmail = emailInput.value.trim().toLowerCase();
 
   if (!userEmail || !validateEmail(userEmail)) {
-    showError("Please enter a valid email address");
+    Swal.fire("Please enter a valid email address");
     emailInput.focus();
     return;
   }
@@ -183,7 +183,7 @@ function submitEmail() {
     }).catch((error) => {
       console.error("Error saving user data:", error);
       hideLoading("email-prompt", "Submit Email");
-      showError("Error saving data. Please try again.");
+      Swal.fire("Error saving data. Please try again.");
     });
   } else {
     hideLoading("email-prompt", "Submit Email");
@@ -292,34 +292,25 @@ function initializeChat() {
 
   const chatRef = db.ref("chats/" + sessionId);
   chatRef.once("value", (snapshot) => {
-    if (!snapshot.exists()) {
-  // Compose the greeting message object
-  const greetingMsg = {
-    sender: "bot",
-    message: `Hi ${userName}! 👋 How can I help you ?`,
-    type: "text",
-    timestamp: Date.now()
-  };
-  // Push greeting to Firebase
-  db.ref("chats/" + sessionId).push(greetingMsg).then(ref => {
-    // Instantly show the greeting in the UI, without waiting for Firebase roundtrip
-    addMessage(
-      greetingMsg.message,
-      greetingMsg.sender,
-      null,
-      greetingMsg.timestamp,
-      ref.key // Use the Firebase key
-    );
-    // Continue loading chat as usual (which will sync with Firebase, so UI is always correct)
+  if (!snapshot.exists()) {
+    // Compose the greeting message object
+    const greetingMsg = {
+      sender: "bot",
+      message: `Hi ${userName}! 👋 How can I help you ?`,
+      type: "text",
+      timestamp: Date.now()
+    };
+    // Push greeting to Firebase, that's it!
+    db.ref("chats/" + sessionId).push(greetingMsg).then(() => {
+      loadChatMessages();
+    });
+    sessionStorage.setItem('greeted', 'true');
+  } else {
+    // Just load messages if chat exists
     loadChatMessages();
-  });
-  sessionStorage.setItem('greeted', 'true');
-} else {
-  // Just load messages if chat exists
-  loadChatMessages();
-}
+  }
+});
 
-  });
 
   refreshPresenceOnActivity();
   setupUserPresence();

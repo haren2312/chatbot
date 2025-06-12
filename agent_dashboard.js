@@ -144,7 +144,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
       // Validation: show warning if required fields are missing
       if (!name || !email) {
-        alert("Name and Email are required");
+        Swal.fire("Name and Email are required");
         return;
       }
 
@@ -1353,3 +1353,4 @@ function debugUserPresence() {
   window.saveUserEdit = saveUserEdit;
   window.openEditModal = openEditModal;
   window.closeModal = closeModal;
+  
