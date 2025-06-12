@@ -293,21 +293,32 @@ function initializeChat() {
   const chatRef = db.ref("chats/" + sessionId);
   chatRef.once("value", (snapshot) => {
     if (!snapshot.exists()) {
-      // Only push greeting if chat is empty
-      db.ref("chats/" + sessionId).push({
-        sender: "bot",
-        message: `Hi ${userName}! 👋 How can I help you ?`,
-        type: "text",
-        timestamp: Date.now()
-      }).then(() => {
-        // Now load messages, greeting will be included
-        loadChatMessages();
-      });
-      sessionStorage.setItem('greeted', 'true');
-    } else {
-      // Just load messages if chat exists
-      loadChatMessages();
-    }
+  // Compose the greeting message object
+  const greetingMsg = {
+    sender: "bot",
+    message: `Hi ${userName}! 👋 How can I help you ?`,
+    type: "text",
+    timestamp: Date.now()
+  };
+  // Push greeting to Firebase
+  db.ref("chats/" + sessionId).push(greetingMsg).then(ref => {
+    // Instantly show the greeting in the UI, without waiting for Firebase roundtrip
+    addMessage(
+      greetingMsg.message,
+      greetingMsg.sender,
+      null,
+      greetingMsg.timestamp,
+      ref.key // Use the Firebase key
+    );
+    // Continue loading chat as usual (which will sync with Firebase, so UI is always correct)
+    loadChatMessages();
+  });
+  sessionStorage.setItem('greeted', 'true');
+} else {
+  // Just load messages if chat exists
+  loadChatMessages();
+}
+
   });
 
   refreshPresenceOnActivity();

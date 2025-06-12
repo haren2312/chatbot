@@ -1055,22 +1055,23 @@ const canEditDelete = senderType === "admin" || senderType === "agent" || sender
 
   // --- Chat selection & loading ---
 let currentChatListeners = {};
+let messagesMap = {};
 
 function loadChat(sessionId) {
   selectedSessionId = sessionId;
   const chatRef = db.ref("chats/" + selectedSessionId);
 
-  // --- Remove old listeners if present ---
+  // Remove old listeners if present
   if (currentChatListeners.added) chatRef.off("child_added", currentChatListeners.added);
   if (currentChatListeners.changed) chatRef.off("child_changed", currentChatListeners.changed);
   if (currentChatListeners.removed) chatRef.off("child_removed", currentChatListeners.removed);
 
-  // --- Clear chatBox and initialize our message map ---
+  // Initialize message map and clear UI
+  messagesMap = {};
   const chatBox = document.getElementById('chatBox');
   chatBox.innerHTML = "";
-  let messagesMap = {}; // key: msgId, value: msgObj
 
-  // --- Child Added (new message) ---
+  // Add message
   currentChatListeners.added = chatRef.on("child_added", snapshot => {
     const msg = snapshot.val();
     const msgId = snapshot.key;
@@ -1078,7 +1079,7 @@ function loadChat(sessionId) {
     renderSingleMessage(msg, msgId, chatBox, messagesMap);
   });
 
-  // --- Child Changed (edited message) ---
+  // Update message (edit)
   currentChatListeners.changed = chatRef.on("child_changed", snapshot => {
     const msg = snapshot.val();
     const msgId = snapshot.key;
@@ -1086,17 +1087,17 @@ function loadChat(sessionId) {
     updateSingleMessage(msg, msgId, chatBox, messagesMap);
   });
 
-  // --- Child Removed (deleted message) ---
+  // Remove message (delete)
   currentChatListeners.removed = chatRef.on("child_removed", snapshot => {
     const msgId = snapshot.key;
     delete messagesMap[msgId];
     removeSingleMessage(msgId, chatBox);
   });
 
-  // --- Also refresh user info panel ---
   renderUserInfoPanel();
   document.getElementById("inputGroup").style.display = "flex";
 }
+
 
 function renderSingleMessage(msg, msgId, chatBox, messagesMap) {
   // Prevent duplicates
@@ -1201,15 +1202,23 @@ function renderSingleMessage(msg, msgId, chatBox, messagesMap) {
 }
 
 // Update message (on edit)
-function updateSingleMessage(msg, msgId, chatBox, messagesMap) {
-  const oldRow = chatBox.querySelector(`[data-msg-id="${msgId}"]`);
-  if (oldRow) {
-    const newRow = document.createElement("div");
-    // Reuse above function, but manually since it's not returned as string
-    renderSingleMessage(msg, msgId, chatBox, messagesMap); // This will append a duplicate
-    chatBox.replaceChild(chatBox.lastChild, oldRow); // Replace old with new
+// Real-time all chats and all users
+db.ref("chats").on("value", (snapshot) => {
+  allSessions = snapshot.val() || {};
+  renderSessions(document.getElementById("searchInput").value.toLowerCase());
+  // Optionally, reload chat panel if current session changed (avoid flicker)
+  if (selectedSessionId && allSessions[selectedSessionId]) {
+    // Force refresh messages
+    renderChatMessages(allSessions[selectedSessionId]);
   }
-}
+});
+
+db.ref("users").on("value", (snapshot) => {
+  allUserData = snapshot.val() || {};
+  renderSessions(document.getElementById("searchInput").value.toLowerCase());
+  if (selectedSessionId) renderUserInfoPanel();
+});
+
 
 // Remove message (on delete)
 function removeSingleMessage(msgId, chatBox) {
