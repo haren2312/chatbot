@@ -28,7 +28,45 @@
   offline: null
 };
 // window.currentUserId = "userId"; // Replace with actual user ID
+document.getElementById("user-typing-indicator").style.display = "none";
 
+
+function listenForUserTyping(sessionId, userName = "User") {
+  const typingRef = db.ref("typing/" + sessionId + "/user");
+  typingRef.on("value", (snapshot) => {
+    const isTyping = !!snapshot.val();
+    const typingEl = document.getElementById("user-typing-indicator");
+    const typingUserLabel = document.getElementById("typing-user-label");
+    const typingAvatar = typingEl.querySelector(".typing-avatar");
+    const user = allUserData[sessionId] || {};
+
+    typingUserLabel.textContent = (user.name || userName) + " is typing";
+
+    // Avatar logic
+    if (user.profilePic) {
+      typingAvatar.innerHTML = `<img src="${user.profilePic}" alt="User" style="width:22px;height:22px;border-radius:50%;" />`;
+    } else {
+      const initials = getInitials(user.name || userName);
+      const avatarColor = getAvatarGradient(user.name || userName);
+      typingAvatar.innerHTML = `<span style="display:inline-block;width:22px;height:22px;border-radius:50%;background:${avatarColor};color:#fff;line-height:22px;text-align:center;font-size:13px;">${initials}</span>`;
+    }
+
+    // Only show if selected chat
+    typingEl.style.display = (isTyping && selectedSessionId === sessionId) ? "flex" : "none";
+  });
+}
+
+
+function showOrHideTypingIndicator(isTyping, userName) {
+  const el = document.getElementById('user-typing-indicator');
+  if (isTyping) {
+    el.style.display = "flex";
+    // Update text/avatar etc as you want
+    document.getElementById('typing-user-label').textContent = `${userName} is typing`;
+  } else {
+    el.style.display = "none";
+  }
+}
 
 
 function refreshPresenceOnActivity() {
@@ -429,6 +467,7 @@ function saveProfileEdit() {
 }
 // Also close modal on backdrop click:
 document.getElementById("profileModalBackdrop").onclick = closeProfileModal;
+
 
 
   // --- SIDEBAR: Session List ---
@@ -1059,6 +1098,7 @@ let messagesMap = {};
 
 function loadChat(sessionId) {
   selectedSessionId = sessionId;
+  listenForUserTyping(sessionId, allUserData[sessionId]?.name || "User");
   const chatRef = db.ref("chats/" + selectedSessionId);
 
   // Remove old listeners if present
@@ -1096,6 +1136,7 @@ function loadChat(sessionId) {
 
   renderUserInfoPanel();
   document.getElementById("inputGroup").style.display = "flex";
+  
 }
 
 

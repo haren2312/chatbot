@@ -754,16 +754,18 @@ document.addEventListener("DOMContentLoaded", function() {
   const input = document.getElementById('input');
   const picker = document.getElementById('emoji-picker');
 
-  let typingTimeout;
+let typingTimeout;
+
 function setTyping(isTyping) {
   if (!db || !sessionId) return;
   db.ref("typing/" + sessionId + "/user").set(isTyping);
 }
+    
 input.addEventListener("input", () => {
-  refreshPresenceOnActivity();
+  refreshPresenceOnActivity && refreshPresenceOnActivity(); // if you use presence
   setTyping(true);
   clearTimeout(typingTimeout);
-  typingTimeout = setTimeout(() => setTyping(false), 1200);
+  typingTimeout = setTimeout(() => setTyping(false), 1200); // stops after 1.2s of inactivity
 });
 input.addEventListener("blur", () => setTyping(false));
 
