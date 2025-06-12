@@ -1080,12 +1080,12 @@ function loadChat(sessionId) {
   });
 
   // Update message (edit)
-  currentChatListeners.changed = chatRef.on("child_changed", snapshot => {
-    const msg = snapshot.val();
-    const msgId = snapshot.key;
-    messagesMap[msgId] = { ...msg, _id: msgId };
-    updateSingleMessage(msg, msgId, chatBox, messagesMap);
-  });
+  // currentChatListeners.changed = chatRef.on("child_changed", snapshot => {
+  //   const msg = snapshot.val();
+  //   const msgId = snapshot.key;
+  //   messagesMap[msgId] = { ...msg, _id: msgId };
+  //   updateSingleMessage(msg, msgId, chatBox, messagesMap);
+  // });
 
   // Remove message (delete)
   currentChatListeners.removed = chatRef.on("child_removed", snapshot => {
