@@ -648,43 +648,42 @@ function presetClick(message) {
   sendMsg(message);
 }
 
+
+
+// Add Cloudinary unsigned upload preset in your Cloudinary dashboard
+const cloudName = "drrnur7f1";
+const uploadPreset = "einvite_upload";
+
 function uploadImage() {
   const fileInput = document.getElementById("imageUpload");
   const file = fileInput.files[0];
+  if (!file) return;
 
-  if (!file) {
-    alert("Please select an image.");
-    return;
-  }
-
+  const url = `https://api.cloudinary.com/v1_1/${cloudName}/upload`;
   const formData = new FormData();
-  formData.append("image", file);
+  formData.append("file", file);
+  formData.append("upload_preset", uploadPreset);
 
-  fetch("upload.php", {
-    method: "POST",
-    body: formData
-  })
-    .then((response) => response.json())
-    .then((data) => {
-      console.log(data);
-      if (data.success) {
-        // Just push to Firebase or wherever you need:
+  fetch(url, { method: "POST", body: formData })
+    .then(r => r.json())
+    .then(data => {
+      if (data.secure_url) {
+        // Use data.secure_url as your image URL in chat!
+        // Send to Firebase Realtime Database or wherever you want
         db.ref("chats/" + sessionId).push({
           sender: "user",
-          message: data.url,   // <-- this will be "/uploads/xxxx.jpg"
+          message: data.secure_url,
           type: "image",
           timestamp: Date.now()
         });
-        refreshPresenceOnActivity();
       } else {
-        alert("Upload failed: " + data.error);
+        alert("Upload failed.");
       }
-    })
-    .catch((error) => {
-      console.error("Error uploading image:", error);
-      alert("An error occurred.");
     });
 }
+
+
+
 
 
 
