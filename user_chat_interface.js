@@ -289,7 +289,7 @@ function initializeChat() {
   if (chatInitialized) return;
   document.getElementById("chat").style.display = "flex";
   chatInitialized = true;
-
+console.log("USER PANEL sessionId:", sessionId);
   const chatRef = db.ref("chats/" + sessionId);
   chatRef.once("value", (snapshot) => {
   if (!snapshot.exists()) {
@@ -349,33 +349,38 @@ function loadChatMessages(callback) {
   const messageElements = {};
 
   // Add message
-  chatRef.on("child_added", (snapshot) => {
-    const data = snapshot.val();
-    if (data && data.message) {
-      const msgDiv = createOrUpdateMessageElement(data, snapshot.key);
-      messagesContainer.appendChild(msgDiv);
-      messageElements[snapshot.key] = msgDiv;
-      messagesContainer.scrollTop = messagesContainer.scrollHeight;
-    }
-  });
+  // Add message
+chatRef.on("child_added", (snapshot) => {
+  const data = snapshot.val();
+  console.log("USER PANEL sees message:", data);
+  const msgDiv = createOrUpdateMessageElement(data, snapshot.key);
+  if (msgDiv) {
+    messagesContainer.appendChild(msgDiv);
+    messageElements[snapshot.key] = msgDiv;
+    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+  }
+});
 
-  // Update message (edit)
-  chatRef.on("child_changed", (snapshot) => {
-    const data = snapshot.val();
-    if (data && data.message) {
-      if (!messageElements[snapshot.key]) {
-        // Fallback: message not seen yet, add it
-        const msgDiv = createOrUpdateMessageElement(data, snapshot.key, true);
+// Update message (edit)
+chatRef.on("child_changed", (snapshot) => {
+  const data = snapshot.val();
+  if (data && data.message) {
+    const msgDiv = createOrUpdateMessageElement(data, snapshot.key, true);
+    if (!messageElements[snapshot.key]) {
+      if (msgDiv) {
         messagesContainer.appendChild(msgDiv);
         messageElements[snapshot.key] = msgDiv;
-      } else {
-        const msgDiv = createOrUpdateMessageElement(data, snapshot.key, true);
+      }
+    } else {
+      if (msgDiv) {
         messagesContainer.replaceChild(msgDiv, messageElements[snapshot.key]);
         messageElements[snapshot.key] = msgDiv;
       }
-      messagesContainer.scrollTop = messagesContainer.scrollHeight;
     }
-  });
+    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+  }
+});
+
 
   // Remove message (delete)
   chatRef.on("child_removed", (snapshot) => {
@@ -390,16 +395,23 @@ function loadChatMessages(callback) {
 }
 
 
-// Helper to create/update message DOM
+// Helper to create/update  message DOM
 function createOrUpdateMessageElement(data, messageKey, isUpdate = false) {
-  // Remove old date separators only if isUpdate is true, otherwise you may get date duplicates
-  // (if you want ultra-clean logic, you may want to refactor date separators later)
-
-  // For now, we'll just re-use your addMessage logic:
   const tempDiv = document.createElement('div');
   addMessage(data.message, data.sender, null, data.timestamp, messageKey, tempDiv);
-  return tempDiv.firstChild; // addMessage appends to container, so use first child
+  // Always get the message node, not the timestamp line
+  const msgNode = tempDiv.querySelector('.msg');
+  if (!msgNode) {
+    // Defensive: return null if the .msg is missing
+    console.warn('No .msg element created for:', data);
+    return null;
+  }
+  return msgNode;
 }
+
+
+
+
 
 
 
@@ -420,7 +432,8 @@ function addMessage(text, sender, name, timestamp = Date.now(), messageKey = nul
     const dateLine = document.createElement("div");
     dateLine.className = "timestamp-line";
     dateLine.textContent = dayString;
-    messagesContainer.appendChild(dateLine);
+    // Only append to DOM if this is NOT a temp container (for createOrUpdateMessageElement)
+    if (!container) messagesContainer.appendChild(dateLine);
     window.lastMessageDate = dayString;
   }
 
@@ -428,6 +441,7 @@ function addMessage(text, sender, name, timestamp = Date.now(), messageKey = nul
   const msgDiv = document.createElement("div");
   msgDiv.className = `msg ${sender}`;
   if (messageKey) msgDiv.dataset.key = messageKey; // For deletion
+
   // --- Only for bot/agent: Header with avatar and name
   if (sender === "bot" || sender === "agent") {
     const headerDiv = document.createElement("div");
@@ -460,7 +474,6 @@ function addMessage(text, sender, name, timestamp = Date.now(), messageKey = nul
     (text.match(/\.(jpeg|jpg|gif|png|webp)$/i) || text.startsWith("data:image/"))
   ) {
     const img = document.createElement('img');
-    // Ensure image path is accessible
     img.src = text.startsWith('/') ? window.location.origin + text : text;
     img.alt = "Sent image";
     img.style.maxWidth = "200px";
@@ -479,65 +492,66 @@ function addMessage(text, sender, name, timestamp = Date.now(), messageKey = nul
   bubbleDiv.appendChild(timeLabel);
 
   // --- 3-dot menu for user's own messages ---
-if (sender === "user" && messageKey) {
-  const msgActions = document.createElement("div");
-  msgActions.className = "msg-actions";
+  if (sender === "user" && messageKey) {
+    const msgActions = document.createElement("div");
+    msgActions.className = "msg-actions";
 
-  // 3-dot menu button
-  const menuBtn = document.createElement("button");
-  menuBtn.className = "msg-menu";
-  menuBtn.innerHTML = "&#8942;";
+    const menuBtn = document.createElement("button");
+    menuBtn.className = "msg-menu";
+    menuBtn.innerHTML = "&#8942;";
 
-  // Dropdown menu
-  const dropdown = document.createElement("div");
-  dropdown.className = "msg-dropdown";
-  dropdown.style.display = "none";
-  dropdown.innerHTML = `
-    <div class="msg-dropdown-item" data-action="edit">Edit</div>
-    <div class="msg-dropdown-item" data-action="delete">Delete</div>
-    <div class="msg-dropdown-item" data-action="copy">Copy</div>
-  `;
-
-  // Toggle dropdown (show/hide)
-  menuBtn.onclick = (e) => {
-    e.stopPropagation();
-    // First, close all open dropdowns
-    document.querySelectorAll('.msg-dropdown').forEach(el => el.style.display = "none");
-    dropdown.style.display = dropdown.style.display === "block" ? "none" : "block";
-  };
-
-  // Click outside to close any dropdown
-  document.addEventListener("click", (event) => {
-    if (!msgActions.contains(event.target)) {
-      dropdown.style.display = "none";
-    }
-  });
-
-  // Handle dropdown actions
-  dropdown.addEventListener("click", function(e) {
-    if (!e.target.classList.contains("msg-dropdown-item")) return;
+    const dropdown = document.createElement("div");
+    dropdown.className = "msg-dropdown";
     dropdown.style.display = "none";
-    const action = e.target.dataset.action;
-    if (action === "edit") {
-      editMessageFromFirebase(messageKey, msgContent, bubbleDiv);
-    } else if (action === "delete") {
-      deleteMessageFromFirebase(messageKey);
-    } else if (action === "copy") {
-      copyMessageToClipboard(msgContent);
-    }
-  });
+    dropdown.innerHTML = `
+      <div class="msg-dropdown-item" data-action="edit">Edit</div>
+      <div class="msg-dropdown-item" data-action="delete">Delete</div>
+      <div class="msg-dropdown-item" data-action="copy">Copy</div>
+    `;
 
-  msgActions.appendChild(menuBtn);  
-  msgActions.appendChild(dropdown);
-  bubbleDiv.appendChild(msgActions);
-}
+    menuBtn.onclick = (e) => {
+      e.stopPropagation();
+      document.querySelectorAll('.msg-dropdown').forEach(el => el.style.display = "none");
+      dropdown.style.display = dropdown.style.display === "block" ? "none" : "block";
+    };
 
+    document.addEventListener("click", (event) => {
+      if (!msgActions.contains(event.target)) {
+        dropdown.style.display = "none";
+      }
+    });
 
+    dropdown.addEventListener("click", function(e) {
+      if (!e.target.classList.contains("msg-dropdown-item")) return;
+      dropdown.style.display = "none";
+      const action = e.target.dataset.action;
+      if (action === "edit") {
+        editMessageFromFirebase(messageKey, msgContent, bubbleDiv);
+      } else if (action === "delete") {
+        deleteMessageFromFirebase(messageKey);
+      } else if (action === "copy") {
+        copyMessageToClipboard(msgContent);
+      }
+    });
+
+    msgActions.appendChild(menuBtn);
+    msgActions.appendChild(dropdown);
+    bubbleDiv.appendChild(msgActions);
+  }
 
   msgDiv.appendChild(bubbleDiv);
-  messagesContainer.appendChild(msgDiv);
-  messagesContainer.scrollTop = messagesContainer.scrollHeight;
+
+  // Only append to DOM if this is NOT a temp container (for createOrUpdateMessageElement)
+  if (!container) {
+    messagesContainer.appendChild(msgDiv);
+    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+  } else {
+    messagesContainer.appendChild(msgDiv);
+  }
+
+  return msgDiv; // <-- Always return the msgDiv
 }
+
 
 // Edit message (user’s own)
 function editMessageFromFirebase(messageKey, msgContent, bubbleDiv) {
