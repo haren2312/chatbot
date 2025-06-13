@@ -460,7 +460,8 @@ function addMessage(text, sender, name, timestamp = Date.now(), messageKey = nul
     (text.match(/\.(jpeg|jpg|gif|png|webp)$/i) || text.startsWith("data:image/"))
   ) {
     const img = document.createElement('img');
-    img.src = text;
+    // Ensure image path is accessible
+    img.src = text.startsWith('/') ? window.location.origin + text : text;
     img.alt = "Sent image";
     img.style.maxWidth = "200px";
     img.style.maxHeight = "150px";
