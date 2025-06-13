@@ -299,14 +299,14 @@ function initializePresenceTracking() {
  // Place this with your other utils at the top
 function getAvatarGradient(name = "") {
   const gradients = [
-    "#79b6a1", // Teal/green
-  "#6a8da8", // Blue-grey
-  "#ce9a84", // Peach/tan
-  "#b5aacd", // Lavender/purple
-  "#b9d8b8", // Minty green
-  "#d2c893", // Cream
-  "#c9c3cf", // Muted lilac
-  "##9ba2d1", // Muted rose
+  "#4b846e", // Darker Teal/green
+  "#456080", // Darker Blue-grey
+  "#b47c60", // Darker Peach/tan
+  "#8e7aad", // Darker Lavender/purple
+  "#7fa884", // Darker Minty green
+  "#aea663", // Darker Cream
+  "#99889d", // Darker Muted lilac
+  "#747cb1", // Muted rose
 ];
   let hash = 0;
   for (let i = 0; i < name.length; i++) {
