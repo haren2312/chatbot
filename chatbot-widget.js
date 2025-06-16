@@ -83,7 +83,6 @@
       </div>
       <div id="messages" class="chat-messages"></div>
       <div id="typing-indicator" style="display:none;margin:6px 0 0 16px;"></div>
-      <hr style="width: 85%; margin-left: 20px; border: 1px solid #ebebeb;">
       <div class="input-wrapper">
         <div class="input-row">
           <input id="input" type="text" placeholder="Type your message..." />
@@ -145,26 +144,44 @@
 
 
     // GLOBALS
-    let sessionId = "", userName = "", userEmail = "", userLocation = null, chatInitialized = false;
-    let presenceTimers = { away: null, offline: null };
-    let windowLastMessageDate = undefined;
+  let sessionId = "", userName = "", userEmail = "", userLocation = null, chatInitialized = false;
+  let presenceTimers = { away: null, offline: null };
+  let windowLastMessageDate = undefined;
 
+  function sanitizeEmail(email) {
+    return email.trim().toLowerCase().replace(/[^a-z0-9]/g, "_");
+  }
+  function updateSessionIdFromStorage() {
+    const email = localStorage.getItem("chatbot_user_email") || "";
+    sessionId = email ? sanitizeEmail(email) : "";
+  }
 
-    function generateSessionId(name) {
-  const sanitized = name.toLowerCase().replace(/\s+/g, "_").replace(/[^a-z0-9_]/g, "");
-  const timestamp = Date.now();
-  return sanitized + "_" + timestamp;
-}
-
-
-    // Helpers
-    function sanitizeEmail(email) {
-      return email.trim().toLowerCase().replace(/[^a-z0-9]/g, "_");
+  function bootstrapChat() {
+    updateSessionIdFromStorage();
+    const savedEmail = localStorage.getItem("chatbot_user_email");
+    const savedName = localStorage.getItem("chatbot_user_name");
+    if (savedEmail && savedName) {
+      userName = savedName;
+      userEmail = savedEmail;
+      document.getElementById("name-prompt").style.display = "none";
+      document.getElementById("email-prompt").style.display = "none";
+      document.getElementById("location-prompt").style.display = "none";
+      document.getElementById("chat").style.display = "flex";
+      chatInitialized = true;
+      loadChatMessages(); // always uses current sessionId
+    } else {
+      document.getElementById("name-prompt").style.display = "block";
+      document.getElementById("email-prompt").style.display = "none";
+      document.getElementById("location-prompt").style.display = "none";
+      document.getElementById("chat").style.display = "none";
     }
+  }
+
     function validateEmail(email) {
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       return emailRegex.test(email);
     }
+
     function showError(message) { Swal.fire(message); }
     function showLoading(elementId, message) {
       const el = document.getElementById(elementId);
@@ -201,38 +218,40 @@
 
 
     // ON LOAD
-document.addEventListener("DOMContentLoaded", function() {
-let savedName = localStorage.getItem("chatbot_user_name") || "";
-let savedEmail = localStorage.getItem("chatbot_user_email") || "";
-let locationSet = localStorage.getItem("chatbot_location_set") === "1";
-document.getElementById("nameInput").value = savedName;
-document.getElementById("emailInput").value = savedEmail;
-if (savedName && savedEmail && locationSet) {
-  userName = savedName;
-  userEmail = savedEmail;
-  sessionId = sanitizeEmail(savedEmail);
-  document.getElementById("name-prompt").style.display = "none";
-  document.getElementById("email-prompt").style.display = "none";
-  document.getElementById("location-prompt").style.display = "none";
-  document.getElementById("chat").style.display = "flex";
-  chatInitialized = true;
-  initializeChat();
-} else if (savedName && savedEmail) {
-  userName = savedName;
-  userEmail = savedEmail;
-  sessionId = sanitizeEmail(savedEmail);
-  document.getElementById("name-prompt").style.display = "none";
-  document.getElementById("email-prompt").style.display = "none";
-  document.getElementById("location-prompt").style.display = "block";
-} else {
-  document.getElementById("name-prompt").style.display = "block";
-  document.getElementById("email-prompt").style.display = "none";
-  document.getElementById("location-prompt").style.display = "none";
-  document.getElementById("chat").style.display = "none";
-}
+// function initializePrompts() {
+//   let savedName = localStorage.getItem("chatbot_user_name") || "";
+//   let savedEmail = localStorage.getItem("chatbot_user_email") || "";
+//   let locationSet = localStorage.getItem("chatbot_location_set") === "1";
+//   document.getElementById("nameInput").value = savedName;
+//   document.getElementById("emailInput").value = savedEmail;
+//   if (savedName && savedEmail && locationSet) {
+//     userName = savedName;
+//     userEmail = savedEmail;
+//     // Always use sanitized version!
+//     sessionId = sanitizeEmail(localStorage.getItem("chatbot_user_email") || "");
+//     document.getElementById("name-prompt").style.display = "none";
+//     document.getElementById("email-prompt").style.display = "none";
+//     document.getElementById("location-prompt").style.display = "none";
+//     document.getElementById("chat").style.display = "flex";
+//     chatInitialized = true;
+//     setTimeout(() => initializeChat(), 100); // short delay for DOM ready
 
+//   } else if (savedName && savedEmail) {
+//     userName = savedName;
+//     userEmail = savedEmail;
+//     // Always use sanitized version!
+//     sessionId = sanitizeEmail(localStorage.getItem("chatbot_user_email") || "");
+//     document.getElementById("name-prompt").style.display = "none";
+//     document.getElementById("email-prompt").style.display = "none";
+//     document.getElementById("location-prompt").style.display = "block";
+//   } else {
+//     document.getElementById("name-prompt").style.display = "block";
+//     document.getElementById("email-prompt").style.display = "none";
+//     document.getElementById("location-prompt").style.display = "none";
+//     document.getElementById("chat").style.display = "none";
+//   }
+// }
 
-    });
 
     // NAME PROMPT
     document.getElementById("start-btn").onclick = function () {
@@ -308,7 +327,8 @@ function skipLocation() {
   // --- SET LOCATION FLAG HERE ---
   localStorage.setItem("chatbot_location_set", "1");
   document.getElementById("location-prompt").style.display = "none";
-  initializeChat();
+  setTimeout(() => initializeChat(), 100); // short delay for DOM ready
+
   listenForAgentTyping();
 }
 
@@ -351,29 +371,32 @@ function skipLocation() {
 }
 
     // INITIALIZE CHAT
-    function initializeChat() {
-      if (chatInitialized) return;
-      document.getElementById("chat").style.display = "flex";
-      chatInitialized = true;
-      const chatRef = db.ref("chats/" + sessionId);
-      chatRef.once("value", (snapshot) => {
-        if (!snapshot.exists()) {
-          const greetingMsg = {
-            sender: "bot",
-            message: `Hi ${userName}! 👋 How can I help you ?`,
-            type: "text",
-            timestamp: Date.now()
-          };
-          db.ref("chats/" + sessionId).push(greetingMsg).then(() => { loadChatMessages(); });
-          sessionStorage.setItem('greeted', 'true');
-        } else {
-          loadChatMessages();
-        }
-      });
-      refreshPresenceOnActivity();
-      setupUserPresence();
-      setTimeout(() => { document.getElementById("input").focus(); }, 100);
+function initializeChat() {
+  if (chatInitialized) return;
+  document.getElementById("chat").style.display = "flex";
+  chatInitialized = true;
+  const chatRef = db.ref("chats/" + sessionId);
+  chatRef.once("value", (snapshot) => {
+    if (!snapshot.exists()) {
+      const greetingMsg = {
+        sender: "bot",
+        message: `Hi ${userName}! 👋 How can I help you ?`,
+        type: "text",
+        timestamp: Date.now()
+      };
+      db.ref("chats/" + sessionId).push(greetingMsg).then(() => { loadChatMessages(); });
+      sessionStorage.setItem('greeted', 'true');
+    } else {
+      console.log("sessionId used for chat:", sessionId);
+      console.log("Checking if chat exists at /chats/" + sessionId);
+      loadChatMessages();
     }
+  });
+  refreshPresenceOnActivity();
+  setupUserPresence();
+  setTimeout(() => { document.getElementById("input").focus(); }, 100);
+}
+
 
 
     function sendMessage(message, type = "text") {
@@ -392,38 +415,23 @@ function skipLocation() {
 
 
     // LOAD & RENDER MESSAGES
-    function loadChatMessages(callback) {
-      const chatRef = db.ref("chats/" + sessionId);
-      const messagesContainer = document.getElementById("messages");
-      messagesContainer.innerHTML = "";
-      windowLastMessageDate = undefined;
-      chatRef.off();
-      const messageElements = {};
-      chatRef.on("child_added", (snapshot) => {
-        const data = snapshot.val();
-        const msgDiv = createOrUpdateMessageElement(data, snapshot.key);
-        if (msgDiv) {
-          messagesContainer.appendChild(msgDiv);
-          messageElements[snapshot.key] = msgDiv;
-          messagesContainer.scrollTop = messagesContainer.scrollHeight;
-        }
-      });
-      chatRef.on("child_changed", (snapshot) => {
-        const data = snapshot.val();
-        const msgDiv = createOrUpdateMessageElement(data, snapshot.key, true);
-        if (!messageElements[snapshot.key]) {
-          if (msgDiv) {
-            messagesContainer.appendChild(msgDiv);
-            messageElements[snapshot.key] = msgDiv;
-          }
-        } else {
-          if (msgDiv) {
-            messagesContainer.replaceChild(msgDiv, messageElements[snapshot.key]);
-            messageElements[snapshot.key] = msgDiv;
-          }
-        }
-        messagesContainer.scrollTop = messagesContainer.scrollHeight;
-      });
+function loadChatMessages(callback) {
+  updateSessionIdFromStorage();
+  if (!sessionId) return;
+  const chatRef = db.ref("chats/" + sessionId);
+  const messagesContainer = document.getElementById("messages");
+  messagesContainer.innerHTML = "";
+  windowLastMessageDate = undefined;
+  chatRef.off();
+  const messageElements = {};
+  chatRef.on("child_added", (snapshot) => {
+    const data = snapshot.val();
+    const msgDiv = addMessage(data.message, data.sender, null, data.timestamp, snapshot.key);
+    if (msgDiv) {
+      messageElements[snapshot.key] = msgDiv;
+      messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    }
+  });
       chatRef.on("child_removed", (snapshot) => {
         if (messageElements[snapshot.key]) {
           messageElements[snapshot.key].remove();
@@ -433,14 +441,12 @@ function skipLocation() {
       });
       if (typeof callback === "function") callback();
     }
-    function createOrUpdateMessageElement(data, messageKey, isUpdate = false) {
-      const tempDiv = document.createElement('div');
-      addMessage(data.message, data.sender, null, data.timestamp, messageKey, tempDiv);
-      const msgNode = tempDiv.querySelector('.msg');
-      if (!msgNode) { console.warn('No .msg element created for:', data); return null; }
-      return msgNode;
-    }
-    function addMessage(text, sender, name, timestamp = Date.now(), messageKey = null, container = null) {
+
+
+
+
+
+function addMessage(text, sender, name, timestamp = Date.now(), messageKey = null, container = null) {
   const messagesContainer = container || document.getElementById("messages");
       const now = new Date(timestamp);
       const dayString = now.toLocaleDateString([], { weekday: "long", day: "numeric", month: "long" });
@@ -452,9 +458,9 @@ function skipLocation() {
         messagesContainer.appendChild(dateLine);
         windowLastMessageDate = dayString;
       }
-      const msgDiv = document.createElement("div");
-      msgDiv.className = `msg ${sender}`;
-      if (messageKey) msgDiv.dataset.key = messageKey;
+  const msgDiv = document.createElement("div");
+  msgDiv.className = `msg ${sender}`;
+  if (messageKey) msgDiv.dataset.key = messageKey;
       if (sender === "bot" || sender === "agent") {
         const headerDiv = document.createElement("div");
         headerDiv.className = "msg-header";
@@ -522,13 +528,13 @@ function skipLocation() {
         bubbleDiv.appendChild(msgActions);
       }
       msgDiv.appendChild(bubbleDiv);
-      if (!container) {
-    messagesContainer.appendChild(msgDiv);
-    messagesContainer.scrollTop = messagesContainer.scrollHeight;
-  } else {
-    container.appendChild(msgDiv); // <--- CORRECTED LINE
-  }
-      return msgDiv;
+if (!container) {
+  messagesContainer.appendChild(msgDiv);
+  messagesContainer.scrollTop = messagesContainer.scrollHeight;
+} else {
+  container.appendChild(msgDiv); // <--- CORRECTED LINE
+}
+return msgDiv;
     }
     function editMessageFromFirebase(messageKey, msgContent, bubbleDiv) {
       const currentText = msgContent.textContent || "";
@@ -556,18 +562,22 @@ function skipLocation() {
     // SEND MESSAGE
     document.getElementById("send-btn").onclick = function () { sendMsg(); };
     document.getElementById("input").addEventListener("keypress", function (e) { if (e.key === "Enter") sendMsg(); });
+    
+    
     function sendMsg(customText) {
-      const input = document.getElementById("input");
-      const msg = (customText || input.value).trim();
-      if (!msg) return;
-      if (db && sessionId) {
-        db.ref("chats/" + sessionId).push({
-          sender: "user", message: msg, type: "text", timestamp: Date.now()
-        });
-        refreshPresenceOnActivity();
-      }
-      if (!customText) input.value = "";
-    }
+  updateSessionIdFromStorage();
+  if (!sessionId) return;
+  const input = document.getElementById("input");
+  const msg = (customText || input.value).trim();
+  if (!msg) return;
+  db.ref("chats/" + sessionId).push({
+    sender: "user", message: msg, type: "text", timestamp: Date.now()
+  });
+  refreshPresenceOnActivity();
+  if (!customText) input.value = "";
+}
+
+
 function addImageMessage(url, sender) {
   addMessage(url, sender);
 }
@@ -695,7 +705,11 @@ function hideTypingIndicator() {
     window.addEventListener('unhandledrejection', function (event) {
       event.preventDefault();
     });
-  }
+  // initializePrompts();
+  
+  window.onload = bootstrapChat;
+}
+
 })();
 
 

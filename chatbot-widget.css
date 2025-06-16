@@ -898,7 +898,7 @@ body, input, button, .bubble, .sender-name {
   display: flex;
   flex-direction: column;
   background: white;
-  padding: 8px;
+  padding: 0 8px;
   border-top: 1px solid #ddd;
 }
 
