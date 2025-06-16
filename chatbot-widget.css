@@ -922,7 +922,7 @@ body, input, button, .bubble, .sender-name {
   display: flex;
   justify-content: flex-end;
   gap: 6px;
-  margin-top: 6px;
+  /* margin-top: 6px; */
 }
 
 
