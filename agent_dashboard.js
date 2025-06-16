@@ -22,6 +22,16 @@
   window.editMessage = editMessage;
   window.deleteMessage = deleteMessage;
   window.userPresence = {};
+  const ADMIN_ID = "admin";
+
+  window.lastViewedTimestamp = {};
+
+db.ref("admin_last_seen/" + ADMIN_ID).once("value", (snapshot) => {
+  window.lastViewedTimestamp = snapshot.val() || {};
+  // Render session list after loading
+  renderSessions(document.getElementById("searchInput").value.toLowerCase());
+});
+
 
   let presenceTimers = {
   away: null,
@@ -597,11 +607,17 @@ document.getElementById("profileModalBackdrop").onclick = closeProfileModal;
         </div>
       </div>
     `;
+    
+    
     sessionBtn.onclick = () => {
-  window.lastViewedTimestamp[sid] = Date.now();
+  const now = Date.now();
+  window.lastViewedTimestamp[sid] = now;
+  // Persist to Firebase
+  db.ref("admin_last_seen/" + ADMIN_ID + "/" + sid).set(now);
   loadChat(sid);
   renderSessions(document.getElementById("searchInput").value.toLowerCase());
 };
+
 
     sessionList.appendChild(sessionBtn);
   }
@@ -1316,19 +1332,24 @@ function debugUserPresence() {
 
   // --- Send message ---
   document.getElementById("sendBtn").onclick = () => {
-    const msgInput = document.getElementById("msgInput");
-    const msg = msgInput.value.trim();
-    if (!msg || !selectedSessionId || !db) return;
-    const messageData = {
-      sender: "agent",
-      message: msg,
-      type: "text",
-      timestamp: Date.now()
-    };
-    db.ref("chats/" + selectedSessionId).push(messageData).then(() => {
-      msgInput.value = "";
-    });
+  const msgInput = document.getElementById("msgInput");
+  const msg = msgInput.value.trim();
+  if (!msg || !selectedSessionId || !db) return;
+  const messageData = {
+    sender: "agent",
+    message: msg,
+    type: "text",
+    timestamp: Date.now()
   };
+  db.ref("chats/" + selectedSessionId).push(messageData).then(() => {
+    msgInput.value = "";
+    // Also mark as viewed
+    const now = Date.now();
+    window.lastViewedTimestamp[selectedSessionId] = now;
+    db.ref("admin_last_seen/" + ADMIN_ID + "/" + selectedSessionId).set(now);
+  });
+};
+
   document.getElementById("msgInput").addEventListener("keypress", (e) => {
     if (e.key === "Enter") document.getElementById("sendBtn").onclick();
   });

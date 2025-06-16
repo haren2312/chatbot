@@ -1,12 +1,12 @@
 (function () {
   // ---- CONFIGURATION ----
   const IMAGES = {
-    logo: 'images/logo.jpg',
-    chatIcon: 'images/chat-icon.png',
-    closeIcon: 'images/close-icon.png',
-    crispMsg: 'images/crsip-msg.png'
+    logo: 'http://localhost:8888/code/chatbot-widget/images/logo.jpg',
+    chatIcon: 'http://localhost:8888/code/chatbot-widget/images/chat-icon.png',
+    closeIcon: 'http://localhost:8888/code/chatbot-widget/images/close-icon.png',
+    crispMsg: 'http://localhost:8888/code/chatbot-widget/images/crsip-msg.png'
   };
-  const CSS_URL = 'chatbot-widget.css';
+  const CSS_URL = 'http://localhost:8888/code/chatbot-widget/chatbot-widget.css';
 
   // ---- INJECT CSS ----
   var style = document.createElement('link');
@@ -140,6 +140,10 @@
       console.error("Firebase initialization error:", error);
     }
 
+
+    window.skipLocation = skipLocation;
+
+
     // GLOBALS
     let sessionId = "", userName = "", userEmail = "", userLocation = null, chatInitialized = false;
     let presenceTimers = { away: null, offline: null };
@@ -193,36 +197,53 @@
       presenceTimers.offline = setTimeout(() => setPresence("offline"), 5 * 60 * 1000);
     }
 
+    // localStorage.setItem("chatbot_location_set", "1");
+
+
     // ON LOAD
-    document.addEventListener("DOMContentLoaded", function() {
-      let savedName = localStorage.getItem("chatbot_user_name") || "";
-      let savedEmail = localStorage.getItem("chatbot_user_email") || "";
-      document.getElementById("nameInput").value = savedName;
-      document.getElementById("emailInput").value = savedEmail;
-      if (savedName && savedEmail) {
-        userName = savedName;
-        userEmail = savedEmail;
-        sessionId = sanitizeEmail(savedEmail);
-        document.getElementById("name-prompt").style.display = "none";
-        document.getElementById("email-prompt").style.display = "none";
-        document.getElementById("location-prompt").style.display = "block";
-      } else {
-        document.getElementById("name-prompt").style.display = "block";
-        document.getElementById("email-prompt").style.display = "none";
-        document.getElementById("location-prompt").style.display = "none";
-        document.getElementById("chat").style.display = "none";
-      }
+document.addEventListener("DOMContentLoaded", function() {
+let savedName = localStorage.getItem("chatbot_user_name") || "";
+let savedEmail = localStorage.getItem("chatbot_user_email") || "";
+let locationSet = localStorage.getItem("chatbot_location_set") === "1";
+document.getElementById("nameInput").value = savedName;
+document.getElementById("emailInput").value = savedEmail;
+if (savedName && savedEmail && locationSet) {
+  userName = savedName;
+  userEmail = savedEmail;
+  sessionId = sanitizeEmail(savedEmail);
+  document.getElementById("name-prompt").style.display = "none";
+  document.getElementById("email-prompt").style.display = "none";
+  document.getElementById("location-prompt").style.display = "none";
+  document.getElementById("chat").style.display = "flex";
+  chatInitialized = true;
+  initializeChat();
+} else if (savedName && savedEmail) {
+  userName = savedName;
+  userEmail = savedEmail;
+  sessionId = sanitizeEmail(savedEmail);
+  document.getElementById("name-prompt").style.display = "none";
+  document.getElementById("email-prompt").style.display = "none";
+  document.getElementById("location-prompt").style.display = "block";
+} else {
+  document.getElementById("name-prompt").style.display = "block";
+  document.getElementById("email-prompt").style.display = "none";
+  document.getElementById("location-prompt").style.display = "none";
+  document.getElementById("chat").style.display = "none";
+}
+
+
     });
 
     // NAME PROMPT
     document.getElementById("start-btn").onclick = function () {
-      userName = document.getElementById("nameInput").value.trim();
-      if (!userName) { showError("Please enter your name"); document.getElementById("nameInput").focus(); return; }
-      localStorage.setItem("chatbot_user_name", userName);
-      document.getElementById("name-prompt").style.display = "none";
-      document.getElementById("email-prompt").style.display = "block";
-      setTimeout(() => document.getElementById("emailInput").focus(), 100);
-    };
+  userName = document.getElementById("nameInput").value.trim();
+  if (!userName) { showError("Please enter your name"); document.getElementById("nameInput").focus(); return; }
+  localStorage.setItem("chatbot_user_name", userName);
+  document.getElementById("name-prompt").style.display = "none";
+  document.getElementById("email-prompt").style.display = "block";
+  setTimeout(() => document.getElementById("emailInput").focus(), 100);
+};
+
     document.getElementById("nameInput").addEventListener("keypress", function(e) {
       if (e.key === "Enter") document.getElementById("start-btn").click();
     });
@@ -255,34 +276,45 @@
 
     // LOCATION PROMPT
     document.getElementById("location-btn").onclick = function () {
-      const status = document.getElementById("location-status");
-      if (!navigator.geolocation) {
-        status.textContent = "Geolocation is not supported by your browser."; setTimeout(skipLocation, 2000); return;
-      }
-      status.textContent = "Getting location...";
-      showLoading("location-prompt", "Getting Location...");
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          userLocation = { latitude: position.coords.latitude, longitude: position.coords.longitude, timestamp: Date.now() };
-          db.ref("users/" + sessionId + "/location").set(userLocation).catch(() => { });
-          status.textContent = "Location saved! Starting chat...";
-          hideLoading("location-prompt", "Share Location");
-          document.getElementById("location-prompt").style.display = "none";
-          setTimeout(initializeChat, 500);
-        },
-        () => {
-          status.textContent = "Unable to retrieve your location.";
-          hideLoading("location-prompt", "Share Location");
-          setTimeout(skipLocation, 2000);
-        }, { timeout: 10000, enableHighAccuracy: false }
-      );
-    };
-    document.getElementById("skip-location-btn").onclick = skipLocation;
-    function skipLocation() {
-      listenForAgentTyping();
+  const status = document.getElementById("location-status");
+  if (!navigator.geolocation) {
+    status.textContent = "Geolocation is not supported by your browser."; 
+    setTimeout(skipLocation, 2000); 
+    return;
+  }
+  status.textContent = "Getting location...";
+  showLoading("location-prompt", "Getting Location...");
+  navigator.geolocation.getCurrentPosition(
+    (position) => {
+      userLocation = { latitude: position.coords.latitude, longitude: position.coords.longitude, timestamp: Date.now() };
+      db.ref("users/" + sessionId + "/location").set(userLocation).catch(() => { });
+      status.textContent = "Location saved! Starting chat...";
+      hideLoading("location-prompt", "Share Location");
+      // --- SET LOCATION FLAG HERE ---
+      localStorage.setItem("chatbot_location_set", "1");
       document.getElementById("location-prompt").style.display = "none";
-      initializeChat();
-    }
+      setTimeout(initializeChat, 500);
+    },
+    () => {
+      status.textContent = "Unable to retrieve your location.";
+      hideLoading("location-prompt", "Share Location");
+      setTimeout(skipLocation, 2000);
+    }, { timeout: 10000, enableHighAccuracy: false }
+  );
+};
+
+    document.getElementById("skip-location-btn").onclick = skipLocation;
+function skipLocation() {
+  // --- SET LOCATION FLAG HERE ---
+  localStorage.setItem("chatbot_location_set", "1");
+  document.getElementById("location-prompt").style.display = "none";
+  initializeChat();
+  listenForAgentTyping();
+}
+
+
+// localStorage.setItem("chatbot_location_set", "1");
+
 
     function setupUserPresence() {
   if (!sessionId) return;
@@ -635,6 +667,24 @@ function showTypingIndicator(who) {
   `;
 }
 
+function listenForAgentTyping() {
+  if (!db || !sessionId) return;
+  const typingRef = db.ref("typing/" + sessionId + "/agent");
+  typingRef.on("value", (snapshot) => {
+    if (snapshot.val()) {
+      showTypingIndicator("agent");
+    } else {
+      hideTypingIndicator();
+    }
+  });
+}
+
+
+function setTyping(isTyping) {
+  if (!db || !sessionId) return;
+  db.ref("typing/" + sessionId + "/user").set(isTyping);
+}
+
 function hideTypingIndicator() {
   document.getElementById("typing-indicator").style.display = "none";
 }
@@ -648,20 +698,5 @@ function hideTypingIndicator() {
   }
 })();
 
-function listenForAgentTyping() {
-  if (!db || !sessionId) return;
-  const typingRef = db.ref("typing/" + sessionId + "/agent");
-  typingRef.on("value", (snapshot) => {
-    if (snapshot.val()) {
-      showTypingIndicator("agent");
-    } else {
-      hideTypingIndicator();
-    }
-  });
-}
 
-function setTyping(isTyping) {
-  if (!db || !sessionId) return;
-  db.ref("typing/" + sessionId + "/user").set(isTyping);
-}
 
