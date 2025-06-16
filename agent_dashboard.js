@@ -969,7 +969,7 @@ function renderChatMessages(chatData) {
 
   if (isRight) {
     // Bot/Admin/Agent avatar
-    avatarHtml = `<div class="message-avatar" style="padding:2px;background:#fff;">
+    avatarHtml = `<div class="message-avatar" style="padding:2px;background:#fff; ">
       <img src="${window.ADMIN_PROFILE.avatarUrl}" alt="Bot/Admin" style="width:32px;height:32px;border-radius:50%;" />
     </div>`;
 } else if (isRight) {
@@ -1165,7 +1165,7 @@ function renderSingleMessage(msg, msgId, chatBox, messagesMap) {
       let name = userData.name || msg.sender || "";
       let initials = getInitials(name);
       let avatarColor = getAvatarGradient(name + (userData.country || "IN"));
-      avatarHtml = `<div class="message-avatar" style="background:${avatarColor};color:#fff;">${initials}</div>`;
+      avatarHtml = `<div class="message-avatar" style="background:${avatarColor};color:#fff; font-size: 12px;">${initials}</div>`;
     }
   }
 

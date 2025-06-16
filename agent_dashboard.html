@@ -33,7 +33,7 @@
   <div class="sidebar">
     <div class="filter-bar" style="display: flex; gap: 10px; align-items: center;">
   <label style="font-weight: 600; color: #545454; font-size: 11px;">Filter</label>
-  <select id="sessionSortMode" style="padding:5px 10px; border-radius: 5px; border: 1px solid #eaeaea;">
+  <select id="sessionSortMode" style="padding:5px 10px; border-radius: 0px; border: 1px solid #eaeaea;">
     <option value="az">A-Z</option>
     <option value="za">Z-A</option>
     <option value="latest" selected>Newest</option>
@@ -44,7 +44,7 @@
     min-width: 100px;
     max-width: 130px;
     padding: 5px 10px;
-    border-radius: 6px;
+    /* border-radius: 6px; */
     border: 1px solid #eaeaea;
     margin-left: 40px;" />
 </div>
@@ -77,7 +77,7 @@
 </div>
 
 
-      <hr style="width: 90%; margin-left: 45px; border: 1px solid #ebebeb;">
+      <!-- <hr style="width: 90%; margin-left: 45px; border: 1px solid #ebebeb;"> -->
       
       <div class="input-group" id="inputGroup" style="display: none;">
         <input type="text" id="msgInput" placeholder="Type your message..." maxlength="500" autocomplete="off">
@@ -173,6 +173,10 @@
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 <script src="agent_dashboard.js"></script>
-<script src="chatbot-widget.js"></script>
+
+<!-- <script src="chatbot-widget.js"></script> -->
+
+<!-- <script src="https://YOUR_DOMAIN.com/path/to/chatbot-widget.js"></script> -->
+
 </body>
 </html>

@@ -1,13 +1,12 @@
 (function () {
   // ---- CONFIGURATION ----
-  const PREFIX = 'chatbot-';
   const IMAGES = {
     logo: 'images/logo.jpg',
     chatIcon: 'images/chat-icon.png',
     closeIcon: 'images/close-icon.png',
     crispMsg: 'images/crsip-msg.png'
   };
-  const CSS_URL = 'user_chat_interface.css';
+  const CSS_URL = 'chatbot-widget.css';
 
   // ---- INJECT CSS ----
   var style = document.createElement('link');
@@ -17,12 +16,12 @@
 
   // ---- INJECT HTML ----
   const widgetHTML = `
-  <button id="${PREFIX}chatbot-toggle">
-    <img id="${PREFIX}chat-icon-img" src="${IMAGES.chatIcon}" />
-    <img id="${PREFIX}close-icon-img" src="${IMAGES.closeIcon}" style="display:none;position:absolute;left:10px;top:10px;" />
+  <button id="chatbot-toggle">
+    <img id="chat-icon-img" src="${IMAGES.chatIcon}" />
+    <img id="close-icon-img" src="${IMAGES.closeIcon}" style="display:none;position:absolute;left:10px;top:10px;" />
   </button>
-  <div id="${PREFIX}chat-container">
-    <div id="${PREFIX}name-prompt" class="prompt-box">
+  <div id="chat-container">
+    <div id="name-prompt" class="prompt-box">
       <div class="prompt-header">
         <div class="bot-avatar"><img src="${IMAGES.logo}" alt="Bot Avatar" class="bot-avatar" /></div>
         <div>
@@ -31,12 +30,12 @@
         </div>
       </div>
       <div class="prompt-content">
-        <label for="${PREFIX}nameInput" class="prompt-label">What's your name?</label>
-        <input id="${PREFIX}nameInput" type="text" placeholder="Enter your name..." />
-        <button id="${PREFIX}start-btn">Next</button>
+        <label for="nameInput" class="prompt-label">What's your name?</label>
+        <input id="nameInput" type="text" placeholder="Enter your name..." />
+        <button id="start-btn">Next</button>
       </div>
     </div>
-    <div id="${PREFIX}email-prompt" class="prompt-box" style="display:none;">
+    <div id="email-prompt" class="prompt-box" style="display:none;">
       <div class="prompt-header">
         <div class="bot-avatar"><img src="${IMAGES.logo}" alt="Bot Avatar" class="bot-avatar" /></div>
         <div>
@@ -45,12 +44,12 @@
         </div>
       </div>
       <div class="prompt-content">
-        <label for="${PREFIX}emailInput" class="prompt-label">Please enter your email:</label>
-        <input id="${PREFIX}emailInput" type="email" placeholder="Your email..." />
-        <button id="${PREFIX}email-btn">Submit Email</button>
+        <label for="emailInput" class="prompt-label">Please enter your email:</label>
+        <input id="emailInput" type="email" placeholder="Your email..." />
+        <button id="email-btn">Submit Email</button>
       </div>
     </div>
-    <div id="${PREFIX}location-prompt" class="prompt-box" style="display:none;">
+    <div id="location-prompt" class="prompt-box" style="display:none;">
       <div class="prompt-header">
         <div class="bot-avatar">📍</div>
         <div>
@@ -60,12 +59,12 @@
       </div>
       <div class="prompt-content">
         <label class="prompt-label">Please share your location for personalized service:</label>
-        <button id="${PREFIX}location-btn">Share Location</button>
-        <button id="${PREFIX}skip-location-btn" style="background: #6b7280;">Skip for Now</button>
-        <p id="${PREFIX}location-status"></p>
+        <button id="location-btn">Share Location</button>
+        <button id="skip-location-btn" style="background: #6b7280;">Skip for Now</button>
+        <p id="location-status"></p>
       </div>
     </div>
-    <div id="${PREFIX}chat" class="chat-bot-bg" style="display:none;">
+    <div id="chat" class="chat-bot-bg" style="display:none;">
       <div class="chat-header">
         <div class="chat-header-top">
           <button class="crisp-chat-btn">
@@ -82,18 +81,20 @@
           </div>
         </div>
       </div>
-      <div id="${PREFIX}messages" class="chat-messages"></div>
-      <div id="${PREFIX}typing-indicator" style="display:none;margin:6px 0 0 16px;"></div>
+      <div id="messages" class="chat-messages"></div>
+      <div id="typing-indicator" style="display:none;margin:6px 0 0 16px;"></div>
       <hr style="width: 85%; margin-left: 20px; border: 1px solid #ebebeb;">
-      <div class="input-row">
-        <input id="${PREFIX}input" type="text" placeholder="Type your message..." />
-      </div>
-      <div style="text-align: end; padding: 0 5px 5px 0; background-color: white;">
-        <input type="file" id="${PREFIX}imageUpload" accept="image/*" style="display:none;">
-        <button id="${PREFIX}upload-btn" class="upload-button">🔗</button>
-        <button id="${PREFIX}emoji-btn" type="button">❤︎</button>
-        <button id="${PREFIX}send-btn" class="send-button">➤</button>
-        <div id="${PREFIX}emoji-picker" style="display:none;position:absolute;bottom:40px;left:110px;z-index:1000;background:#fff;padding:6px 10px;border:1px solid #ddd;border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,0.1);"></div>
+      <div class="input-wrapper">
+        <div class="input-row">
+          <input id="input" type="text" placeholder="Type your message..." />
+        </div>
+        <div class="input-actions">
+          <input type="file" id="imageUpload" accept="image/*" style="display:none;">
+          <button id="upload-btn" class="upload-button">🔗</button>
+          <button id="emoji-btn" type="button">❤︎</button>
+          <button id="send-btn" class="send-button">➤</button>
+          <div id="emoji-picker" style="display:none;position:absolute;bottom:40px;left:110px;z-index:1000;background:#fff;padding:6px 10px;border:1px solid #ddd;border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,0.1);"></div>
+        </div>
       </div>
     </div>
   </div>
@@ -117,9 +118,9 @@
     });
   });
 
-  // ---- FULL CHATBOT LOGIC, PREFXIED ----
+  // --- FULL CHATBOT LOGIC WITHOUT PREFIXES OR $() ---
   function widgetLogic() {
-    // --------------- FIREBASE CONFIG ---------------
+    // FIREBASE CONFIG
     const firebaseConfig = {
       apiKey: "AIzaSyCuzXtnMzjJ76N8PH-I4ZND5NnyVfD3XjE",
       authDomain: "chatbot-0405.firebaseapp.com",
@@ -139,11 +140,20 @@
       console.error("Firebase initialization error:", error);
     }
 
-    // --------------- GLOBALS & UTILS ---------------
+    // GLOBALS
     let sessionId = "", userName = "", userEmail = "", userLocation = null, chatInitialized = false;
     let presenceTimers = { away: null, offline: null };
     let windowLastMessageDate = undefined;
 
+
+    function generateSessionId(name) {
+  const sanitized = name.toLowerCase().replace(/\s+/g, "_").replace(/[^a-z0-9_]/g, "");
+  const timestamp = Date.now();
+  return sanitized + "_" + timestamp;
+}
+
+
+    // Helpers
     function sanitizeEmail(email) {
       return email.trim().toLowerCase().replace(/[^a-z0-9]/g, "_");
     }
@@ -151,7 +161,6 @@
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       return emailRegex.test(email);
     }
-
     function showError(message) { Swal.fire(message); }
     function showLoading(elementId, message) {
       const el = document.getElementById(elementId);
@@ -168,7 +177,7 @@
       }
     }
 
-    // --------------- PRESENCE ---------------
+    // PRESENCE
     function setPresence(state) {
       if (!sessionId) return;
       db.ref('status/' + sessionId).set({
@@ -184,94 +193,135 @@
       presenceTimers.offline = setTimeout(() => setPresence("offline"), 5 * 60 * 1000);
     }
 
-    // --------------- UI EVENTS & LOGIC ---------------
-    function $(id) { return document.getElementById(PREFIX + id); }
-
-    // On load: populate localStorage name/email
+    // ON LOAD
     document.addEventListener("DOMContentLoaded", function() {
       let savedName = localStorage.getItem("chatbot_user_name") || "";
       let savedEmail = localStorage.getItem("chatbot_user_email") || "";
-      $("nameInput").value = savedName;
-      $("emailInput").value = savedEmail;
-      $("name-prompt").style.display = "block";
-      $("email-prompt").style.display = "none";
-      $("location-prompt").style.display = "none";
-      $("chat").style.display = "none";
+      document.getElementById("nameInput").value = savedName;
+      document.getElementById("emailInput").value = savedEmail;
+      if (savedName && savedEmail) {
+        userName = savedName;
+        userEmail = savedEmail;
+        sessionId = sanitizeEmail(savedEmail);
+        document.getElementById("name-prompt").style.display = "none";
+        document.getElementById("email-prompt").style.display = "none";
+        document.getElementById("location-prompt").style.display = "block";
+      } else {
+        document.getElementById("name-prompt").style.display = "block";
+        document.getElementById("email-prompt").style.display = "none";
+        document.getElementById("location-prompt").style.display = "none";
+        document.getElementById("chat").style.display = "none";
+      }
     });
 
-    // --------------- STEP 1: Name prompt ---------------
-    $("start-btn").onclick = function () {
-      userName = $("nameInput").value.trim();
-      if (!userName) { showError("Please enter your name"); $("nameInput").focus(); return; }
+    // NAME PROMPT
+    document.getElementById("start-btn").onclick = function () {
+      userName = document.getElementById("nameInput").value.trim();
+      if (!userName) { showError("Please enter your name"); document.getElementById("nameInput").focus(); return; }
       localStorage.setItem("chatbot_user_name", userName);
-      $("name-prompt").style.display = "none";
-      $("email-prompt").style.display = "block";
-      setTimeout(() => $("emailInput").focus(), 100);
+      document.getElementById("name-prompt").style.display = "none";
+      document.getElementById("email-prompt").style.display = "block";
+      setTimeout(() => document.getElementById("emailInput").focus(), 100);
     };
-    $("nameInput").addEventListener("keypress", function(e) {
-      if (e.key === "Enter") $("start-btn").click();
+    document.getElementById("nameInput").addEventListener("keypress", function(e) {
+      if (e.key === "Enter") document.getElementById("start-btn").click();
     });
 
-    // --------------- STEP 2: Email prompt ---------------
-    $("email-btn").onclick = function () {
-      userEmail = $("emailInput").value.trim().toLowerCase();
+    // EMAIL PROMPT
+    document.getElementById("email-btn").onclick = function () {
+      userEmail = document.getElementById("emailInput").value.trim().toLowerCase();
       if (!userEmail || !validateEmail(userEmail)) {
         showError("Please enter a valid email address");
-        $("emailInput").focus();
+        document.getElementById("emailInput").focus();
         return;
       }
       localStorage.setItem("chatbot_user_email", userEmail);
       sessionId = sanitizeEmail(userEmail);
-      showLoading(PREFIX + "email-prompt", "Saving...");
+      showLoading("email-prompt", "Saving...");
       db.ref("users/" + sessionId).set({
         name: userName, email: userEmail, timestamp: Date.now()
       }).then(() => {
-        hideLoading(PREFIX + "email-prompt", "Submit Email");
-        $("email-prompt").style.display = "none";
-        $("location-prompt").style.display = "block";
+        hideLoading("email-prompt", "Submit Email");
+        document.getElementById("email-prompt").style.display = "none";
+        document.getElementById("location-prompt").style.display = "block";
       }).catch(() => {
-        hideLoading(PREFIX + "email-prompt", "Submit Email");
+        hideLoading("email-prompt", "Submit Email");
         showError("Error saving data. Please try again.");
       });
     };
-    $("emailInput").addEventListener("keypress", function(e) {
-      if (e.key === "Enter") $("email-btn").click();
+    document.getElementById("emailInput").addEventListener("keypress", function(e) {
+      if (e.key === "Enter") document.getElementById("email-btn").click();
     });
 
-    // --------------- STEP 3: Location prompt ---------------
-    $("location-btn").onclick = function () {
-      const status = $("location-status");
+    // LOCATION PROMPT
+    document.getElementById("location-btn").onclick = function () {
+      const status = document.getElementById("location-status");
       if (!navigator.geolocation) {
         status.textContent = "Geolocation is not supported by your browser."; setTimeout(skipLocation, 2000); return;
       }
       status.textContent = "Getting location...";
-      showLoading(PREFIX + "location-prompt", "Getting Location...");
+      showLoading("location-prompt", "Getting Location...");
       navigator.geolocation.getCurrentPosition(
         (position) => {
           userLocation = { latitude: position.coords.latitude, longitude: position.coords.longitude, timestamp: Date.now() };
           db.ref("users/" + sessionId + "/location").set(userLocation).catch(() => { });
           status.textContent = "Location saved! Starting chat...";
-          hideLoading(PREFIX + "location-prompt", "Share Location");
-          $("location-prompt").style.display = "none";
+          hideLoading("location-prompt", "Share Location");
+          document.getElementById("location-prompt").style.display = "none";
           setTimeout(initializeChat, 500);
         },
         () => {
           status.textContent = "Unable to retrieve your location.";
-          hideLoading(PREFIX + "location-prompt", "Share Location");
+          hideLoading("location-prompt", "Share Location");
           setTimeout(skipLocation, 2000);
         }, { timeout: 10000, enableHighAccuracy: false }
       );
     };
-    $("skip-location-btn").onclick = skipLocation;
+    document.getElementById("skip-location-btn").onclick = skipLocation;
     function skipLocation() {
-      $("location-prompt").style.display = "none";
+      listenForAgentTyping();
+      document.getElementById("location-prompt").style.display = "none";
       initializeChat();
     }
 
-    // --------------- INITIALIZE CHAT ---------------
+    function setupUserPresence() {
+  if (!sessionId) return;
+  const statusRef = db.ref('status/' + sessionId);
+
+  db.ref('.info/connected').on('value', function(snapshot) {
+    if (snapshot.val() === false) return;
+
+    // Set offline when connection drops or tab closes
+    statusRef.onDisconnect().set({
+      state: "offline",
+      last_changed: firebase.database.ServerValue.TIMESTAMP
+    });
+
+    // Set online when connected
+    statusRef.set({
+      state: "online",
+      last_changed: firebase.database.ServerValue.TIMESTAMP
+    });
+  });
+
+  // Idle: set "away"
+  let idleTimer;
+  function goAway() {
+    statusRef.set({ state: "away", last_changed: firebase.database.ServerValue.TIMESTAMP });
+  }
+  function activity() {
+    statusRef.set({ state: "online", last_changed: firebase.database.ServerValue.TIMESTAMP });
+    if (idleTimer) clearTimeout(idleTimer);
+    idleTimer = setTimeout(goAway, 2 * 60 * 1000); // 2 min
+  }
+  window.onmousemove = window.onkeydown = activity;
+  activity(); // Trigger immediately
+}
+
+    // INITIALIZE CHAT
     function initializeChat() {
       if (chatInitialized) return;
-      $("chat").style.display = "flex";
+      document.getElementById("chat").style.display = "flex";
       chatInitialized = true;
       const chatRef = db.ref("chats/" + sessionId);
       chatRef.once("value", (snapshot) => {
@@ -289,13 +339,30 @@
         }
       });
       refreshPresenceOnActivity();
-      setTimeout(() => { $("input").focus(); }, 100);
+      setupUserPresence();
+      setTimeout(() => { document.getElementById("input").focus(); }, 100);
     }
 
-    // --------------- LOAD & RENDER MESSAGES ---------------
+
+    function sendMessage(message, type = "text") {
+  if (!db || !sessionId || !message) return;
+  const newMsgRef = db.ref("chats/" + sessionId).push();
+  newMsgRef.set({
+    message,
+    sender: "user",
+    type,
+    timestamp: Date.now()
+  }).then(() => {
+    addMessage(message, "user", userName, Date.now(), newMsgRef.key);
+  });
+}
+
+
+
+    // LOAD & RENDER MESSAGES
     function loadChatMessages(callback) {
       const chatRef = db.ref("chats/" + sessionId);
-      const messagesContainer = $("messages");
+      const messagesContainer = document.getElementById("messages");
       messagesContainer.innerHTML = "";
       windowLastMessageDate = undefined;
       chatRef.off();
@@ -342,8 +409,7 @@
       return msgNode;
     }
     function addMessage(text, sender, name, timestamp = Date.now(), messageKey = null, container = null) {
-      const messagesContainer = container || $("messages");
-      // DATE/TIME separator logic
+  const messagesContainer = container || document.getElementById("messages");
       const now = new Date(timestamp);
       const dayString = now.toLocaleDateString([], { weekday: "long", day: "numeric", month: "long" });
       const timeString = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true });
@@ -354,11 +420,9 @@
         messagesContainer.appendChild(dateLine);
         windowLastMessageDate = dayString;
       }
-      // MSG container
       const msgDiv = document.createElement("div");
       msgDiv.className = `msg ${sender}`;
       if (messageKey) msgDiv.dataset.key = messageKey;
-      // Bot/Agent avatar header
       if (sender === "bot" || sender === "agent") {
         const headerDiv = document.createElement("div");
         headerDiv.className = "msg-header";
@@ -372,7 +436,6 @@
         headerDiv.appendChild(nameSpan);
         msgDiv.appendChild(headerDiv);
       }
-      // Bubble
       const bubbleDiv = document.createElement("div");
       bubbleDiv.className = "bubble";
       const msgContent = document.createElement("div");
@@ -388,12 +451,10 @@
         msgContent.textContent = text;
       }
       bubbleDiv.appendChild(msgContent);
-      // Time
       const timeLabel = document.createElement("span");
       timeLabel.className = "msg-time";
       timeLabel.textContent = timeString;
       bubbleDiv.appendChild(timeLabel);
-      // 3-dot menu (user)
       if (sender === "user" && messageKey) {
         const msgActions = document.createElement("div");
         msgActions.className = "msg-actions";
@@ -430,9 +491,11 @@
       }
       msgDiv.appendChild(bubbleDiv);
       if (!container) {
-        messagesContainer.appendChild(msgDiv);
-        messagesContainer.scrollTop = messagesContainer.scrollHeight;
-      }
+    messagesContainer.appendChild(msgDiv);
+    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+  } else {
+    container.appendChild(msgDiv); // <--- CORRECTED LINE
+  }
       return msgDiv;
     }
     function editMessageFromFirebase(messageKey, msgContent, bubbleDiv) {
@@ -458,11 +521,11 @@
       navigator.clipboard.writeText(text).then(() => { });
     }
 
-    // --------------- SENDING LOGIC ---------------
-    $("send-btn").onclick = function () { sendMsg(); };
-    $("input").addEventListener("keypress", function (e) { if (e.key === "Enter") sendMsg(); });
+    // SEND MESSAGE
+    document.getElementById("send-btn").onclick = function () { sendMsg(); };
+    document.getElementById("input").addEventListener("keypress", function (e) { if (e.key === "Enter") sendMsg(); });
     function sendMsg(customText) {
-      const input = $("input");
+      const input = document.getElementById("input");
       const msg = (customText || input.value).trim();
       if (!msg) return;
       if (db && sessionId) {
@@ -473,93 +536,132 @@
       }
       if (!customText) input.value = "";
     }
+function addImageMessage(url, sender) {
+  addMessage(url, sender);
+}
 
-    // --------------- UPLOAD IMAGE LOGIC ---------------
-    $("upload-btn").onclick = function () { $("imageUpload").click(); };
-    $("imageUpload").onchange = function () { uploadImage(); };
-    function uploadImage() {
-      const fileInput = $("imageUpload");
-      const file = fileInput.files[0];
-      if (!file) return;
-      const cloudName = "drrnur7f1";
-      const uploadPreset = "chatbot_upload";
-      const url = `https://api.cloudinary.com/v1_1/${cloudName}/upload`;
-      const formData = new FormData();
-      formData.append("file", file);
-      formData.append("upload_preset", uploadPreset);
-      fetch(url, { method: "POST", body: formData })
-        .then(r => r.json())
-        .then(data => {
-          if (data.secure_url) {
-            db.ref("chats/" + sessionId).push({
-              sender: "user", message: data.secure_url, type: "image", timestamp: Date.now()
-            });
-          } else { alert("Upload failed."); }
+function presetClick(message) {
+  sendMsg(message);
+}
+    // UPLOAD IMAGE
+    document.getElementById("upload-btn").onclick = function () { document.getElementById("imageUpload").click(); };
+    document.getElementById("imageUpload").onchange = function () { uploadImage(); };
+    
+    
+    const cloudName = "drrnur7f1";
+const uploadPreset = "einvite_upload";
+
+function uploadImage() {
+  const fileInput = document.getElementById("imageUpload");
+  const file = fileInput.files[0];
+  if (!file) return;
+
+  const url = `https://api.cloudinary.com/v1_1/${cloudName}/upload`;
+  const formData = new FormData();
+  formData.append("file", file);
+  formData.append("upload_preset", uploadPreset);
+
+  fetch(url, { method: "POST", body: formData })
+    .then(r => r.json())
+    .then(data => {
+      if (data.secure_url) {
+        // Use data.secure_url as your image URL in chat!
+        // Send to Firebase Realtime Database or wherever you want
+        db.ref("chats/" + sessionId).push({
+          sender: "user",
+          message: data.secure_url,
+          type: "image",
+          timestamp: Date.now()
         });
-    }
+      } else {
+        alert("Upload failed.");
+      }
+    });
+}
 
-    // --------------- EMOJI PICKER LOGIC ---------------
-    $("emoji-btn").onclick = function () {
-      const picker = $("emoji-picker");
+    // EMOJI PICKER
+    document.getElementById("emoji-btn").onclick = function () {
+      const picker = document.getElementById("emoji-picker");
       picker.style.display = picker.style.display === 'block' ? 'none' : 'block';
     };
-    $("emoji-picker").onclick = function (e) {
-      const input = $("input");
+    document.getElementById("emoji-picker").onclick = function (e) {
+      const input = document.getElementById("input");
       if (e.target.tagName === 'SPAN') {
         const start = input.selectionStart;
         const end = input.selectionEnd;
         input.value = input.value.substring(0, start) + e.target.textContent + input.value.substring(end);
         input.focus();
         input.selectionStart = input.selectionEnd = start + e.target.textContent.length;
-        $("emoji-picker").style.display = 'none';
+        document.getElementById("emoji-picker").style.display = 'none';
       }
     };
-    // Emoji List
     const emojis = ["😀","😂","😍","🥰","😎","😭","😡","😱","👍","🙏","🎉","🎂","🔥","🤔","🤖","❤️"];
-    $("emoji-picker").innerHTML = emojis.map(e => `<span style="cursor:pointer;font-size:22px;padding:2px;">${e}</span>`).join('');
+    document.getElementById("emoji-picker").innerHTML = emojis.map(e => `<span style="cursor:pointer;font-size:22px;padding:2px;">${e}</span>`).join('');
     document.addEventListener('click', function (e) {
-      if (!$( "emoji-btn" ).contains(e.target) && !$( "emoji-picker" ).contains(e.target)) {
-        $("emoji-picker").style.display = 'none';
+      if (!document.getElementById("emoji-btn").contains(e.target) && !document.getElementById("emoji-picker").contains(e.target)) {
+        document.getElementById("emoji-picker").style.display = 'none';
       }
     });
 
-    // --------------- TOGGLE BUTTON (OPEN/CLOSE WIDGET) ---------------
-    $( "chatbot-toggle" ).onclick = function () {
-    const chatContainer = $( "chat-container" );
-    const isVisible = chatContainer.style.display === "flex";
-    chatContainer.style.display = isVisible ? "none" : "flex";
-      $( "chat-icon-img" ).style.display = isVisible ? "block" : "none";
-      $( "close-icon-img" ).style.display = isVisible ? "none" : "block";
+    // TOGGLE BUTTON
+    document.getElementById("chatbot-toggle").onclick = function () {
+      const chatContainer = document.getElementById("chat-container");
+      const chatIcon = document.getElementById("chat-icon-img");
+      const closeIcon = document.getElementById("close-icon-img");
+      const isVisible = chatContainer.style.display === "flex";
+      chatContainer.style.display = isVisible ? "none" : "flex";
+      chatIcon.style.display = isVisible ? "block" : "none";
+      closeIcon.style.display = isVisible ? "none" : "block";
       setTimeout(() => {
-        if ($( "name-prompt" ).style.display !== "none") $( "nameInput" ).focus();
-        else if ($( "email-prompt" ).style.display !== "none") $( "emailInput" ).focus();
-        else if ($( "chat" ).style.display !== "none") $( "input" ).focus();
+        if (document.getElementById("name-prompt").style.display !== "none") document.getElementById("nameInput").focus();
+        else if (document.getElementById("email-prompt").style.display !== "none") document.getElementById("emailInput").focus();
+        else if (document.getElementById("chat").style.display !== "none") document.getElementById("input").focus();
       }, 100);
     };
 
-    // --------------- TYPING INDICATOR (OPTIONAL: ADVANCED) ---------------
-    function showTypingIndicator(who) {
-      const el = $("typing-indicator");
-      el.style.display = "block";
-      el.innerHTML = `
-        <span style="display:inline-block;">
-          <span style="color:#1877f2;font-weight:600;">
-            ${who === "agent" ? "Agent" : "User"} is typing
-          </span>
-          <span class="typing-dots">
-            <span>.</span><span>.</span><span>.</span>
-          </span>
-        </span>
-      `;
-    }
-    function hideTypingIndicator() {
-      $("typing-indicator").style.display = "none";
-    }
+    // TYPING INDICATOR (OPTIONAL)
+function showTypingIndicator(who) {
+  const el = document.getElementById("typing-indicator");
+  el.style.display = "block";
+  el.innerHTML = `
+    <span style="display:inline-block;">
+      <span style="color:#1877f2;font-weight:600;">
+        ${who === "agent" ? "Agent" : "User"} is typing
+      </span>
+      <span class="typing-dots">
+        <span>.</span><span>.</span><span>.</span>
+      </span>
+    </span>
+  `;
+}
 
-    // Error handling for unhandled promises
+function hideTypingIndicator() {
+  document.getElementById("typing-indicator").style.display = "none";
+}
+
+
+
+    // Error handling
     window.addEventListener('unhandledrejection', function (event) {
       event.preventDefault();
     });
   }
 })();
+
+function listenForAgentTyping() {
+  if (!db || !sessionId) return;
+  const typingRef = db.ref("typing/" + sessionId + "/agent");
+  typingRef.on("value", (snapshot) => {
+    if (snapshot.val()) {
+      showTypingIndicator("agent");
+    } else {
+      hideTypingIndicator();
+    }
+  });
+}
+
+function setTyping(isTyping) {
+  if (!db || !sessionId) return;
+  db.ref("typing/" + sessionId + "/user").set(isTyping);
+}
 
