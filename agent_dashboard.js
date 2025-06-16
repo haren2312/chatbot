@@ -309,15 +309,27 @@ function initializePresenceTracking() {
  // Place this with your other utils at the top
 function getAvatarGradient(name = "") {
   const gradients = [
-  "#4b846e", // Darker Teal/green
-  "#456080", // Darker Blue-grey
-  "#b47c60", // Darker Peach/tan
-  "#8e7aad", // Darker Lavender/purple
-  "#7fa884", // Darker Minty green
-  "#aea663", // Darker Cream
-  "#99889d", // Darker Muted lilac
-  "#747cb1", // Muted rose
-];
+    "#589c7f", // Brightened Teal/green
+    "#527092", // Brightened Blue-grey
+    "#c48b6c", // Brightened Peach/tan
+    "#9c8abc", // Brightened Lavender/purple
+    "#8fc097", // Brightened Minty green
+    "#bdb56f", // Brightened Cream
+    "#a897aa", // Brightened Mauve
+    "#677287", // Brightened Slate Blue-Grey
+    "#7a9974", // Brightened Olive Green
+    "#9b7d6a", // Brightened Rusty Brown
+    "#7a7aa1", // Brightened Dusty Indigo
+    "#9da893", // Brightened Pale Sage
+    "#8d9aaf", // Brightened Steel Blue
+    "#a8899f", // Brightened Plum
+    "#7f8d7c", // Brightened Moss Green
+    "#a6886b", // Brightened Tan/Brown
+    "#8e86a0", // Brightened Dusty Purple
+    "#7ea29a", // Brightened Cool Teal
+    "#9c9482", // Brightened Soft Taupe
+    "#b37e7e", // Brightened Muted Rose
+  ];
   let hash = 0;
   for (let i = 0; i < name.length; i++) {
     hash = name.charCodeAt(i) + ((hash << 5) - hash);

@@ -136,9 +136,19 @@ body, input, button, .bubble, .sender-name {
     margin-bottom: 10px;
 }
 
-    /* button:hover {
-      background: var(--hover);
-    } */
+.send-button{
+  color: #a7a7a7;
+  background: white;
+}
+
+.send-button:hover {
+  background:#2563eb ;
+      color: rgb(255, 255, 255);
+}
+    button:hover {
+      background:#2563eb ;
+      color: rgb(255, 255, 255);
+    }
 
     button:disabled {
       background: #6b7280;
@@ -382,7 +392,7 @@ body, input, button, .bubble, .sender-name {
 
  #chat-container {
     max-height: 80vh;
-    max-width: 50vh;
+    max-width: 55vh;
     scroll-behavior: smooth;
 }
 
@@ -898,7 +908,7 @@ body, input, button, .bubble, .sender-name {
   display: flex;
   flex-direction: column;
   background: white;
-  padding: 0 8px;
+  padding: 0px 8px;
   border-top: 1px solid #ddd;
 }
 

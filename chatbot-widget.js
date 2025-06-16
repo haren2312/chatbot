@@ -82,7 +82,8 @@
         </div>
       </div>
       <div id="messages" class="chat-messages"></div>
-      <div id="typing-indicator" style="display:none;margin:6px 0 0 16px;"></div>
+
+    <div id="typing-indicator" style="display:none;margin:6px 0 0 16px;"></div>
       <div class="input-wrapper">
         <div class="input-row">
           <input id="input" type="text" placeholder="Type your message..." />
@@ -91,7 +92,7 @@
           <input type="file" id="imageUpload" accept="image/*" style="display:none;">
           <button id="upload-btn" class="upload-button">🔗</button>
           <button id="emoji-btn" type="button">❤︎</button>
-          <button id="send-btn" class="send-button">➤</button>
+          <button id="send-btn" class="send-button" onclick="sendMsg()" title="Send Message" >➤</button>
           <div id="emoji-picker" style="display:none;position:absolute;bottom:40px;left:110px;z-index:1000;background:#fff;padding:6px 10px;border:1px solid #ddd;border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,0.1);"></div>
         </div>
       </div>
@@ -710,26 +711,30 @@ function hideTypingIndicator() {
   window.onload = bootstrapChat;
 }
 
-window.addEventListener("DOMContentLoaded", function () {
-  // 1. Try to detect main color from most common real site elements
-  let primary =
-    getComputedStyle(document.querySelector('a'))?.color ||
-    getComputedStyle(document.querySelector('button'))?.backgroundColor ||
-    getComputedStyle(document.body).color ||
-    "#1877f2"; // Fallback blue
+// // --- [THEME AUTO-DETECT & APPLY] ---
+// // --- [AUTO-DETECT HOST SITE COLORS] ---
+// window.addEventListener("DOMContentLoaded", function () {
+//   // 1. Try to detect main color from most common real site elements
+//   let primary =
+//     getComputedStyle(document.querySelector('a'))?.color ||
+//     getComputedStyle(document.querySelector('button'))?.backgroundColor ||
+//     getComputedStyle(document.body).color ||
+//     "#1877f2"; // Fallback blue
 
-  let background =
-    getComputedStyle(document.body).backgroundColor ||
-    "#ffffff"; // Fallback white
+//   let background =
+//     getComputedStyle(document.body).backgroundColor ||
+//     "#ffffff"; // Fallback white
 
-  // 2. Find the chatbot container
-  var chatRoot = document.getElementById('chat-container');
-  if (chatRoot) {
-    // 3. Set theme for chatbot only
-    chatRoot.style.setProperty('--primary', primary);
-    chatRoot.style.setProperty('--background', background);
-  }
-});
+//   // 2. Find the chatbot container
+//   var chatRoot = document.getElementById('chat-container');
+//   if (chatRoot) {
+//     // 3. Set theme for chatbot only
+//     chatRoot.style.setProperty('--primary', primary);
+//     chatRoot.style.setProperty('--background', background);
+//   }
+// });
+
+
 
 })();
 
