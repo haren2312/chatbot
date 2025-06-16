@@ -710,6 +710,27 @@ function hideTypingIndicator() {
   window.onload = bootstrapChat;
 }
 
+window.addEventListener("DOMContentLoaded", function () {
+  // 1. Try to detect main color from most common real site elements
+  let primary =
+    getComputedStyle(document.querySelector('a'))?.color ||
+    getComputedStyle(document.querySelector('button'))?.backgroundColor ||
+    getComputedStyle(document.body).color ||
+    "#1877f2"; // Fallback blue
+
+  let background =
+    getComputedStyle(document.body).backgroundColor ||
+    "#ffffff"; // Fallback white
+
+  // 2. Find the chatbot container
+  var chatRoot = document.getElementById('chat-container');
+  if (chatRoot) {
+    // 3. Set theme for chatbot only
+    chatRoot.style.setProperty('--primary', primary);
+    chatRoot.style.setProperty('--background', background);
+  }
+});
+
 })();
 
 
