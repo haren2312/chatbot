@@ -159,9 +159,16 @@
 
   function bootstrapChat() {
     updateSessionIdFromStorage();
-    const savedEmail = localStorage.getItem("chatbot_user_email");
-    const savedName = localStorage.getItem("chatbot_user_name");
-    if (savedEmail && savedName) {
+    let savedEmail = localStorage.getItem("chatbot_user_email");
+let savedName = localStorage.getItem("chatbot_user_name");
+
+if (savedEmail) {
+  // Try to fetch name from Firebase
+  firebase.database().ref('users/' + sanitizeEmail(savedEmail)).once('value', function(snapshot) {
+    if (snapshot.exists() && snapshot.val().name) {
+      savedName = snapshot.val().name;
+      localStorage.setItem('chatbot_user_name', savedName); // cache for next time on this device
+      // skip prompts, open chat
       userName = savedName;
       userEmail = savedEmail;
       document.getElementById("name-prompt").style.display = "none";
@@ -169,13 +176,23 @@
       document.getElementById("location-prompt").style.display = "none";
       document.getElementById("chat").style.display = "flex";
       chatInitialized = true;
-      loadChatMessages(); // always uses current sessionId
+      loadChatMessages();
     } else {
+      // Show name prompt (for new user, or first device)
       document.getElementById("name-prompt").style.display = "block";
       document.getElementById("email-prompt").style.display = "none";
       document.getElementById("location-prompt").style.display = "none";
       document.getElementById("chat").style.display = "none";
     }
+  });
+} else {
+  // Show email prompt
+  document.getElementById("name-prompt").style.display = "block";
+  document.getElementById("email-prompt").style.display = "none";
+  document.getElementById("location-prompt").style.display = "none";
+  document.getElementById("chat").style.display = "none";
+}
+
   }
 
     function validateEmail(email) {
