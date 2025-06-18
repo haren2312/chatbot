@@ -31,21 +31,21 @@
 
 #chat-container {
     position: fixed;
-    bottom: 100px;
+    bottom: 75px;
     right: 20px;
     width: 370px;
     min-width: 320px;
     max-width: 420px;
-    /* border: 1px solid rgb(136 136 136); */
+    /* border: 1px solid transparent; */
     border-radius: 10px;
     display: none;
     flex-direction: column;
-    gap: 12px;
+    gap: 5px;
     z-index: 998;
     max-height: 90vh;
     overflow: hidden;
     background: white;
-    box-shadow: 0 1px 15px rgb(0 0 0 / 20%);
+    box-shadow: 0px 0px 20px 6px rgb(0 0 0 / 20%);
 }
 
 /* Responsive for real small screens */
@@ -129,13 +129,20 @@
     font-size: 15px;
     cursor: pointer;
     transition: background 0.3s;
-    margin-bottom: 10px;
+    margin-bottom: 5px;
     background: white;
 }
 
-.text-bnt:hover {
-    background: #2563eb;
-    color: rgb(255, 255, 255);
+/* Set default color for svg */
+.chat-svg {
+    color: #8c8c8c;
+    transition: color 0.3s;
+    fill: currentColor;
+}
+
+/* On button hover, change svg color */
+.text-bnt:hover .chat-svg {
+  color: #1877f2;  /* Your hover color */
 }
 
 
@@ -408,7 +415,6 @@
         bottom: 85px;
         right: 5px;
         left: 5px;
-        padding: 16px;
       }
 
       .prompt-title {
@@ -429,14 +435,15 @@
 
     }
 
-   .chat-icon {
+.chat-icon {
+    width: 25px;
     height: 25px;
+    display: block;
 }
-
 
  #chat-container {
     max-height: 80vh;
-    max-width: 55vh;
+    max-width: 50vh;
     scroll-behavior: smooth;
 }
 
@@ -701,23 +708,44 @@ width: 100%;
 }
 
 
-/* Header Area */
 .chat-header {
-    background: #006fff;
-    /* border-radius: 18px 18px 0 0; */
-    padding: 0 0 18px 0;
+  position: relative;
+  background: #1877f2; /* your base color */
+  overflow: hidden;
+      padding: 0 0 10px 0;
     /* box-shadow: 0 1px 8px rgba(44, 84, 255, 0.04); */
     /* min-width: 330px; */
     position: relative;
 }
 
-.chat-header-top {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  margin-top: 16px;
-  margin-bottom: 7px;
+.chat-header::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: url('https://client.crisp.chat/static/images/tiles/overlapping-hexagons.svg?43022c0');
+  opacity: 0.075;          /* Faint overlay */
+  pointer-events: none;    /* Let clicks pass through */
+  z-index: 0;
+  background-size: auto;
+  background-repeat: repeat;
+  
 }
+
+/* Make sure your content is above the pattern */
+.chat-header > * {
+  position: relative;
+  z-index: 1;
+}
+
+.chat-header-top {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-top: 10px;
+    margin-bottom: 7px;
+}
+
+
 
 
 .crisp-chat-btn {
@@ -738,14 +766,13 @@ width: 100%;
 
 
 .chat-icon-circle {
-    width: 34px;
-    height: 34px;
-    background: #005cdb;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    /* margin-right: 10px; */
+  width: 32px;
+  height: 32px;
+  background: #005cdb;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 
@@ -760,20 +787,29 @@ width: 100%;
 
 /* Crisp avatar and name row */
 .chat-header-main {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 0 18px 0 75px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  /* gap: 0px;
+  padding: 0 18px 0 18px; */
 }
+
+.header-avatar-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 4px;
+}
+
 
 .header-avatar {
     width: 35px;
     height: 35px;
     border-radius: 50%;
-    /* border: 2px solid #fff; */
     object-fit: cover;
-    /* box-shadow: 0 2px 6px rgba(0, 0, 0, .07); */
-    /* background: #fff; */
+    border: 1px solid #fff;
+    box-shadow: 0 1px 5px rgba(24, 119, 242, 0.10);
+    background: #fff;
 }
 
 .header-info {
@@ -784,11 +820,11 @@ width: 100%;
 }
 
 .header-title {
-    color: #fff;
-    font-weight: bold;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+  color: #fff;
+  font-weight: bold;
+  font-size: 1.08rem;
+  text-align: center;
+  margin-bottom: 1px;
 }
 
 .header-menu-btn {
@@ -1075,4 +1111,93 @@ width: 100%;
   border-radius: 8px;
   margin-bottom: 8px;
   object-fit: cover;
+}
+
+.header-title {
+    color: #fff;
+    font-weight: 600;
+    font-size: .8rem;
+    margin-top: 5px;
+    font-family: "Crisp Noto Sans Bold", sans-serif !important;
+}
+
+.header-status-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  margin-top: 2px;
+  margin-bottom: 4px;
+}
+
+.online-dot {
+    width: 7px;
+    height: 7.1px;
+    border-radius: 50%;
+    background: #12d86e;
+    display: inline-block;
+    box-shadow: 0 1px 4px rgba(18, 216, 110, 0.19);
+    margin-top: 2.2px;
+}
+
+.header-status-msg {
+    color: #ffffffe3;
+    font-size: 0.8rem;
+    font-weight: 400;
+    font-family: "Crisp Noto Sans Regular", sans-serif !important;
+    margin-top: 2px;
+}
+
+.chat-icon-logo {
+    width: 37px;
+    height: 37px;
+    background: #1877f2;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid #bcbcbc;
+}
+
+.overlap-logos {
+  position: relative;
+  width: 52px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.overlap-avatar {
+    width: 35px;
+    height: 35px;
+    border-radius: 50%;
+    border: 1px solid #fff;
+    background: #fff;
+    box-shadow: 0 1px 8px rgba(0, 0, 0, 0.08);
+    position: relative;
+    z-index: 1;
+    right: 18px;
+}
+
+.overlap-chat-icon {
+    position: absolute;
+    left: 24px;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: #468ee5;
+    border: 1px solid #fff;
+    outline: 3px solid #1877f2;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2;
+    box-shadow: 0 2px 8px rgba(24, 119, 242, 0.09);
+}
+
+.overlap-chat-icon img {
+    width: 30px;
+    height: 30px;
+    display: block;
 }

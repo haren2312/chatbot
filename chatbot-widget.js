@@ -1,12 +1,12 @@
 (function () {
   // ---- CONFIGURATION ----
   const IMAGES = {
-    logo: 'http://localhost:8888/code/chatbot-widget/images/logo.jpg',
-    chatIcon: 'http://localhost:8888/code/chatbot-widget/images/chat-icon.png',
-    closeIcon: 'http://localhost:8888/code/chatbot-widget/images/close-icon.png',
-    crispMsg: 'http://localhost:8888/code/chatbot-widget/images/crsip-msg.png'
+    logo: 'http://localhost:8888/code/chatbot/images/logo.jpg',
+    chatIcon: 'http://localhost:8888/code/chatbot/images/chat-icon.png',
+    closeIcon: 'http://localhost:8888/code/chatbot/images/close-icon.png',
+    crispMsg: 'http://localhost:8888/code/chatbot/images/crsip-msg.png'
   };
-  const CSS_URL = 'http://localhost:8888/code/chatbot-widget/chatbot-widget.css';
+  const CSS_URL = 'http://localhost:8888/code/chatbot/chatbot-widget.css';
 
   // ---- INJECT CSS ----
   var style = document.createElement('link');
@@ -66,21 +66,32 @@
     </div>
     <div id="chat" class="chat-bot-bg" style="display:none;">
       <div class="chat-header">
-        <div class="chat-header-top">
-          <button class="crisp-chat-btn">
-            <span class="chat-icon-circle">
-              <img src="${IMAGES.crispMsg}" alt="Chat Icon" class="chat-icon" />
-            </span>
-            <span class="chat-btn-label">Chat</span>
-          </button>
-        </div>
-        <div class="chat-header-main">
-          <img src="${IMAGES.logo}" class="header-avatar" />
-          <div class="header-info">
-            <div class="header-title">E from E inviter</div>
-          </div>
-        </div>
-      </div>
+  <div class="chat-header-top">
+    <button class="crisp-chat-btn">
+      <span class="chat-icon-circle">
+        <img src="${IMAGES.crispMsg}" alt="Chat Icon" class="chat-icon" />
+      </span>
+      <span class="chat-btn-label">Chat</span>
+    </button>
+  </div>
+<div class="chat-header-main">
+<div class="header-avatar-row">
+  <div class="overlap-logos">
+    <img src="${IMAGES.logo}" class="overlap-avatar" />
+    <span class="overlap-chat-icon">
+      <img src="${IMAGES.crispMsg}" alt="Chat Icon" class="chat-icon" />
+    </span>
+  </div>
+  </div>
+  <div class="header-title">Questions? Chat with us!</div>
+  <div class="header-status-row">
+    <span class="online-dot"></span>
+    <span class="header-status-msg">Typically replies under an hour</span>
+  </div>
+</div>
+  </div>
+</div>
+
       <div id="messages" class="chat-messages"></div>
 
     <div id="typing-indicator" style="display:none;margin:6px 0 0 16px;"></div>
@@ -99,9 +110,9 @@
 
         <div class="input-actions">
           <input type="file" id="imageUpload" accept="image/*" style="display:none;">
-          <button id="upload-btn" class="text-bnt">🔗</button>
-          <button id="emoji-btn" class="text-bnt" type="button">❤︎</button>
-          <button id="send-btn" class="text-bnt" onclick="sendMsg()" title="Send Message" >➤</button>
+          <button id="upload-btn" class="text-bnt"><svg class="chat-svg" xmlns="http://www.w3.org/2000/svg" height="20" width="20" viewBox="0 0 20 20"><path fill="currentColor" d="M10.546 4.363v7.563c0 1.215-.822 2.32-2.011 2.564A2.55 2.55 0 015.455 12V2.99c0-.723.493-1.397 1.208-1.515.91-.151 1.7.55 1.7 1.434v7.636a.364.364 0 01-.727 0V4.363a.728.728 0 00-1.454 0v6.075c0 .952.683 1.82 1.629 1.916a1.82 1.82 0 002.007-1.809V3.038C9.818 1.52 8.711.161 7.2.014A2.912 2.912 0 004 2.91v8.913c0 2.088 1.522 3.955 3.6 4.158A4.005 4.005 0 0012 12V4.363a.728.728 0 00-1.454 0z"/></svg></button>
+          <button id="emoji-btn" class="text-bnt" type="button"><svg class="chat-svg" xmlns="http://www.w3.org/2000/svg" height="20" width="20" viewBox="0 0 20 20"><path fill="currentColor" d="M7.992 0C3.576 0 0 3.584 0 8s3.576 8 7.992 8C12.416 16 16 12.416 16 8s-3.584-8-8.008-8zM8 14.4A6.398 6.398 0 011.6 8c0-3.536 2.864-6.4 6.4-6.4 3.536 0 6.4 2.864 6.4 6.4 0 3.536-2.864 6.4-6.4 6.4zm2.8-7.2c.664 0 1.2-.536 1.2-1.2 0-.664-.536-1.2-1.2-1.2S9.6 5.336 9.6 6c0 .664.536 1.2 1.2 1.2zm-5.6 0c.664 0 1.2-.536 1.2-1.2 0-.664-.536-1.2-1.2-1.2S4 5.336 4 6c0 .664.536 1.2 1.2 1.2zM8 12.4a4.375 4.375 0 003.456-1.692c.378-.485-.033-1.108-.648-1.108H5.192c-.615 0-1.026.623-.648 1.108A4.375 4.375 0 008 12.4z"/></svg></button>
+          <button id="send-btn" class="text-bnt" onclick="sendMsg()" title="Send Message" ><svg class="chat-svg" xmlns="http://www.w3.org/2000/svg" height="20" width="20" viewBox="0 0 20 20"><clipPath id="a"><path fill="currentColor" d="M14.84.054a.864.864 0 011.107 1.107l-5.189 14.27a.864.864 0 01-1.423.316L6.15 12.56a.864.864 0 01-.056-1.16l7.03-8.522L4.6 9.908a.864.864 0 01-1.16-.056L.252 6.666A.864.864 0 01.57 5.243z"/></clipPath><g clip-path="url(#a)" transform="rotate(45 6.516 4.341)"><path d="M0 0h16v16H0z"/></g></svg></button>
           <div id="emoji-picker" style="display:none;position:absolute;bottom:40px;left:110px;z-index:1000;background:#fff;padding:6px 10px;border:1px solid #ddd;border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,0.1);"></div>
         </div>
       </div>
