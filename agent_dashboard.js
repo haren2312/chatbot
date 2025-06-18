@@ -10,6 +10,7 @@
   };
   firebase.initializeApp(firebaseConfig);
   const db = firebase.database();
+  
 
   // === GLOBAL STATE ===
   let selectedSessionId = null;
@@ -192,9 +193,10 @@ document.addEventListener('DOMContentLoaded', function() {
 
       // Validation: show warning if required fields are missing
       if (!name || !email) {
-        Swal.fire("Name and Email are required");
-        return;
-      }
+  Swal.fire({ icon: "warning", text: "Name and Email are required" });
+  return;
+}
+
 
       // You can plug in your Firebase/database logic here, e.g.:
       // db.ref("users/" + userId).update({ name, email, city, country, ... })
@@ -352,17 +354,22 @@ function getCountryFlagImg(countryCode = "IN", size = 15) {
       String.fromCodePoint(127397 + char.charCodeAt())
     );
   }
-  function notify(message, options = {}) {
-    const el = document.getElementById('notification-toast');
-    el.textContent = message;
-    el.style.background = options.type === "error" ? "#e53935" : "#2563eb";
-    el.style.opacity = "1.0";
-    el.style.display = "block";
-    setTimeout(() => {
-      el.style.opacity = "0";
-      setTimeout(() => { el.style.display = "none"; }, 400);
-    }, options.timeout || 2500);
-  }
+function notify(message, options = {}) {
+  Swal.fire({
+    text: message,
+    icon: options.type === "error" ? "error" :
+          options.type === "success" ? "success" :
+          options.type === "warning" ? "warning" : "info",
+    toast: true,
+    position: options.position || 'top-end',
+    showConfirmButton: false,
+    timer: options.timeout || 2000,
+    timerProgressBar: true,
+    background: options.type === "error" ? "#fff0f0" : "#f5fafd",
+    color: "#222e3a",
+  });
+}
+
 
   function getMessageStatusIcon(msg, isRight) {
   // Only show status for right-side messages (admin/agent/bot)
@@ -422,26 +429,76 @@ chatBox.querySelectorAll('.message-bubble').forEach(bubble => {
 
 function deleteMessage(msgId) {
   if (!selectedSessionId || !msgId) return;
-  if (!confirm("Delete this message?")) return;
-  const chatRef = db.ref("chats/" + selectedSessionId + "/" + msgId);
-  chatRef.remove()
-    .then(() => notify("Message deleted", { type: "success" }))
-    .catch(err => notify("Failed to delete: " + err.message, { type: "error" }));
+  Swal.fire({
+    title: "Delete this message?",
+    icon: "warning",
+    toast: true,
+    position: 'top-end',
+    timer: 2000,
+    showConfirmButton: false,
+    timerProgressBar: true,
+    showCancelButton: true,
+    confirmButtonText: "Delete",
+    cancelButtonText: "Cancel",
+    confirmButtonColor: "#d33",
+    reverseButtons: true
+  }).then((result) => {
+    if (result.isConfirmed) {
+      const chatRef = db.ref("chats/" + selectedSessionId + "/" + msgId);
+      chatRef.remove()
+        .then(() => Swal.fire({
+  text: "Message deleted",
+  icon: "success",
+  toast: true,
+  position: 'top-end',
+  showConfirmButton: false,
+  timer: 2000,
+  timerProgressBar: true,
+  background: "#f5fafd",
+  color: "#222e3a"
+}))
+        .catch(err => Swal.fire({
+  text: "Failed to delete: " + err.message,
+  icon: "error",
+  toast: true,
+  position: 'top-end',
+  showConfirmButton: false,
+  timer: 2000,
+  timerProgressBar: true,
+  background: "#fff0f0",
+  color: "#222e3a"
+}));
+    }
+  });
 }
+
 
 function editMessage(msgId) {
   const chatRef = db.ref("chats/" + selectedSessionId + "/" + msgId);
   chatRef.once("value", snapshot => {
     const msg = snapshot.val();
     if (!msg) return;
-    const newText = prompt("Edit your message:", msg.message);
-    if (newText !== null && newText.trim() !== "" && newText !== msg.message) {
-      chatRef.update({ message: newText, edited: true })
-        .then(() => notify("Message edited", { type: "success" }))
-        .catch(err => notify("Edit failed: " + err.message, { type: "error" }));
-    }
+    Swal.fire({
+      title: 'Edit your message',
+      input: 'text',
+      inputValue: msg.message || "",
+      showCancelButton: true,
+      confirmButtonText: 'Update',
+      cancelButtonText: 'Cancel',
+      inputValidator: (value) => {
+        if (!value.trim()) return 'Message cannot be empty';
+        if (value.trim() === msg.message) return 'No changes made';
+      }
+    }).then((result) => {
+      if (result.isConfirmed && result.value && result.value.trim() !== msg.message) {
+        chatRef.update({ message: result.value.trim(), edited: true })
+          .then(() => notify("Message edited", { type: "success" }))
+          .catch(err => notify("Edit failed: " + err.message, { type: "error" }));
+      }
+    });
   });
 }
+
 
 function renderNavProfileAvatar(user) {
   const el = document.getElementById("navProfileAvatar");
@@ -471,7 +528,10 @@ function saveProfileEdit() {
   const email = document.getElementById("profileEditEmail").value.trim();
   const city = document.getElementById("profileEditCity").value.trim();
   const country = document.getElementById("profileEditCountry").value.trim().toUpperCase();
-  if (!currentUserId) { alert("User not logged in"); return false; }
+  if (!currentUserId) {
+  Swal.fire({ icon: "error", text: "User not logged in" });
+  return false;
+}
   db.ref("users/" + currentUserId).update({ name, email, city, country }).then(() => {
 
     window.ADMIN_PROFILE.avatarUrl = newPhotoUrl; // after upload
@@ -880,9 +940,11 @@ function setUserPresence(userId) {
   const profilePic = window.newProfilePicData || ""; // base64 or empty
 
   if (!sessionId || !db) return notify("Invalid session or database not initialized.", { type: "error" });
-  if (!name || !email) {
-    notify("Name and email are required.", { type: "error" }); return;
-  }
+if (!name || !email) {
+  Swal.fire({ icon: "warning", text: "Name and Email are required" });
+  return;
+}
+
   // Safe update
   const userData = {
     name, email,
@@ -891,7 +953,18 @@ function setUserPresence(userId) {
   };
   db.ref("users/" + sessionId).update(userData)
     .then(() => {
-      notify("User profile updated!", { type: "success" });
+      Swal.fire({
+  text: "User profile updated!",
+  icon: "success",
+  toast: true,
+  position: 'top-end',
+  showConfirmButton: false,
+  timer: 2000,
+  timerProgressBar: true,
+  background: "#f5fafd",
+  color: "#222e3a"
+});
+
       closeModal();
       window.newProfilePicData = undefined; // Reset
     })
@@ -1049,7 +1122,7 @@ const canEditDelete = senderType === "admin" || senderType === "agent" || sender
         <div class="msg-meta">${timeString} ${getMessageStatusIcon(msg, isRight)}</div>
         <span class="msg-menu" title="More" data-msg-id="${msg._id}">⋮</span>
         <div class="msg-actions" data-msg-id="${msg._id}" style="display:none;">
-          <button class="edit-btn" data-msg-id="${msg._id}" title="Edit">Eidt</button>
+          <button class="edit-btn" data-msg-id="${msg._id}" title="Edit">Edit</button>
           <button class="delete-btn" data-msg-id="${msg._id}" title="Delete">Delete</button>
           <button class="copy-btn" data-msg-id="${msg._id}" title="Copy">Copy</button>
         </div>
@@ -1097,7 +1170,7 @@ const canEditDelete = senderType === "admin" || senderType === "agent" || sender
       const msgId = this.getAttribute('data-msg-id');
       const msgContent = chatBox.querySelector(`.message-bubble[data-msg-id="${msgId}"] .msg-content`).textContent || "";
       navigator.clipboard.writeText(msgContent).then(() => {
-        notify("Message copied!", { type: "success" });
+        Swal("Message copied!", { type: "success" });
       });
       chatBox.querySelectorAll('.msg-actions').forEach(a => a.style.display = "none");
     };
@@ -1128,6 +1201,11 @@ function loadChat(sessionId) {
   selectedSessionId = sessionId;
   listenForUserTyping(sessionId, allUserData[sessionId]?.name || "User");
   const chatRef = db.ref("chats/" + selectedSessionId);
+
+  if (window.innerWidth <= 700) {
+    document.querySelector('.sidebar').classList.add('mobile-hide');
+    document.getElementById('mobileBackBtn').style.display = "flex";
+  }
 
   // Remove old listeners if present
   if (currentChatListeners.added) chatRef.off("child_added", currentChatListeners.added);
@@ -1253,7 +1331,18 @@ function renderSingleMessage(msg, msgId, chatBox, messagesMap) {
     e.stopPropagation();
     const msgContent = row.querySelector('.msg-content').textContent || "";
     navigator.clipboard.writeText(msgContent).then(() => {
-      notify("Message copied!", { type: "success" });
+      Swal.fire({
+  text: "Message copied!",
+  icon: "info",
+  toast: true,
+  position: 'top-end',
+  showConfirmButton: false,
+  timer: 2000,
+  timerProgressBar: true,
+  background: "#f5fafd",
+  color: "#222e3a"
+});
+
     });
     chatBox.querySelectorAll('.msg-actions').forEach(a => a.style.display = "none");
   };
@@ -1396,7 +1485,18 @@ function debugUserPresence() {
       return;
     }
     if (!file.type.startsWith('image/')) {
-      notify("Only image files are allowed.", { type: "error" });
+      Swal.fire({
+  text: "Only image files are allowed.",
+  icon: "warning",
+  toast: true,
+  position: 'top-end',
+  showConfirmButton: false,
+  timer: 2000,
+  timerProgressBar: true,
+  background: "#f5fafd",
+  color: "#222e3a"
+});
+
       return;
     }
     // NOTE: You need your own image upload handler.
@@ -1428,3 +1528,29 @@ function debugUserPresence() {
   window.openEditModal = openEditModal;
   window.closeModal = closeModal;
   
+window.closeChatOnMobile = function() {
+  selectedSessionId = null;
+  document.querySelector('.sidebar').classList.remove('mobile-hide');
+  document.getElementById('mobileBackBtn').style.display = "none";
+  // Hide chat
+  document.getElementById('chatBox').innerHTML = `
+    <div class="empty-state">
+      <h3>Select a chat to view messages</h3>
+      <p>Choose a session from the sidebar to start viewing the conversation</p>
+    </div>
+  `;
+  document.getElementById("inputGroup").style.display = "none";
+  renderSessions(document.getElementById("searchInput").value.toLowerCase());
+  renderUserInfoPanel();
+}
+
+window.addEventListener("resize", function() {
+  if (window.innerWidth > 700) {
+    document.querySelector('.sidebar').classList.remove('mobile-hide');
+    document.getElementById('mobileBackBtn').style.display = "none";
+  } else if (selectedSessionId) {
+    document.querySelector('.sidebar').classList.add('mobile-hide');
+    document.getElementById('mobileBackBtn').style.display = "flex";
+  }
+});
+
