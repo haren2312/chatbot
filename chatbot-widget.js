@@ -32,7 +32,7 @@
       <div class="prompt-content">
         <label for="nameInput" class="prompt-label">What's your name?</label>
         <input id="nameInput" type="text" placeholder="Enter your name..." />
-        <button id="start-btn">Next</button>
+        <button id="start-btn" class="next-btn" >Next</button>
       </div>
     </div>
     <div id="email-prompt" class="prompt-box" style="display:none;">
@@ -46,7 +46,7 @@
       <div class="prompt-content">
         <label for="emailInput" class="prompt-label">Please enter your email:</label>
         <input id="emailInput" type="email" placeholder="Your email..." />
-        <button id="email-btn">Submit Email</button>
+        <button id="email-btn" class="email-btn">Submit Email</button>
       </div>
     </div>
     <div id="location-prompt" class="prompt-box" style="display:none;">
@@ -59,8 +59,8 @@
       </div>
       <div class="prompt-content">
         <label class="prompt-label">Please share your location for personalized service:</label>
-        <button id="location-btn">Share Location</button>
-        <button id="skip-location-btn" style="background: #6b7280;">Skip for Now</button>
+        <button id="location-btn" class="location-btn" >Share Location</button>
+        <button id="skip-location-btn" class="skip-location-btn" style="background: #6b7280;">Skip for Now</button>
         <p id="location-status"></p>
       </div>
     </div>
@@ -88,11 +88,20 @@
         <div class="input-row">
           <input id="input" type="text" placeholder="Type your message..." />
         </div>
+        <!-- Image Preview (hidden by default) -->
+<div id="image-preview-area" style="display:none;flex-direction:column;align-items:flex-end;margin-top:8px;">
+  <img id="image-preview" src="" alt="Preview" style="max-width:180px;max-height:160px;border-radius:10px;border:1px solid #e4e4e4;background:#fff;margin-bottom:8px;">
+  <div style="display:flex;gap:8px;">
+    <button id="image-cancel-btn" class="text-bnt" style="background:#fff;color:#222;">Cancel</button>
+    <button id="image-send-btn" class="next-btn" style="background:#2563eb;">Send</button>
+  </div>
+</div>
+
         <div class="input-actions">
           <input type="file" id="imageUpload" accept="image/*" style="display:none;">
-          <button id="upload-btn" class="upload-button">🔗</button>
-          <button id="emoji-btn" type="button">❤︎</button>
-          <button id="send-btn" class="send-button" onclick="sendMsg()" title="Send Message" >➤</button>
+          <button id="upload-btn" class="text-bnt">🔗</button>
+          <button id="emoji-btn" class="text-bnt" type="button">❤︎</button>
+          <button id="send-btn" class="text-bnt" onclick="sendMsg()" title="Send Message" >➤</button>
           <div id="emoji-picker" style="display:none;position:absolute;bottom:40px;left:110px;z-index:1000;background:#fff;padding:6px 10px;border:1px solid #ddd;border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,0.1);"></div>
         </div>
       </div>
@@ -492,25 +501,42 @@ function addMessage(text, sender, name, timestamp = Date.now(), messageKey = nul
         headerDiv.appendChild(nameSpan);
         msgDiv.appendChild(headerDiv);
       }
-      const bubbleDiv = document.createElement("div");
-      bubbleDiv.className = "bubble";
-      const msgContent = document.createElement("div");
-      if (typeof text === 'string' && (text.match(/\.(jpeg|jpg|gif|png|webp)$/i) || text.startsWith("data:image/"))) {
-        const img = document.createElement('img');
-        img.src = text.startsWith('/') ? window.location.origin + text : text;
-        img.alt = "Sent image";
-        img.style.maxWidth = "200px";
-        img.style.maxHeight = "150px";
-        img.style.borderRadius = "8px";
-        msgContent.appendChild(img);
-      } else {
-        msgContent.textContent = text;
-      }
-      bubbleDiv.appendChild(msgContent);
-      const timeLabel = document.createElement("span");
-      timeLabel.className = "msg-time";
-      timeLabel.textContent = timeString;
-      bubbleDiv.appendChild(timeLabel);
+      const isImageMsg = typeof text === 'string' && (text.match(/\.(jpeg|jpg|gif|png|webp)$/i) || text.startsWith("data:image/"));
+let bubbleDiv, msgContent;
+
+if (isImageMsg) {
+  bubbleDiv = document.createElement("div");
+  bubbleDiv.className = "bubble image-bubble"; // special class for image messages
+  bubbleDiv.style.background = "transparent";
+  bubbleDiv.style.boxShadow = "none";
+  bubbleDiv.style.padding = "0";
+  bubbleDiv.style.marginLeft = "0";
+  bubbleDiv.style.display = "flex";
+  bubbleDiv.style.flexDirection = "column";
+  msgContent = document.createElement("img");
+  msgContent.src = text.startsWith('/') ? window.location.origin + text : text;
+  msgContent.alt = "Sent image";
+  msgContent.style.maxWidth = "200px";
+  msgContent.style.maxHeight = "200px";
+  msgContent.style.borderRadius = "10px";
+  msgContent.style.display = "block";
+  msgContent.style.background = "#fff";
+  msgContent.style.margin = "1px 0 10px 50px";
+  msgContent.style.border = "1px solid #e4e4e4";
+  bubbleDiv.appendChild(msgContent);
+} else {
+  bubbleDiv = document.createElement("div");
+  bubbleDiv.className = "bubble";
+  msgContent = document.createElement("div");
+  msgContent.textContent = text;
+  bubbleDiv.appendChild(msgContent);
+}
+
+const timeLabel = document.createElement("span");
+timeLabel.className = "msg-time";
+timeLabel.textContent = timeString;
+bubbleDiv.appendChild(timeLabel);
+
       if (sender === "user" && messageKey) {
         const msgActions = document.createElement("div");
         msgActions.className = "msg-actions";
@@ -604,40 +630,88 @@ function presetClick(message) {
   sendMsg(message);
 }
     // UPLOAD IMAGE
-    document.getElementById("upload-btn").onclick = function () { document.getElementById("imageUpload").click(); };
-    document.getElementById("imageUpload").onchange = function () { uploadImage(); };
-    
-    
-    const cloudName = "drrnur7f1";
-const uploadPreset = "einvite_upload";
+    // Select DOM nodes
+const imageInput = document.getElementById("imageUpload");
+const imagePreviewArea = document.getElementById("image-preview-area");
+const imagePreview = document.getElementById("image-preview");
+const imageCancelBtn = document.getElementById("image-cancel-btn");
+const imageSendBtn = document.getElementById("image-send-btn");
 
-function uploadImage() {
-  const fileInput = document.getElementById("imageUpload");
-  const file = fileInput.files[0];
+// 1. When user clicks upload button, open the file picker
+document.getElementById("upload-btn").onclick = function () {
+  imageInput.value = ""; // Clear previous
+  imageInput.click();
+};
+
+// 2. When a file is selected, show preview UI (don't upload yet!)
+imageInput.onchange = function () {
+  const file = imageInput.files[0];
   if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function (e) {
+    imagePreview.src = e.target.result;
+    imagePreviewArea.style.display = "flex";
+    // Optionally hide chat input while image preview is visible
+    document.getElementById("input").disabled = true;
+    document.getElementById("send-btn").disabled = true;
+  };
+  reader.readAsDataURL(file);
+};
 
+// 3. Cancel button: close preview, restore normal UI
+imageCancelBtn.onclick = function () {
+  imagePreviewArea.style.display = "none";
+  imagePreview.src = "";
+  imageInput.value = "";
+  document.getElementById("input").disabled = false;
+  document.getElementById("send-btn").disabled = false;
+};
+
+// 4. Send button: upload to Cloudinary and send to chat
+imageSendBtn.onclick = function () {
+  const file = imageInput.files[0];
+  if (!file) return;
+  imageSendBtn.disabled = true;
+  imageSendBtn.textContent = "Uploading...";
+  // Cloudinary upload (reuse your existing logic)
+  const cloudName = "drrnur7f1";
+  const uploadPreset = "einvite_upload";
   const url = `https://api.cloudinary.com/v1_1/${cloudName}/upload`;
   const formData = new FormData();
   formData.append("file", file);
   formData.append("upload_preset", uploadPreset);
-
   fetch(url, { method: "POST", body: formData })
     .then(r => r.json())
     .then(data => {
       if (data.secure_url) {
-        // Use data.secure_url as your image URL in chat!
-        // Send to Firebase Realtime Database or wherever you want
+        // Send as chat message
         db.ref("chats/" + sessionId).push({
           sender: "user",
           message: data.secure_url,
           type: "image",
           timestamp: Date.now()
         });
+        // Reset preview and UI
+        imagePreviewArea.style.display = "none";
+        imagePreview.src = "";
+        imageInput.value = "";
+        imageSendBtn.disabled = false;
+        imageSendBtn.textContent = "Send";
+        document.getElementById("input").disabled = false;
+        document.getElementById("send-btn").disabled = false;
       } else {
         alert("Upload failed.");
+        imageSendBtn.disabled = false;
+        imageSendBtn.textContent = "Send";
       }
+    })
+    .catch(() => {
+      alert("Upload error.");
+      imageSendBtn.disabled = false;
+      imageSendBtn.textContent = "Send";
     });
-}
+};
+
 
     // EMOJI PICKER
     document.getElementById("emoji-btn").onclick = function () {
