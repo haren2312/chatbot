@@ -152,10 +152,66 @@
 
     window.skipLocation = skipLocation;
 
+// Call this on any user interaction (mousemove, keydown, click, etc.)
+// Presence update function (keep!)
+function setPresence(state) {
+  if (!sessionId) return;
+  db.ref('status/' + sessionId).set({
+    state: state,
+    last_changed: firebase.database.ServerValue.TIMESTAMP
+  });
+}
+
+let idleTimer = null;
+
+function markOnline() {
+  setPresence("online");
+  clearTimeout(idleTimer);
+  idleTimer = setTimeout(() => setPresence("away"), 3 * 60 * 1000); // 3 minutes
+}
+
+function markOffline() {
+  setPresence("offline");
+  clearTimeout(idleTimer);
+}
+
+['mousemove', 'keydown', 'scroll', 'click'].forEach(evt => {
+  window.addEventListener(evt, markOnline);
+});
+
+window.addEventListener('focus', markOnline);
+window.addEventListener('blur', markOffline);
+
+document.addEventListener('visibilitychange', function() {
+  if (document.hidden) {
+    markOffline();
+  } else {
+    markOnline();
+  }
+});
+
+window.addEventListener('beforeunload', markOffline);
+
+function initPresenceTracking() {
+  // Event listeners for presence (same as before)
+  ['mousemove', 'keydown', 'scroll', 'click'].forEach(evt => {
+    window.addEventListener(evt, markOnline);
+  });
+  window.addEventListener('focus', markOnline);
+  window.addEventListener('blur', markOffline);
+  document.addEventListener('visibilitychange', function() {
+    if (document.hidden) markOffline();
+    else markOnline();
+  });
+  window.addEventListener('beforeunload', markOffline);
+
+  // Set presence online initially
+  markOnline();
+}
+
 
     // GLOBALS
   let sessionId = "", userName = "", userEmail = "", userLocation = null, chatInitialized = false;
-  let presenceTimers = { away: null, offline: null };
   let windowLastMessageDate = undefined;
 
   function sanitizeEmail(email) {
@@ -224,63 +280,6 @@ if (savedEmail) {
         if (btn) { btn.disabled = false; btn.textContent = originalText; }
       }
     }
-
-    // PRESENCE
-    function setPresence(state) {
-      if (!sessionId) return;
-      db.ref('status/' + sessionId).set({
-        state: state,
-        last_changed: firebase.database.ServerValue.TIMESTAMP
-      });
-    }
-    function refreshPresenceOnActivity() {
-      if (presenceTimers.away) clearTimeout(presenceTimers.away);
-      if (presenceTimers.offline) clearTimeout(presenceTimers.offline);
-      setPresence("online");
-      presenceTimers.away = setTimeout(() => setPresence("away"), 2 * 60 * 1000);
-      presenceTimers.offline = setTimeout(() => setPresence("offline"), 5 * 60 * 1000);
-    }
-
-    // localStorage.setItem("chatbot_location_set", "1");
-
-
-    // ON LOAD
-// function initializePrompts() {
-//   let savedName = localStorage.getItem("chatbot_user_name") || "";
-//   let savedEmail = localStorage.getItem("chatbot_user_email") || "";
-//   let locationSet = localStorage.getItem("chatbot_location_set") === "1";
-//   document.getElementById("nameInput").value = savedName;
-//   document.getElementById("emailInput").value = savedEmail;
-//   if (savedName && savedEmail && locationSet) {
-//     userName = savedName;
-//     userEmail = savedEmail;
-//     // Always use sanitized version!
-//     sessionId = sanitizeEmail(localStorage.getItem("chatbot_user_email") || "");
-//     document.getElementById("name-prompt").style.display = "none";
-//     document.getElementById("email-prompt").style.display = "none";
-//     document.getElementById("location-prompt").style.display = "none";
-//     document.getElementById("chat").style.display = "flex";
-//     chatInitialized = true;
-//     setTimeout(() => initializeChat(), 100); // short delay for DOM ready
-
-//   } else if (savedName && savedEmail) {
-//     userName = savedName;
-//     userEmail = savedEmail;
-//     // Always use sanitized version!
-//     sessionId = sanitizeEmail(localStorage.getItem("chatbot_user_email") || "");
-//     document.getElementById("name-prompt").style.display = "none";
-//     document.getElementById("email-prompt").style.display = "none";
-//     document.getElementById("location-prompt").style.display = "block";
-//   } else {
-//     document.getElementById("name-prompt").style.display = "block";
-//     document.getElementById("email-prompt").style.display = "none";
-//     document.getElementById("location-prompt").style.display = "none";
-//     document.getElementById("chat").style.display = "none";
-//   }
-// }
-
-
-    // NAME PROMPT
     document.getElementById("start-btn").onclick = function () {
   userName = document.getElementById("nameInput").value.trim();
   if (!userName) { showError("Please enter your name"); document.getElementById("nameInput").focus(); return; }
@@ -360,42 +359,6 @@ function skipLocation() {
 }
 
 
-// localStorage.setItem("chatbot_location_set", "1");
-
-
-    function setupUserPresence() {
-  if (!sessionId) return;
-  const statusRef = db.ref('status/' + sessionId);
-
-  db.ref('.info/connected').on('value', function(snapshot) {
-    if (snapshot.val() === false) return;
-
-    // Set offline when connection drops or tab closes
-    statusRef.onDisconnect().set({
-      state: "offline",
-      last_changed: firebase.database.ServerValue.TIMESTAMP
-    });
-
-    // Set online when connected
-    statusRef.set({
-      state: "online",
-      last_changed: firebase.database.ServerValue.TIMESTAMP
-    });
-  });
-
-  // Idle: set "away"
-  let idleTimer;
-  function goAway() {
-    statusRef.set({ state: "away", last_changed: firebase.database.ServerValue.TIMESTAMP });
-  }
-  function activity() {
-    statusRef.set({ state: "online", last_changed: firebase.database.ServerValue.TIMESTAMP });
-    if (idleTimer) clearTimeout(idleTimer);
-    idleTimer = setTimeout(goAway, 2 * 60 * 1000); // 2 min
-  }
-  window.onmousemove = window.onkeydown = activity;
-  activity(); // Trigger immediately
-}
 
     // INITIALIZE CHAT
 function initializeChat() {
@@ -419,8 +382,8 @@ function initializeChat() {
       loadChatMessages();
     }
   });
-  refreshPresenceOnActivity();
   setupUserPresence();
+  initPresenceTracking(); 
   setTimeout(() => { document.getElementById("input").focus(); }, 100);
 }
 
@@ -617,7 +580,6 @@ return msgDiv;
   db.ref("chats/" + sessionId).push({
     sender: "user", message: msg, type: "text", timestamp: Date.now()
   });
-  refreshPresenceOnActivity();
   if (!customText) input.value = "";
 }
 
