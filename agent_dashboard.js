@@ -406,10 +406,9 @@ document.getElementById("searchInput").addEventListener('input', function() {
 
 // Setup hover/click for msg-menu
 chatBox.querySelectorAll('.message-bubble').forEach(bubble => {
-  const msgMenu = bubble.querySelector('.msg-menu');
-  const msgActions = bubble.querySelector('.msg-actions');
-  if (msgMenu && msgActions) {
-    msgMenu.onclick = function(e) {
+const msgMenuEl = row.querySelector('.msg-menu');
+if (msgMenuEl) {
+  msgMenuEl.onclick = function(e) {
       e.stopPropagation();
       msgActions.style.display = msgActions.style.display === "flex" ? "none" : "flex";
       // Hide other menus
@@ -1097,17 +1096,22 @@ function renderChatMessages(chatData) {
   }
 }
     // Message Content
-    let messageContent = "";
-    if (msg.type === "image" && msg.message) {
-      messageContent = `<img src="${escapeHtml(msg.message)}" alt="image" style="max-width:160px;max-height:110px;border-radius:7px;cursor:pointer;box-shadow:0 1px 5px #2563eb1a;" onclick="window.open('${escapeHtml(msg.message)}','_blank')"/>`;
-    } else {
-      messageContent = escapeHtml(msg.message || "");
-    }
+let messageContent = "";
+let bubbleStyle = '';
 
-    // Bubble color: all right-side (admin/agent/bot) are white/blue text
-    let bubbleColor = isRight
-      ? "background:#fff;color:#2563eb;"
-      : "background:linear-gradient(98deg, #2563eb 90%, #1877f2 100%);color:#fff;";
+if (msg.type === "image" && msg.message) {
+  // Only pure image, no inline styling needed
+  messageContent = `<img src="${escapeHtml(msg.message)}" alt="image" onclick="window.open('${escapeHtml(msg.message)}','_blank')" />`;
+  bubbleStyle = "background:transparent;padding:0;margin:0;box-shadow:none;border:none;";
+} else {
+  messageContent = escapeHtml(msg.message || "");
+  if (isRight) {
+    bubbleStyle = "background:#fff;color:#2563eb;";
+  } else {
+    bubbleStyle = "background:linear-gradient(98deg, #2563eb 90%, #1877f2 100%);color:#fff;";
+  }
+}
+
 
     // Message bubble HTML
     // At the top of your .forEach((msg) => { ... })
@@ -1117,7 +1121,7 @@ const canEditDelete = senderType === "admin" || senderType === "agent" || sender
  chatBox.innerHTML += `
     <div class="message-row ${isRight ? "self" : senderType}" style="position:relative;">
       ${!isRight ? avatarHtml : ""}
-      <div class="message-bubble" style="${bubbleColor};position:relative;" data-msg-id="${msg._id}">
+      <div class="message-bubble" style="${bubbleStyle}position:relative;" data-msg-id="${msg._id}">
         <div class="msg-content">${messageContent}</div>
         <div class="msg-meta">${timeString} ${getMessageStatusIcon(msg, isRight)}</div>
         <span class="msg-menu" title="More" data-msg-id="${msg._id}">⋮</span>
@@ -1275,24 +1279,37 @@ function renderSingleMessage(msg, msgId, chatBox, messagesMap) {
     }
   }
 
-  let messageContent = "";
-  if (msg.type === "image" && msg.message) {
-    messageContent = `<img src="${escapeHtml(msg.message)}" alt="image" style="max-width:160px;max-height:110px;border-radius:7px;cursor:pointer;box-shadow:0 1px 5px #2563eb1a;" onclick="window.open('${escapeHtml(msg.message)}','_blank')"/>`;
-  } else {
-    messageContent = escapeHtml(msg.message || "");
-  }
+let messageContent = "";
+let bubbleStyle = '';
 
-  let bubbleColor = isRight
-    ? "background:#fff;color:#2563eb;"
-    : "background:linear-gradient(98deg, #2563eb 90%, #1877f2 100%);color:#fff;";
+if (msg.type === "image" && msg.message) {
+  // Only pure image, no inline styling needed
+  messageContent = `<img src="${escapeHtml(msg.message)}" alt="image" onclick="window.open('${escapeHtml(msg.message)}','_blank')" />`;
+  bubbleStyle = "background:transparent;padding:0;margin:0;box-shadow:none;border:none;";
+} else {
+  messageContent = escapeHtml(msg.message || "");
+  if (isRight) {
+    bubbleStyle = "background:#fff;color:#2563eb;";
+  } else {
+    bubbleStyle = "background:linear-gradient(98deg, #2563eb 90%, #1877f2 100%);color:#fff;";
+  }
+}
+
 
   // Build the whole row
   const row = document.createElement("div");
   row.className = `message-row ${isRight ? "self" : senderType}`;
   row.setAttribute("data-msg-id", msgId);
+  if (msg.type === "image" && msg.message) {
   row.innerHTML = `
     ${!isRight ? avatarHtml : ""}
-    <div class="message-bubble" style="${bubbleColor};position:relative;" data-msg-id="${msgId}">
+    <img src="${escapeHtml(msg.message)}" alt="image" class="chat-img-standalone" onclick="window.open('${escapeHtml(msg.message)}','_blank')" />
+    ${isRight ? avatarHtml : ""}
+  `;
+} else {
+  row.innerHTML = `
+    ${!isRight ? avatarHtml : ""}
+    <div class="message-bubble" style="${bubbleStyle}position:relative;" data-msg-id="${msgId}">
       <div class="msg-content">${messageContent}</div>
       <div class="msg-meta">${timeString} ${getMessageStatusIcon(msg, isRight)}</div>
       <span class="msg-menu" title="More" data-msg-id="${msgId}">⋮</span>
@@ -1304,48 +1321,63 @@ function renderSingleMessage(msg, msgId, chatBox, messagesMap) {
     </div>
     ${isRight ? avatarHtml : ""}
   `;
+}
+
 
   // --- Event Listeners (same as before) ---
   // Menu
-  row.querySelector('.msg-menu').onclick = function(e) {
+  // Menu
+const msgMenuEl = row.querySelector('.msg-menu');
+if (msgMenuEl) {
+  msgMenuEl.onclick = function(e) {
     e.stopPropagation();
     const msgId = this.getAttribute('data-msg-id');
     chatBox.querySelectorAll('.msg-actions').forEach(a => a.style.display = "none");
     const actions = row.querySelector(`.msg-actions[data-msg-id="${msgId}"]`);
     if (actions) actions.style.display = "flex";
   };
-  // Edit
-  row.querySelector('.edit-btn').onclick = function(e) {
+}
+// Edit
+const editBtnEl = row.querySelector('.edit-btn');
+if (editBtnEl) {
+  editBtnEl.onclick = function(e) {
     e.stopPropagation();
     editMessage(msgId);
     chatBox.querySelectorAll('.msg-actions').forEach(a => a.style.display = "none");
   };
-  // Delete
-  row.querySelector('.delete-btn').onclick = function(e) {
+}
+// Delete
+const deleteBtnEl = row.querySelector('.delete-btn');
+if (deleteBtnEl) {
+  deleteBtnEl.onclick = function(e) {
     e.stopPropagation();
     deleteMessage(msgId);
     chatBox.querySelectorAll('.msg-actions').forEach(a => a.style.display = "none");
   };
-  // Copy
-  row.querySelector('.copy-btn').onclick = function(e) {
+}
+// Copy
+const copyBtnEl = row.querySelector('.copy-btn');
+if (copyBtnEl) {
+  copyBtnEl.onclick = function(e) {
     e.stopPropagation();
     const msgContent = row.querySelector('.msg-content').textContent || "";
     navigator.clipboard.writeText(msgContent).then(() => {
       Swal.fire({
-  text: "Message copied!",
-  icon: "info",
-  toast: true,
-  position: 'top-end',
-  showConfirmButton: false,
-  timer: 2000,
-  timerProgressBar: true,
-  background: "#f5fafd",
-  color: "#222e3a"
-});
-
+        text: "Message copied!",
+        icon: "info",
+        toast: true,
+        position: 'top-end',
+        showConfirmButton: false,
+        timer: 2000,
+        timerProgressBar: true,
+        background: "#f5fafd",
+        color: "#222e3a"
+      });
     });
     chatBox.querySelectorAll('.msg-actions').forEach(a => a.style.display = "none");
   };
+}
+
   // Hide all menus on outside click
   document.addEventListener('click', function outsideClickHandler(e) {
     chatBox.querySelectorAll('.msg-actions').forEach(actions => {
