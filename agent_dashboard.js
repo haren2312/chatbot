@@ -360,15 +360,13 @@ function notify(message, options = {}) {
     icon: options.type === "error" ? "error" :
           options.type === "success" ? "success" :
           options.type === "warning" ? "warning" : "info",
-    toast: true,
-    position: options.position || 'top-end',
-    showConfirmButton: false,
-    timer: options.timeout || 2000,
-    timerProgressBar: true,
     background: options.type === "error" ? "#fff0f0" : "#f5fafd",
     color: "#222e3a",
+    showConfirmButton: true,
+    confirmButtonText: "OK"
   });
 }
+
 
 
   function getMessageStatusIcon(msg, isRight) {
@@ -428,48 +426,43 @@ if (msgMenuEl) {
 
 function deleteMessage(msgId) {
   if (!selectedSessionId || !msgId) return;
+  // First, ask for confirmation!
   Swal.fire({
     title: "Delete this message?",
+    text: "Are you sure you want to delete this message?",
     icon: "warning",
-    toast: true,
-    position: 'top-end',
-    timer: 2000,
-    showConfirmButton: false,
-    timerProgressBar: true,
     showCancelButton: true,
     confirmButtonText: "Delete",
     cancelButtonText: "Cancel",
     confirmButtonColor: "#d33",
-    reverseButtons: true
+    background: "#fff0f0",
+    color: "#222e3a"
   }).then((result) => {
     if (result.isConfirmed) {
       const chatRef = db.ref("chats/" + selectedSessionId + "/" + msgId);
+      removeSingleMessage(msgId, document.getElementById('chatBox'));
       chatRef.remove()
         .then(() => Swal.fire({
-  text: "Message deleted",
-  icon: "success",
-  toast: true,
-  position: 'top-end',
-  showConfirmButton: false,
-  timer: 2000,
-  timerProgressBar: true,
-  background: "#f5fafd",
-  color: "#222e3a"
-}))
+          text: "Message deleted",
+          icon: "success",
+          background: "#f5fafd",
+          color: "#222e3a",
+          showConfirmButton: true,
+          confirmButtonText: "OK"
+        }))
         .catch(err => Swal.fire({
-  text: "Failed to delete: " + err.message,
-  icon: "error",
-  toast: true,
-  position: 'top-end',
-  showConfirmButton: false,
-  timer: 2000,
-  timerProgressBar: true,
-  background: "#fff0f0",
-  color: "#222e3a"
-}));
+          text: "Failed to delete: " + err.message,
+          icon: "error",
+          background: "#fff0f0",
+          color: "#222e3a",
+          showConfirmButton: true,
+          confirmButtonText: "OK"
+        }));
     }
   });
 }
+
+
 
 
 function editMessage(msgId) {
@@ -955,8 +948,9 @@ if (!name || !email) {
       Swal.fire({
   text: "User profile updated!",
   icon: "success",
-  toast: true,
-  position: 'top-end',
+  showConfirmButton: true,
+  confirmButtonText: "OK",
+  position: 'center',
   showConfirmButton: false,
   timer: 2000,
   timerProgressBar: true,
@@ -1100,9 +1094,12 @@ let messageContent = "";
 let bubbleStyle = '';
 
 if (msg.type === "image" && msg.message) {
-  // Only pure image, no inline styling needed
-  messageContent = `<img src="${escapeHtml(msg.message)}" alt="image" onclick="window.open('${escapeHtml(msg.message)}','_blank')" />`;
-  bubbleStyle = "background:transparent;padding:0;margin:0;box-shadow:none;border:none;";
+  messageContent = `
+    <img src="${escapeHtml(msg.message)}" alt="image" onclick="window.open('${escapeHtml(msg.message)}','_blank')" />
+    <div class="msg-meta">${timeString} ${getMessageStatusIcon(msg, isRight)}</div>
+    <span class="msg-menu" title="More" data-msg-id="${msg._id}">⋮</span>
+  `;
+  bubbleStyle = "display:flex;align-items:flex-end;gap:8px;background:transparent;padding:0;margin:0;box-shadow:none;border:none;";
 } else {
   messageContent = escapeHtml(msg.message || "");
   if (isRight) {
@@ -1118,22 +1115,22 @@ if (msg.type === "image" && msg.message) {
 const canEditDelete = senderType === "admin" || senderType === "agent" || senderType === "bot"; // or whatever logic you want
 
 // Message bubble HTML, add 3-dot menu if right-side (admin/bot/agent), can do for user too if desired
- chatBox.innerHTML += `
-    <div class="message-row ${isRight ? "self" : senderType}" style="position:relative;">
-      ${!isRight ? avatarHtml : ""}
-      <div class="message-bubble" style="${bubbleStyle}position:relative;" data-msg-id="${msg._id}">
-        <div class="msg-content">${messageContent}</div>
-        <div class="msg-meta">${timeString} ${getMessageStatusIcon(msg, isRight)}</div>
-        <span class="msg-menu" title="More" data-msg-id="${msg._id}">⋮</span>
-        <div class="msg-actions" data-msg-id="${msg._id}" style="display:none;">
-          <button class="edit-btn" data-msg-id="${msg._id}" title="Edit">Edit</button>
-          <button class="delete-btn" data-msg-id="${msg._id}" title="Delete">Delete</button>
-          <button class="copy-btn" data-msg-id="${msg._id}" title="Copy">Copy</button>
-        </div>
+chatBox.innerHTML += `
+  <div class="message-row ${isRight ? "self" : senderType}" style="position:relative;">
+    ${!isRight ? avatarHtml : ""}
+    <div class="message-bubble" style="${bubbleStyle}position:relative;" data-msg-id="${msg._id}">
+      <div class="msg-content">${messageContent}</div>
+      <div class="msg-meta">${timeString} ${getMessageStatusIcon(msg, isRight)}</div>
+      <span class="msg-menu" title="More" data-msg-id="${msg._id}">⋮</span>
+      <div class="msg-actions" data-msg-id="${msg._id}" style="display:none;">
+        <button class="edit-btn" data-msg-id="${msg._id}" title="Edit">Edit</button>
+        <button class="delete-btn" data-msg-id="${msg._id}" title="Delete">Delete</button>
+        <button class="copy-btn" data-msg-id="${msg._id}" title="Copy">Copy</button>
       </div>
-      ${isRight ? avatarHtml : ""}
     </div>
-  `;
+    ${isRight ? avatarHtml : ""}
+  </div>
+`;
 });
 
   chatBox.scrollTop = chatBox.scrollHeight;
@@ -1300,11 +1297,24 @@ if (msg.type === "image" && msg.message) {
   const row = document.createElement("div");
   row.className = `message-row ${isRight ? "self" : senderType}`;
   row.setAttribute("data-msg-id", msgId);
-  if (msg.type === "image" && msg.message) {
-  row.innerHTML = `
-    ${!isRight ? avatarHtml : ""}
-    <img src="${escapeHtml(msg.message)}" alt="image" class="chat-img-standalone" onclick="window.open('${escapeHtml(msg.message)}','_blank')" />
-    ${isRight ? avatarHtml : ""}
+if (msg.type === "image" && msg.message) {
+  row.innerHTML += `
+    <div class="message-row ${isRight ? "self" : senderType}" style="position:relative;width: 400px;
+">
+      ${!isRight ? avatarHtml : ""}
+      <div class="message-bubble image-bubble" data-msg-id="${msg._id}" style="position:relative;display:inline-block;background:none;box-shadow:none;">
+        <img src="${escapeHtml(msg.message)}" alt="image" class="chat-img"
+             style="display:block;max-width:20px;max-height:10px;border-radius:12px;box-shadow:0 2px 8px #2563eb12;" />
+        <span class="msg-menu" title="More" data-msg-id="${msg._id}">⋮</span>
+        <div class="msg-actions" data-msg-id="${msg._id}" style="display:none;">
+          <button class="edit-btn" data-msg-id="${msg._id}" title="Edit">Edit</button>
+          <button class="delete-btn" data-msg-id="${msg._id}" title="Delete">Delete</button>
+          <button class="copy-btn" data-msg-id="${msg._id}" title="Copy">Copy</button>
+        </div>
+        <div class="msg-meta" style="text-align:right;margin-top:2px;font-size:0.92em;">${timeString} ${getMessageStatusIcon(msg, isRight)}</div>
+      </div>
+      ${isRight ? avatarHtml : ""}
+    </div>
   `;
 } else {
   row.innerHTML = `
@@ -1365,8 +1375,9 @@ if (copyBtnEl) {
       Swal.fire({
         text: "Message copied!",
         icon: "info",
-        toast: true,
-        position: 'top-end',
+        showConfirmButton: true,
+        confirmButtonText: "OK",
+        position: 'center',
         showConfirmButton: false,
         timer: 2000,
         timerProgressBar: true,
@@ -1517,17 +1528,15 @@ function debugUserPresence() {
       return;
     }
     if (!file.type.startsWith('image/')) {
-      Swal.fire({
+Swal.fire({
   text: "Only image files are allowed.",
   icon: "warning",
-  toast: true,
-  position: 'top-end',
-  showConfirmButton: false,
-  timer: 2000,
-  timerProgressBar: true,
   background: "#f5fafd",
-  color: "#222e3a"
+  color: "#222e3a",
+  showConfirmButton: true,
+  confirmButtonText: "OK"
 });
+
 
       return;
     }

@@ -841,23 +841,6 @@ body {
   justify-content: flex-end;
 }
 
-.message-bubble {
-    max-width: 60%;
-    padding: 0 10px;
-    border-radius: 10px;
-    position: relative;
-    /* background: #f4f8fd; */
-    color: white;
-    box-shadow: 0 2px 24px 0 #2563eb13, 0 0.5px 1.5px #bdd0ea12;
-    font-size: .7rem;
-    min-width: 55px;
-    word-break: break-word;
-    /* transition: box-shadow 0.16s, background 0.15s; */
-    background-color: #1877f2;
-    box-sizing: border-box;
-    margin: 0;
-    padding: 0;
-}
 
 
 .message-row.self .message-bubble {
@@ -1067,22 +1050,7 @@ body {
     position: relative;
 }
 
-/* Blue bubble for user/bot */
-.message-row.user .message-bubble,
-.message-row.bot .message-bubble {
-  background: linear-gradient(96deg, #2563eb 90%, #5691ff 100%);
-  color: #fff;
-  border: none;
-}
 
-/* White bubble with blue border for agent/admin */
-.message-row.agent .message-bubble,
-.message-row.admin .message-bubble {
-  background: #fff;
-  color: #2563eb;
-  border: 2px solid #d6e5fd;
-  box-shadow: 0 2px 12px #2563eb09;
-}
 
 /* Time style inside the bubble (bottom right) */
 .msg-time {
@@ -1935,17 +1903,5 @@ html, body {
 .sidebar {
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
-}
-
-.message-bubble img {
-    background: none !important;
-    border: none !important;
-    box-shadow: none !important;
-    border-radius: 0 !important;
-    display: block;
-    max-width: 50% !important;
-    max-height: 220px !important;
-    margin: 0 !important;
-    padding: 0 !important;
 }
 
