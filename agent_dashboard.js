@@ -27,12 +27,28 @@ const ADMIN_ID = "admin";
 
 window.lastViewedTimestamp = {};
 
+// Listen to ALL chats and users for session list changes
+db.ref("chats").on("value", (snapshot) => {
+  allSessions = snapshot.val() || {};
+  renderSessions(document.getElementById("searchInput").value.toLowerCase());
+  // Optionally reload current chat
+  if (selectedSessionId && allSessions[selectedSessionId]) {
+    renderChatMessages(allSessions[selectedSessionId]);
+  }
+});
+
+db.ref("users").on("value", (snapshot) => {
+  allUserData = snapshot.val() || {};
+  renderSessions(document.getElementById("searchInput").value.toLowerCase());
+  if (selectedSessionId) renderUserInfoPanel();
+});
+
+
 db.ref("admin_last_seen/" + ADMIN_ID).once("value", (snapshot) => {
   window.lastViewedTimestamp = snapshot.val() || {};
   // Render session list after loading
   renderSessions(document.getElementById("searchInput").value.toLowerCase());
 });
-
 
 let presenceTimers = {
   away: null,
