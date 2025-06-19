@@ -306,6 +306,20 @@ function getInitials(name) {
   return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
 }
 
+function updateMessageStatusUI(msgId, msgData) {
+  const msgDiv = document.querySelector(`[data-key="${msgId}"]`);
+  if (!msgDiv) return;
+  const timeLabel = msgDiv.querySelector('.msg-time');
+  if (!timeLabel) return;
+  if ((msgData.sender || '').toLowerCase() === 'user') {
+    let icon = '';
+    if (msgData.status === "read") icon = "✔✔";
+    else if (msgData.status === "delivered") icon = "✔✔";
+    else icon = "✔";
+    timeLabel.innerHTML = timeLabel.textContent.split(' ')[0] + 
+      ` <span style="color:${msgData.status === "read" ? "#2563eb" : "#bababa"};">${icon}</span>`;
+  }
+}
 
 
 // Place this with your other utils at the top
@@ -871,7 +885,6 @@ function renderUserInfoPanel() {
 }
 
 function getFormattedDateByTimezone(timezone = "Asia/Kolkata") {
-  // Example: "09 Jun 2025"
   const now = new Date();
   return now.toLocaleDateString("en-IN", {
     day: "2-digit",
@@ -880,6 +893,22 @@ function getFormattedDateByTimezone(timezone = "Asia/Kolkata") {
     timeZone: timezone
   });
 }
+
+// Place updateMessageStatusUI here!
+function updateMessageStatusUI(msgId, msgData) {
+  const bubble = document.querySelector(`[data-msg-id="${msgId}"]`);
+  if (!bubble) return;
+  const meta = bubble.querySelector('.msg-meta');
+  if (!meta) return;
+  const timeText = meta.textContent.split('✔')[0].trim();
+  meta.innerHTML = timeText + ' ' + getMessageStatusIcon(msgData, 
+    (msgData.sender || '').toLowerCase() === "admin" ||
+    (msgData.sender || '').toLowerCase() === "agent" ||
+    (msgData.sender || '').toLowerCase() === "bot"
+  );
+}
+
+
 
 function setUserPresence(userId) {
   const presenceRef = firebase.database().ref("presence/" + userId);
@@ -1195,8 +1224,27 @@ function renderChatMessages(chatData) {
 
 
 // --- Chat selection & loading ---
+function updateSingleMessage(msg, msgId, chatBox, messagesMap) {
+  // Remove old bubble
+  const oldRow = chatBox.querySelector(`[data-msg-id="${msgId}"]`);
+  if (oldRow) oldRow.remove();
+  // Re-render the updated message
+  renderSingleMessage(msg, msgId, chatBox, messagesMap);
+}
+
+
 let currentChatListeners = {};
 let messagesMap = {};
+
+// Only mark as read when the chat window is focused AND the current chat is open
+function handleChatVisibility() {
+  if (!selectedSessionId) return;
+
+}
+
+// Listen for visibility change (tab change/minimize)
+document.addEventListener("visibilitychange", handleChatVisibility);
+
 
 function loadChat(sessionId) {
   selectedSessionId = sessionId;
@@ -1209,9 +1257,9 @@ function loadChat(sessionId) {
   }
 
   // Remove old listeners if present
-  if (currentChatListeners.added) chatRef.off("child_added", currentChatListeners.added);
-  if (currentChatListeners.changed) chatRef.off("child_changed", currentChatListeners.changed);
-  if (currentChatListeners.removed) chatRef.off("child_removed", currentChatListeners.removed);
+   if (currentChatListeners.added) db.ref("chats/" + sessionId).off("child_added", currentChatListeners.added);
+  if (currentChatListeners.changed) db.ref("chats/" + sessionId).off("child_changed", currentChatListeners.changed);
+  if (currentChatListeners.removed) db.ref("chats/" + sessionId).off("child_removed", currentChatListeners.removed);
 
   // Initialize message map and clear UI
   messagesMap = {};
@@ -1219,12 +1267,31 @@ function loadChat(sessionId) {
   chatBox.innerHTML = "";
 
   // Add message
-  currentChatListeners.added = chatRef.on("child_added", snapshot => {
-    const msg = snapshot.val();
-    const msgId = snapshot.key;
-    messagesMap[msgId] = { ...msg, _id: msgId };
-    renderSingleMessage(msg, msgId, chatBox, messagesMap);
-  });
+currentChatListeners.added = db.ref("chats/" + sessionId).on("child_added", snapshot => {
+  const msg = snapshot.val();
+  const msgId = snapshot.key;
+  messagesMap[msgId] = { ...msg, _id: msgId };
+  renderSingleMessage(msg, msgId, chatBox, messagesMap);
+});
+
+ currentChatListeners.changed = db.ref("chats/" + sessionId).on("child_changed", snapshot => {
+  const updatedMsg = snapshot.val();
+  const msgId = snapshot.key;
+
+  // Update message status icon
+  updateMessageStatusUI(msgId, updatedMsg);
+
+  // --- ADD THIS: update the text in the UI if message changed ---
+  const msgBubble = document.querySelector(`.message-bubble[data-msg-id="${msgId}"] .msg-content`);
+  if (msgBubble && updatedMsg.message !== undefined) {
+    msgBubble.textContent = updatedMsg.message;
+    // Optionally, show (edited) label:
+    if (updatedMsg.edited) {
+      msgBubble.innerHTML += ' <span style="font-size:11px;color:#888;">(edited)</span>';
+    }
+  }
+});
+
 
   // Update message (edit)
   // currentChatListeners.changed = chatRef.on("child_changed", snapshot => {
@@ -1235,7 +1302,7 @@ function loadChat(sessionId) {
   // });
 
   // Remove message (delete)
-  currentChatListeners.removed = chatRef.on("child_removed", snapshot => {
+  currentChatListeners.removed = db.ref("chats/" + sessionId).on("child_removed", snapshot => {
     const msgId = snapshot.key;
     delete messagesMap[msgId];
     removeSingleMessage(msgId, chatBox);
@@ -1243,6 +1310,11 @@ function loadChat(sessionId) {
 
   renderUserInfoPanel();
   document.getElementById("inputGroup").style.display = "flex";
+  // Mark all user messages as read when admin opens the chat
+if (document.visibilityState === "visible") {
+  markMessagesAsRead(sessionId, "admin");
+}
+
 
 }
 
@@ -1404,15 +1476,15 @@ function renderSingleMessage(msg, msgId, chatBox, messagesMap) {
 
 // Update message (on edit)
 // Real-time all chats and all users
-db.ref("chats").on("value", (snapshot) => {
-  allSessions = snapshot.val() || {};
-  renderSessions(document.getElementById("searchInput").value.toLowerCase());
-  // Optionally, reload chat panel if current session changed (avoid flicker)
-  if (selectedSessionId && allSessions[selectedSessionId]) {
-    // Force refresh messages
-    renderChatMessages(allSessions[selectedSessionId]);
-  }
-});
+// db.ref("chats").on("value", (snapshot) => {
+//   allSessions = snapshot.val() || {};
+//   renderSessions(document.getElementById("searchInput").value.toLowerCase());
+//   // Optionally, reload chat panel if current session changed (avoid flicker)
+//   if (selectedSessionId && allSessions[selectedSessionId]) {
+//     // Force refresh messages
+//     renderChatMessages(allSessions[selectedSessionId]);
+//   }
+// });
 
 db.ref("users").on("value", (snapshot) => {
   allUserData = snapshot.val() || {};
@@ -1478,21 +1550,19 @@ window.addEventListener('load', initializeApp);
 document.getElementById("sendBtn").onclick = () => {
   const msgInput = document.getElementById("msgInput");
   const msg = msgInput.value.trim();
-  if (!msg || !selectedSessionId || !db) return;
+  if (!msg || !selectedSessionId) return;
   const messageData = {
     sender: "agent",
     message: msg,
     type: "text",
-    timestamp: Date.now()
+    timestamp: Date.now(),
+    status: "sent"
   };
   db.ref("chats/" + selectedSessionId).push(messageData).then(() => {
-    msgInput.value = "";
-    // Also mark as viewed
-    const now = Date.now();
-    window.lastViewedTimestamp[selectedSessionId] = now;
-    db.ref("admin_last_seen/" + ADMIN_ID + "/" + selectedSessionId).set(now);
+    msgInput.value = ""; // Clear input immediately for snappy UX
   });
 };
+
 
 document.getElementById("msgInput").addEventListener("keypress", (e) => {
   if (e.key === "Enter") document.getElementById("sendBtn").onclick();
@@ -1545,12 +1615,13 @@ fileInput.onchange = () => {
   const reader = new FileReader();
   reader.onload = function (e) {
     const messageData = {
-      sender: "agent",
-      message: e.target.result,
-      type: "image",
-      timestamp: Date.now()
-    };
-    db.ref("chats/" + selectedSessionId).push(messageData);
+  sender: "agent",
+  message: msg,
+  type: "text",
+  timestamp: Date.now(),
+  status: "sent"
+};
+db.ref("chats/" + selectedSessionId).push(messageData);
     fileInput.value = "";
   };
   reader.readAsDataURL(file);
@@ -1595,3 +1666,8 @@ window.addEventListener("resize", function () {
   }
 });
 
+document.addEventListener("visibilitychange", function () {
+  if (document.visibilityState === "visible" && selectedSessionId) {
+    markMessagesAsRead(selectedSessionId, "admin");
+  }
+});

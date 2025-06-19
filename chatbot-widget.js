@@ -417,6 +417,22 @@
       });
     }
 
+    function updateMessageStatusUI(msgId, msgData) {
+  const msgDiv = document.querySelector(`[data-key="${msgId}"]`);
+  if (!msgDiv) return;
+  const timeLabel = msgDiv.querySelector('.msg-time');
+  if (!timeLabel) return;
+  // Only update ticks for user messages
+  if ((msgData.sender || '').toLowerCase() === 'user') {
+    let icon = '';
+    if (msgData.status === "read") icon = "✔✔";
+    else if (msgData.status === "delivered") icon = "✔✔";
+    else icon = "✔";
+    timeLabel.innerHTML = timeLabel.textContent.split(' ')[0] + 
+      ` <span style="color:${msgData.status === "read" ? "#2563eb" : "#bababa"};">${icon}</span>`;
+  }
+}
+
 
 
     // LOAD & RENDER MESSAGES
@@ -425,6 +441,7 @@
       if (!sessionId) return;
       const chatRef = db.ref("chats/" + sessionId);
       const messagesContainer = document.getElementById("messages");
+      markAllAdminMessagesAsRead();
       messagesContainer.innerHTML = "";
       windowLastMessageDate = undefined;
       chatRef.off();
@@ -432,11 +449,18 @@
       chatRef.on("child_added", (snapshot) => {
         const data = snapshot.val();
         const msgDiv = addMessage(data.message, data.sender, null, data.timestamp, snapshot.key);
+        
         if (msgDiv) {
           messageElements[snapshot.key] = msgDiv;
           messagesContainer.scrollTop = messagesContainer.scrollHeight;
         }
       });
+      chatRef.on("child_changed", (snapshot) => {
+  const updatedMsg = snapshot.val();
+  const msgId = snapshot.key;
+  updateMessageStatusUI(msgId, updatedMsg);
+});
+
       chatRef.on("child_removed", (snapshot) => {
         if (messageElements[snapshot.key]) {
           messageElements[snapshot.key].remove();
@@ -510,10 +534,26 @@
         bubbleDiv.appendChild(msgContent);
       }
 
-      const timeLabel = document.createElement("span");
-      timeLabel.className = "msg-time";
-      timeLabel.textContent = timeString;
-      bubbleDiv.appendChild(timeLabel);
+const timeLabel = document.createElement("span");
+timeLabel.className = "msg-time";
+timeLabel.textContent = timeString;
+
+// Add tick icon if this is a user message (your own sent), and status exists
+if (sender === "user" && messageKey) {
+  // Get status field from Firebase for this message
+  db.ref("chats/" + sessionId + "/" + messageKey).once("value", (snapshot) => {
+    const data = snapshot.val();
+    if (!data || !data.status) return;
+    let icon = "";
+    if (data.status === "read") icon = "✔✔"; // double blue tick (style via CSS)
+    else if (data.status === "delivered") icon = "✔✔"; // double gray tick
+    else icon = "✔"; // single tick
+    // You can use emoji or SVG here
+    timeLabel.innerHTML += ` <span style="color:${data.status === "read" ? "#2563eb" : "#bababa"};">${icon}</span>`;
+  });
+}
+bubbleDiv.appendChild(timeLabel);
+
 
       if (sender === "user" && messageKey) {
         const msgActions = document.createElement("div");
@@ -592,9 +632,10 @@
       const input = document.getElementById("input");
       const msg = (customText || input.value).trim();
       if (!msg) return;
-      db.ref("chats/" + sessionId).push({
-        sender: "user", message: msg, type: "text", timestamp: Date.now()
-      });
+db.ref("chats/" + sessionId).push({
+  sender: "user", message: msg, type: "text", timestamp: Date.now(), status: "sent"
+});
+
       if (!customText) input.value = "";
     }
 
@@ -757,6 +798,23 @@
         }
       });
     }
+
+function markAllAdminMessagesAsRead() {
+  if (!sessionId) return;
+  const messagesRef = db.ref("chats/" + sessionId);
+  messagesRef.once("value", (snapshot) => {
+    const messages = snapshot.val() || {};
+    Object.entries(messages).forEach(([msgId, msg]) => {
+      const sender = (msg.sender || "").toLowerCase();
+      // Only mark admin/agent/bot messages as read if not already read
+      if ((sender === "admin" || sender === "agent" || sender === "bot") && msg.status !== "read") {
+        messagesRef.child(msgId).update({ status: "read" });
+      }
+    });
+  });
+}
+
+
 
 
     function setTyping(isTyping) {
