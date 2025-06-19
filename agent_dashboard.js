@@ -753,22 +753,22 @@ function getStatusDotHtml(userId) {
   const state = userStatus?.state || "offline";
 
   // Define colors for different states
-  const color = state === "online" ? "#13d157"   // Green for online
-    : state === "away" ? "#ff9500"   // Orange for away  
-      : "#bbb";                          // Grey for offline
+  const color = state === "online" ? "#03d500"   // Green for online
+    : state === "away" ? "#fd7b1f"   // Orange for away  
+      : "#919191";                          // Grey for offline
 
   return `<span class="user-status-dot"
     style="
-      position: absolute;
-      bottom: 45px;
-      right: 45px;
-      width: 15px;
-      height: 15px;
-      border-radius: 50%;
-      background: ${color};
-      border: 2px solid white;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.3);
-      z-index: 2;
+position: absolute;
+    bottom: 45px;
+    right: 45px;
+    width: 15px;
+    height: 15px;
+    border-radius: 50%;
+    background: ${color};
+    border: 2px solid white;
+    /* box-shadow: 0 0 6px 3px rgba(0, 0, 0, 0.3); */
+    z-index: 2;
     "></span>`;
 }
 
