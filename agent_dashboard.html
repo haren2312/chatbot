@@ -1,96 +1,122 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Agent Panel - Enterprise Chat</title>
   <link rel="stylesheet" href="agent_dashboard.css">
   <link href="https://fonts.googleapis.com/css?family=Inter:400,600,700&display=swap" rel="stylesheet">
 </head>
+
 <body>
 
-<!-- NAV BAR (vertical, left) -->
-<div class="nav-bar" id="navBar">
-  <button class="nav-toggle" id="navToggle">
-    <span></span>
-    <span></span>
-    <span></span>
-  </button>
-  <ul class="nav-menu">
-    <li class="nav-sec" title="Search">🔍</li>
-    <li class="nav-item" title="User">👤</li>
-    <li class="nav-item" title="Chats" id="nav-chat">🗪</li>
-    <li class="nav-item" id="nav-ai" title="AI"><img src="images/ai.png" alt="AI"></li>
-  </ul>
-  <div class="nav-settings" id="navAdminProfile"  onclick="openProfileModal()">
-  <!-- Avatar HTML inserted here by JS -->
-</div>
-</div>
+  <!-- NAV BAR (vertical, left) -->
+  <div class="nav-bar" id="navBar">
+    <button class="nav-toggle" id="navToggle">
+      <span></span>
+      <span></span>
+      <span></span>
+    </button>
+    <ul class="nav-menu">
+      <li class="nav-sec" title="Search">🔍</li>
+      <li class="nav-item" title="User">👤</li>
+      <li class="nav-item" title="Chats" id="nav-chat">🗪</li>
+      <li class="nav-item" id="nav-ai" title="AI"><img src="images/ai.png" alt="AI"></li>
+    </ul>
+    <div class="nav-settings" id="navAdminProfile" onclick="openProfileModal()">
+      <!-- Avatar HTML inserted here by JS -->
+    </div>
+  </div>
 
 
-<div class="container">
-  <!-- SIDEBAR with filter bar -->
-  <div class="sidebar">
-    <div class="filter-bar" style="display: flex; gap: 10px; align-items: center;">
-  <label style="font-weight: 600; color: #545454; font-size: 11px;">Filter</label>
-  <select id="sessionSortMode" style="padding:5px 10px; border-radius: 0px; border: 1px solid #eaeaea;">
-    <option value="az">A-Z</option>
-    <option value="za">Z-A</option>
-    <option value="latest" selected>Newest</option>
-    <option value="oldest">Oldest</option>
-  </select>
-  <input id="searchInput" type="text" placeholder="🔍 Search User"
-    style="flex: 1;
+  <div class="container">
+    <!-- SIDEBAR with filter bar -->
+    <div class="sidebar">
+      <div class="filter-bar" style="display: flex; gap: 10px; align-items: center;">
+        <label style="font-weight: 600; color: #545454; font-size: 11px;">Filter</label>
+        <select id="sessionSortMode" style="padding:5px 10px; border-radius: 0px; border: 1px solid #eaeaea;">
+          <option value="az">A-Z</option>
+          <option value="za">Z-A</option>
+          <option value="latest" selected>Newest</option>
+          <option value="oldest">Oldest</option>
+        </select>
+        <input id="searchInput" type="text" placeholder="🔍 Search User" style="flex: 1;
     min-width: 100px;
     max-width: 130px;
     padding: 5px 10px;
     /* border-radius: 6px; */
     border: 1px solid #eaeaea;
     margin-left: 40px;" />
-</div>
+      </div>
 
-    <div id="sessionList">
-      <div class="loading">Loading sessions...</div>
+      <div id="sessionList">
+        <div class="loading">Loading sessions...</div>
+      </div>
     </div>
-  </div>
 
-  <!-- MAIN CHAT + USER INFO SECTION -->
-  <div class="chat-area">
-    <!-- CHAT PANEL (center column) -->
-    <div style="flex: 1; display: flex; flex-direction: column; min-width: 0;">
-<div id="mobileBackBtn" class="mobile-back-btn" style="display:none;">
-  <button onclick="window.closeChatOnMobile()" style="font-size:1.5em;background:none;border:none;color:#2563eb;display:flex;align-items:center;gap:7px;">
-    ← <span style="font-size:1em;">Back</span>
-  </button>
-</div>
-
-      <div class="chat-box" id="chatBox">
-        <div class="empty-state">
-          <h3>Select a chat to view messages</h3>
-          <p>Choose a session from the sidebar to start viewing the conversation</p>
+    <!-- MAIN CHAT + USER INFO SECTION -->
+    <div class="chat-area">
+      <!-- CHAT PANEL (center column) -->
+      <div style="flex: 1; display: flex; flex-direction: column; min-width: 0;">
+        <div id="mobileBackBtn" class="mobile-back-btn" style="display:none;">
+          <button onclick="window.closeChatOnMobile()"
+            style="font-size:1.5em;background:none;border:none;color:#2563eb;display:flex;align-items:center;gap:7px;">
+            ← <span style="font-size:1em;">Back</span>
+          </button>
         </div>
-      </div>
-      <div id="user-typing-indicator" style="display:none;align-items:center;margin:0px 5px;">
-      <div class="typing-avatar">
-          <img src="images/user-avatar.png" alt="User" style="width:15;height:15;border-radius:50%;" />
-      </div>
-      <div class="typing-bubble">
-          <span id="typing-user-label">User is typing</span>
-          <span class="typing-dots">
-          <span>.</span><span>.</span><span>.</span>
-    </span>
-  </div>
-</div>
+
+        <div class="chat-box" id="chatBox">
+          <div class="empty-state">
+            <h3>Select a chat to view messages</h3>
+            <p>Choose a session from the sidebar to start viewing the conversation</p>
+          </div>
+        </div>
+        <div id="user-typing-indicator" style="display:none;align-items:center;margin:0px 5px;">
+          <div class="typing-avatar">
+            <img src="images/user-avatar.png" alt="User" style="width:15;height:15;border-radius:50%;" />
+          </div>
+          <div class="typing-bubble">
+            <span id="typing-user-label">User is typing</span>
+            <span class="typing-dots">
+              <span>.</span><span>.</span><span>.</span>
+            </span>
+          </div>
+        </div>
 
 
-      <!-- <hr style="width: 90%; margin-left: 45px; border: 1px solid #ebebeb;"> -->
-      
-      <div class="input-group" id="inputGroup" style="display: none;">
-        <input type="text" id="msgInput" placeholder="Type your message..." maxlength="500" autocomplete="off">
-        <button id="emojiBtn">❤︎</button>
-        <input type="file" id="fileInput" accept="image/*" style="display:none;" />
-        <button id="uploadBtn" title="Send Image 📷">🔗</button>
-        <button id="sendBtn" class="sendBtn">➤</button>
+        <!-- <hr style="width: 90%; margin-left: 45px; border: 1px solid #ebebeb;"> -->
+
+        <div class="input-group" id="inputGroup" style="display: none;">
+          <input type="text" id="msgInput" placeholder="Type your message..." maxlength="500" autocomplete="off">
+          <button id="emojiBtn" class="text-bnt"><svg class="chat-svg" xmlns="http://www.w3.org/2000/svg" height="20" width="20"
+              viewBox="0 0 20 20">
+              <path fill="currentColor"
+                d="M7.992 0C3.576 0 0 3.584 0 8s3.576 8 7.992 8C12.416 16 16 12.416 16 8s-3.584-8-8.008-8zM8 14.4A6.398 6.398 0 011.6 8c0-3.536 2.864-6.4 6.4-6.4 3.536 0 6.4 2.864 6.4 6.4 0 3.536-2.864 6.4-6.4 6.4zm2.8-7.2c.664 0 1.2-.536 1.2-1.2 0-.664-.536-1.2-1.2-1.2S9.6 5.336 9.6 6c0 .664.536 1.2 1.2 1.2zm-5.6 0c.664 0 1.2-.536 1.2-1.2 0-.664-.536-1.2-1.2-1.2S4 5.336 4 6c0 .664.536 1.2 1.2 1.2zM8 12.4a4.375 4.375 0 003.456-1.692c.378-.485-.033-1.108-.648-1.108H5.192c-.615 0-1.026.623-.648 1.108A4.375 4.375 0 008 12.4z" />
+            </svg></button>
+
+          <input type="file" id="fileInput" accept="image/*" style="display:none;" />
+
+          <button id="uploadBtn" title="Send Image 📷" class="text-bnt"><svg class="chat-svg" xmlns="http://www.w3.org/2000/svg"
+              height="20" width="20" viewBox="0 0 20 20">
+              <path fill="currentColor"
+                d="M10.546 4.363v7.563c0 1.215-.822 2.32-2.011 2.564A2.55 2.55 0 015.455 12V2.99c0-.723.493-1.397 1.208-1.515.91-.151 1.7.55 1.7 1.434v7.636a.364.364 0 01-.727 0V4.363a.728.728 0 00-1.454 0v6.075c0 .952.683 1.82 1.629 1.916a1.82 1.82 0 002.007-1.809V3.038C9.818 1.52 8.711.161 7.2.014A2.912 2.912 0 004 2.91v8.913c0 2.088 1.522 3.955 3.6 4.158A4.005 4.005 0 0012 12V4.363a.728.728 0 00-1.454 0z" />
+            </svg></button>
+
+          <button id="sendBtn" class="text-bnt"><svg class="chat-svg" xmlns="http://www.w3.org/2000/svg" height="20"
+              width="20" viewBox="0 0 20 20">
+              <clipPath id="a">
+                <path fill="currentColor"
+                  d="M14.84.054a.864.864 0 011.107 1.107l-5.189 14.27a.864.864 0 01-1.423.316L6.15 12.56a.864.864 0 01-.056-1.16l7.03-8.522L4.6 9.908a.864.864 0 01-1.16-.056L.252 6.666A.864.864 0 01.57 5.243z" />
+              </clipPath>
+              <g clip-path="url(#a)" transform="rotate(45 6.516 4.341)">
+                <path d="M0 0h16v16H0z" />
+              </g>
+            </svg></button>
+          <div id="emoji-picker"
+            style="display:none;position:absolute;bottom:40px;left:110px;z-index:1000;background:#fff;padding:6px 10px;border:1px solid #ddd;border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,0.1);">
+          </div>
+        </div>
       </div>
       <div class="emoji-picker" id="emojiPicker" style="display:none;">
         <span>😊</span><span>😂</span><span>😍</span><span>🤔</span><span>👍</span><span>❤️</span><span>🔥</span><span>✨</span>
@@ -100,53 +126,53 @@
     <!-- USER INFO PANEL (right column) -->
     <div id="user-info-list" class="user-info-section"></div>
   </div>
-</div>
-
-<!-- Edit User Modal -->
-<div id="modalBackdrop" class="modal-backdrop" style="display:none;"></div>
-<div id="editModal" class="edit-modal" data-session-id="" style="display:none;">
-  <div class="edit-user-quote-box">
-    <label for="editName">Name</label>
-    <input type="text" id="editName" placeholder="Enter name">
-    <label for="editEmail">Email</label>
-    <input type="email" id="editEmail" placeholder="Enter email">
-    <label for="editLat">Latitude</label>
-    <input type="number" id="editLat" step="any" placeholder="Enter latitude">
-    <label for="editLng">Longitude</label>
-    <input type="number" id="editLng" step="any" placeholder="Enter longitude">
-    <button onclick="saveUserEdit()">Save</button>
-    <button onclick="closeModal()" style="background:#ccc;color:#000;">Cancel</button>
   </div>
-</div>
 
-<div id="profileModal" class="profile-modal" style="display:none;">
-  <div class="profile-modal-content">
-    <span class="profile-modal-close" onclick="closeProfileModal()">&times;</span>
-    <h2>Edit Profile</h2>
-    <form id="profileEditForm" onsubmit="return saveProfileEdit();">
-    <div style="text-align:center;">
-    <img id="profilePicPreview" src="images/logo.jpg" alt="Profile Picture"
-       style="width:80px;height:80px;border-radius:50%;margin-bottom:10px;object-fit:cover;">
-        <br>
-    <input type="file" id="profilePicInput" accept="images/*" style="margin-top:10px;">
-</div>
-      <label>Name</label>
-      <input type="text" id="profileEditName" required />
-      <label>Email</label>
-      <input type="email" id="profileEditEmail" required />
-      <label>City</label>
-      <input type="text" id="profileEditCity" />
-      <label>Country</label>
-      <input type="text" id="profileEditCountry" maxlength="2" placeholder="IN" />
-      <button type="submit" id="save-btn" class="save-btn">Save Changes</button>
-    </form>
+  <!-- Edit User Modal -->
+  <div id="modalBackdrop" class="modal-backdrop" style="display:none;"></div>
+  <div id="editModal" class="edit-modal" data-session-id="" style="display:none;">
+    <div class="edit-user-quote-box">
+      <label for="editName">Name</label>
+      <input type="text" id="editName" placeholder="Enter name">
+      <label for="editEmail">Email</label>
+      <input type="email" id="editEmail" placeholder="Enter email">
+      <label for="editLat">Latitude</label>
+      <input type="number" id="editLat" step="any" placeholder="Enter latitude">
+      <label for="editLng">Longitude</label>
+      <input type="number" id="editLng" step="any" placeholder="Enter longitude">
+      <button onclick="saveUserEdit()">Save</button>
+      <button onclick="closeModal()" style="background:#ccc;color:#000;">Cancel</button>
+    </div>
   </div>
-</div>
-<div id="profileModalBackdrop" class="modal-backdrop" style="display:none;"></div>
+
+  <div id="profileModal" class="profile-modal" style="display:none;">
+    <div class="profile-modal-content">
+      <span class="profile-modal-close" onclick="closeProfileModal()">&times;</span>
+      <h2>Edit Profile</h2>
+      <form id="profileEditForm" onsubmit="return saveProfileEdit();">
+        <div style="text-align:center;">
+          <img id="profilePicPreview" src="images/logo.jpg" alt="Profile Picture"
+            style="width:80px;height:80px;border-radius:50%;margin-bottom:10px;object-fit:cover;">
+          <br>
+          <input type="file" id="profilePicInput" accept="images/*" style="margin-top:10px;">
+        </div>
+        <label>Name</label>
+        <input type="text" id="profileEditName" required />
+        <label>Email</label>
+        <input type="email" id="profileEditEmail" required />
+        <label>City</label>
+        <input type="text" id="profileEditCity" />
+        <label>Country</label>
+        <input type="text" id="profileEditCountry" maxlength="2" placeholder="IN" />
+        <button type="submit" id="save-btn" class="save-btn">Save Changes</button>
+      </form>
+    </div>
+  </div>
+  <div id="profileModalBackdrop" class="modal-backdrop" style="display:none;"></div>
 
 
-<!-- Notification Toast -->
-<div id="notification-toast" style="
+  <!-- Notification Toast -->
+  <div id="notification-toast" style="
   display: none;
   position: fixed;
   top: 30px;
@@ -166,20 +192,21 @@
   opacity: 0.0;
   transition: opacity .25s;
 "></div>
-<script>
-  const navBar = document.getElementById('navBar');
-  const navToggle = document.getElementById('navToggle');
-  navToggle.addEventListener('click', function() {
-    navBar.classList.toggle('collapsed');
-  });
-</script>
-<!-- Firebase SDK -->
-<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <script>
+    const navBar = document.getElementById('navBar');
+    const navToggle = document.getElementById('navToggle');
+    navToggle.addEventListener('click', function () {
+      navBar.classList.toggle('collapsed');
+    });
+  </script>
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
-<script src="agent_dashboard.js"></script>
+  <script src="agent_dashboard.js"></script>
 
 
 </body>
+
 </html>

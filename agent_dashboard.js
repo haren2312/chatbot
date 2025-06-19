@@ -1,31 +1,31 @@
-  // === FIREBASE CONFIGURATION ===
-  const firebaseConfig = {
-    apiKey: "AIzaSyCuzXtnMzjJ76N8PH-I4ZND5NnyVfD3XjE",
-    authDomain: "chatbot-0405.firebaseapp.com",
-    databaseURL: "https://chatbot-0405-default-rtdb.firebaseio.com",
-    projectId: "chatbot-0405",
-    storageBucket: "chatbot-0405.appspot.com",
-    messagingSenderId: "62504000476",
-    appId: "1:62504000476:web:c1a92e6fa1db26b1668d19"
-  };
-  firebase.initializeApp(firebaseConfig);
-  const db = firebase.database();
-  
+// === FIREBASE CONFIGURATION ===
+const firebaseConfig = {
+  apiKey: "AIzaSyCuzXtnMzjJ76N8PH-I4ZND5NnyVfD3XjE",
+  authDomain: "chatbot-0405.firebaseapp.com",
+  databaseURL: "https://chatbot-0405-default-rtdb.firebaseio.com",
+  projectId: "chatbot-0405",
+  storageBucket: "chatbot-0405.appspot.com",
+  messagingSenderId: "62504000476",
+  appId: "1:62504000476:web:c1a92e6fa1db26b1668d19"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
 
-  // === GLOBAL STATE ===
-  let selectedSessionId = null;
-  let allSessions = {};
-  let allUserData = {};
-  let currentChatListener = null;
-  let sessionSortMode = "latest"; // latest, oldest, az, za
-  let sessionFilterMode = "all";
-  window.lastViewedTimestamp = {};
-  window.editMessage = editMessage;
-  window.deleteMessage = deleteMessage;
-  window.userPresence = {};
-  const ADMIN_ID = "admin";
 
-  window.lastViewedTimestamp = {};
+// === GLOBAL STATE ===
+let selectedSessionId = null;
+let allSessions = {};
+let allUserData = {};
+let currentChatListener = null;
+let sessionSortMode = "latest"; // latest, oldest, az, za
+let sessionFilterMode = "all";
+window.lastViewedTimestamp = {};
+window.editMessage = editMessage;
+window.deleteMessage = deleteMessage;
+window.userPresence = {};
+const ADMIN_ID = "admin";
+
+window.lastViewedTimestamp = {};
 
 db.ref("admin_last_seen/" + ADMIN_ID).once("value", (snapshot) => {
   window.lastViewedTimestamp = snapshot.val() || {};
@@ -34,7 +34,7 @@ db.ref("admin_last_seen/" + ADMIN_ID).once("value", (snapshot) => {
 });
 
 
-  let presenceTimers = {
+let presenceTimers = {
   away: null,
   offline: null
 };
@@ -102,13 +102,13 @@ function refreshPresenceOnActivity() {
 
 function startPresenceTracking() {
   const isOfflineForDatabase = { state: 'offline', last_changed: firebase.database.ServerValue.TIMESTAMP };
-  const isOnlineForDatabase  = { state: 'online', last_changed: firebase.database.ServerValue.TIMESTAMP };
-  const isAwayForDatabase    = { state: 'away', last_changed: firebase.database.ServerValue.TIMESTAMP };
+  const isOnlineForDatabase = { state: 'online', last_changed: firebase.database.ServerValue.TIMESTAMP };
+  const isAwayForDatabase = { state: 'away', last_changed: firebase.database.ServerValue.TIMESTAMP };
 
   const connectedRef = db.ref('.info/connected');
-  connectedRef.on('value', function(snapshot) {
+  connectedRef.on('value', function (snapshot) {
     if (snapshot.val() === false) return;
-    userStatusDatabaseRef.onDisconnect().set(isOfflineForDatabase).then(function() {
+    userStatusDatabaseRef.onDisconnect().set(isOfflineForDatabase).then(function () {
       userStatusDatabaseRef.set(isOnlineForDatabase);
     });
   });
@@ -127,38 +127,38 @@ function startPresenceTracking() {
 
 
 
-  
 
-document.addEventListener('DOMContentLoaded', function() {
+
+document.addEventListener('DOMContentLoaded', function () {
   // Grab all relevant elements, log errors if missing
-  const profilePicInput   = document.getElementById('profilePicInput');
+  const profilePicInput = document.getElementById('profilePicInput');
   const profilePicPreview = document.getElementById('profilePicPreview');
-  const profileModal      = document.getElementById('profileModal');
-  const modalBackdrop     = document.getElementById('profileModalBackdrop');
-  const profileEditName   = document.getElementById('profileEditName');
-  const profileEditEmail  = document.getElementById('profileEditEmail');
-  const profileEditCity   = document.getElementById('profileEditCity');
-  const profileEditCountry= document.getElementById('profileEditCountry');
-  const saveProfileEdit    = document.getElementById('save-btn');
+  const profileModal = document.getElementById('profileModal');
+  const modalBackdrop = document.getElementById('profileModalBackdrop');
+  const profileEditName = document.getElementById('profileEditName');
+  const profileEditEmail = document.getElementById('profileEditEmail');
+  const profileEditCity = document.getElementById('profileEditCity');
+  const profileEditCountry = document.getElementById('profileEditCountry');
+  const saveProfileEdit = document.getElementById('save-btn');
 
   // Null-check all elements
-  if (!profilePicInput)    console.warn('[profilePicInput] not found');
-  if (!profilePicPreview)  console.warn('[profilePicPreview] not found');
-  if (!profileModal)       console.warn('[profileModal] not found');
-  if (!modalBackdrop)      console.warn('[profileModalBackdrop] not found');
-  if (!profileEditName)    console.warn('[profileEditName] not found');
-  if (!profileEditEmail)   console.warn('[profileEditEmail] not found');
-  if (!profileEditCity)    console.warn('[profileEditCity] not found');
+  if (!profilePicInput) console.warn('[profilePicInput] not found');
+  if (!profilePicPreview) console.warn('[profilePicPreview] not found');
+  if (!profileModal) console.warn('[profileModal] not found');
+  if (!modalBackdrop) console.warn('[profileModalBackdrop] not found');
+  if (!profileEditName) console.warn('[profileEditName] not found');
+  if (!profileEditEmail) console.warn('[profileEditEmail] not found');
+  if (!profileEditCity) console.warn('[profileEditCity] not found');
   if (!profileEditCountry) console.warn('[profileEditCountry] not found');
-  if (!saveProfileEdit)     console.warn('[save-btn] not found');
+  if (!saveProfileEdit) console.warn('[save-btn] not found');
 
   // Profile Picture Change: Preview logic
   if (profilePicInput && profilePicPreview) {
-    profilePicInput.addEventListener('change', function() {
+    profilePicInput.addEventListener('change', function () {
       const file = this.files[0];
       if (file) {
         const reader = new FileReader();
-        reader.onload = function(e) {
+        reader.onload = function (e) {
           profilePicPreview.src = e.target.result;
           window.newProfilePicData = e.target.result;
         };
@@ -168,11 +168,11 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 
   // Expose modal open/close globally, defensively
-  window.openProfileModal = function() {
+  window.openProfileModal = function () {
     if (profileModal) profileModal.style.display = "flex";
     if (modalBackdrop) modalBackdrop.style.display = "block";
   };
-  window.closeProfileModal = function() {
+  window.closeProfileModal = function () {
     if (profileModal) profileModal.style.display = "none";
     if (modalBackdrop) modalBackdrop.style.display = "none";
   };
@@ -184,25 +184,25 @@ document.addEventListener('DOMContentLoaded', function() {
 
   // Save profile logic (replace with your Firebase logic as needed)
   if (saveProfileEdit) {
-    saveProfileEdit.onclick = function() {
+    saveProfileEdit.onclick = function () {
       // Defensive: get field values only if fields exist
-      const name    = profileEditName   ? profileEditName.value.trim()   : '';
-      const email   = profileEditEmail  ? profileEditEmail.value.trim()  : '';
-      const city    = profileEditCity   ? profileEditCity.value.trim()   : '';
-      const country = profileEditCountry? profileEditCountry.value.trim(): '';
+      const name = profileEditName ? profileEditName.value.trim() : '';
+      const email = profileEditEmail ? profileEditEmail.value.trim() : '';
+      const city = profileEditCity ? profileEditCity.value.trim() : '';
+      const country = profileEditCountry ? profileEditCountry.value.trim() : '';
 
       // Validation: show warning if required fields are missing
       if (!name || !email) {
-  Swal.fire({ icon: "warning", text: "Name and Email are required" });
-  return;
-}
+        Swal.fire({ icon: "warning", text: "Name and Email are required" });
+        return;
+      }
 
 
       // You can plug in your Firebase/database logic here, e.g.:
       // db.ref("users/" + userId).update({ name, email, city, country, ... })
       //   .then(() => alert("Profile updated!"))
       //   .catch((err) => alert("Update failed: " + err.message));
-      
+
       // Just close modal for demo:
       window.closeProfileModal();
     };
@@ -218,13 +218,13 @@ const userId = 'userId';
 const userStatusDatabaseRef = db.ref('/status/' + userId);
 
 const isOfflineForDatabase = { state: 'offline', last_changed: firebase.database.ServerValue.TIMESTAMP };
-const isOnlineForDatabase  = { state: 'online', last_changed: firebase.database.ServerValue.TIMESTAMP };
-const isAwayForDatabase    = { state: 'away', last_changed: firebase.database.ServerValue.TIMESTAMP };
+const isOnlineForDatabase = { state: 'online', last_changed: firebase.database.ServerValue.TIMESTAMP };
+const isAwayForDatabase = { state: 'away', last_changed: firebase.database.ServerValue.TIMESTAMP };
 
 const connectedRef = db.ref('.info/connected');
-connectedRef.on('value', function(snapshot) {
+connectedRef.on('value', function (snapshot) {
   if (snapshot.val() === false) return;
-  userStatusDatabaseRef.onDisconnect().set(isOfflineForDatabase).then(function() {
+  userStatusDatabaseRef.onDisconnect().set(isOfflineForDatabase).then(function () {
     userStatusDatabaseRef.set(isOnlineForDatabase);
   });
 });
@@ -251,7 +251,7 @@ const usersRef = db.ref('/users');
 
 // Fetch all users
 // After fetching all users:
-usersRef.once('value', function(snapshot) {
+usersRef.once('value', function (snapshot) {
   const users = snapshot.val();
   for (const userId in users) {
     setupPresenceListener(userId);
@@ -262,7 +262,7 @@ usersRef.once('value', function(snapshot) {
 // Listen to all users' presence
 function setupPresenceListener(userId) {
   const statusRef = db.ref('/status/' + userId);
-  statusRef.on('value', function(snapshot) {
+  statusRef.on('value', function (snapshot) {
     window.userPresence[userId] = snapshot.val() || { state: "offline" };
     renderSessions(document.getElementById("searchInput").value.toLowerCase());
     if (selectedSessionId === userId) renderUserInfoPanel();
@@ -272,19 +272,19 @@ function setupPresenceListener(userId) {
 
 function initializePresenceTracking() {
   // First, get all users and set up listeners
-  db.ref('/users').once('value', function(snapshot) {
+  db.ref('/users').once('value', function (snapshot) {
     const users = snapshot.val() || {};
-    
+
     console.log('Setting up presence listeners for users:', Object.keys(users));
-    
+
     // Set up presence listener for each user
     Object.keys(users).forEach(userId => {
       setupPresenceListener(userId);
     });
   });
-  
+
   // Also listen for new users being added
-  db.ref('/users').on('child_added', function(snapshot) {
+  db.ref('/users').on('child_added', function (snapshot) {
     const userId = snapshot.key;
     console.log('New user detected, setting up presence listener:', userId);
     setupPresenceListener(userId);
@@ -292,23 +292,23 @@ function initializePresenceTracking() {
 }
 
 
-  
-  // --- UTILS ---
-  function escapeHtml(unsafe) {
-    if (typeof unsafe !== "string") return "";
-    return unsafe.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
-      .replace(/"/g, "&quot;").replace(/'/g, "&#039;");
-  }
-  function getInitials(name) {
-    if (!name) return "?";
-    const parts = name.split(" ").filter(Boolean);
-    if (parts.length === 1) return parts[0][0].toUpperCase();
-    return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
-  }
+
+// --- UTILS ---
+function escapeHtml(unsafe) {
+  if (typeof unsafe !== "string") return "";
+  return unsafe.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+}
+function getInitials(name) {
+  if (!name) return "?";
+  const parts = name.split(" ").filter(Boolean);
+  if (parts.length === 1) return parts[0][0].toUpperCase();
+  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+}
 
 
 
- // Place this with your other utils at the top
+// Place this with your other utils at the top
 function getAvatarGradient(name = "") {
   const gradients = [
     "#589c7f", // Brightened Teal/green
@@ -342,24 +342,24 @@ function getAvatarGradient(name = "") {
 
 
 function getCountryFlagImg(countryCode = "IN", size = 15) {
-  return `<img src="https://flagcdn.com/${size}x${Math.round(size*0.75)}/${countryCode.toLowerCase()}.png" 
+  return `<img src="https://flagcdn.com/${size}x${Math.round(size * 0.75)}/${countryCode.toLowerCase()}.png" 
     alt="${countryCode.toUpperCase()} flag" style=vertical-align:middle;" />`;
 }
 
 
 
-  function getCountryFlag(countryCode = "IN") {
-    if (!countryCode) return "🏳️";
-    return countryCode.toUpperCase().replace(/./g, char =>
-      String.fromCodePoint(127397 + char.charCodeAt())
-    );
-  }
+function getCountryFlag(countryCode = "IN") {
+  if (!countryCode) return "🏳️";
+  return countryCode.toUpperCase().replace(/./g, char =>
+    String.fromCodePoint(127397 + char.charCodeAt())
+  );
+}
 function notify(message, options = {}) {
   Swal.fire({
     text: message,
     icon: options.type === "error" ? "error" :
-          options.type === "success" ? "success" :
-          options.type === "warning" ? "warning" : "info",
+      options.type === "success" ? "success" :
+        options.type === "warning" ? "warning" : "info",
     background: options.type === "error" ? "#fff0f0" : "#f5fafd",
     color: "#222e3a",
     showConfirmButton: true,
@@ -369,7 +369,7 @@ function notify(message, options = {}) {
 
 
 
-  function getMessageStatusIcon(msg, isRight) {
+function getMessageStatusIcon(msg, isRight) {
   // Only show status for right-side messages (admin/agent/bot)
   if (!isRight) return "";
 
@@ -391,22 +391,22 @@ function notify(message, options = {}) {
 
 
 // Listen for dropdown
-document.getElementById("sessionSortMode").addEventListener("change", function() {
+document.getElementById("sessionSortMode").addEventListener("change", function () {
   sessionSortMode = this.value;
   renderSessions(document.getElementById("searchInput").value.toLowerCase());
 });
 
 // Listen for search bar input
-document.getElementById("searchInput").addEventListener('input', function() {
+document.getElementById("searchInput").addEventListener('input', function () {
   renderSessions(this.value.toLowerCase());
 });
 
 
 // Setup hover/click for msg-menu
 chatBox.querySelectorAll('.message-bubble').forEach(bubble => {
-const msgMenuEl = row.querySelector('.msg-menu');
-if (msgMenuEl) {
-  msgMenuEl.onclick = function(e) {
+  const msgMenuEl = row.querySelector('.msg-menu');
+  if (msgMenuEl) {
+    msgMenuEl.onclick = function (e) {
       e.stopPropagation();
       msgActions.style.display = msgActions.style.display === "flex" ? "none" : "flex";
       // Hide other menus
@@ -521,9 +521,9 @@ function saveProfileEdit() {
   const city = document.getElementById("profileEditCity").value.trim();
   const country = document.getElementById("profileEditCountry").value.trim().toUpperCase();
   if (!currentUserId) {
-  Swal.fire({ icon: "error", text: "User not logged in" });
-  return false;
-}
+    Swal.fire({ icon: "error", text: "User not logged in" });
+    return false;
+  }
   db.ref("users/" + currentUserId).update({ name, email, city, country }).then(() => {
 
     window.ADMIN_PROFILE.avatarUrl = newPhotoUrl; // after upload
@@ -544,8 +544,8 @@ document.getElementById("profileModalBackdrop").onclick = closeProfileModal;
 
 
 
-  // --- SIDEBAR: Session List ---
-  function renderSessions(filter = "") {
+// --- SIDEBAR: Session List ---
+function renderSessions(filter = "") {
   const sessionList = document.getElementById("sessionList");
   sessionList.innerHTML = "";
   const sessionIds = Object.keys(allSessions);
@@ -570,10 +570,10 @@ document.getElementById("profileModalBackdrop").onclick = closeProfileModal;
   });
 
   window.ADMIN_PROFILE = {
-  name: "Admin",
-  initials: "A",
-  avatarUrl: "images/logo.jpg" // updated when profile changes
-};
+    name: "Admin",
+    initials: "A",
+    avatarUrl: "images/logo.jpg" // updated when profile changes
+  };
 
   // 2. Apply sorting (uses global sessionSortMode)
   if (sessionSortMode === "latest") {
@@ -671,16 +671,16 @@ document.getElementById("profileModalBackdrop").onclick = closeProfileModal;
         </div>
       </div>
     `;
-    
-    
+
+
     sessionBtn.onclick = () => {
-  const now = Date.now();
-  window.lastViewedTimestamp[sid] = now;
-  // Persist to Firebase
-  db.ref("admin_last_seen/" + ADMIN_ID + "/" + sid).set(now);
-  loadChat(sid);
-  renderSessions(document.getElementById("searchInput").value.toLowerCase());
-};
+      const now = Date.now();
+      window.lastViewedTimestamp[sid] = now;
+      // Persist to Firebase
+      db.ref("admin_last_seen/" + ADMIN_ID + "/" + sid).set(now);
+      loadChat(sid);
+      renderSessions(document.getElementById("searchInput").value.toLowerCase());
+    };
 
 
     sessionList.appendChild(sessionBtn);
@@ -695,7 +695,7 @@ document.getElementById("profileModalBackdrop").onclick = closeProfileModal;
 db.ref("chats/" + userId)
   .orderByChild("timestamp")
   .limitToLast(1)
-  .once("value", function(snapshot) {
+  .once("value", function (snapshot) {
     // Only handle/display the latest message
   });
 
@@ -721,12 +721,12 @@ function getStatusDotHtml(userId) {
   // Get the user's presence state from the global userPresence object
   const userStatus = window.userPresence?.[userId];
   const state = userStatus?.state || "offline";
-  
+
   // Define colors for different states
   const color = state === "online" ? "#13d157"   // Green for online
-              : state === "away"   ? "#ff9500"   // Orange for away  
-              : "#bbb";                          // Grey for offline
-  
+    : state === "away" ? "#ff9500"   // Orange for away  
+      : "#bbb";                          // Grey for offline
+
   return `<span class="user-status-dot"
     style="
       position: absolute;
@@ -777,14 +777,14 @@ function getLocationMapLink(city, country, lat, lng) {
 
 
 
-  // --- USER INFO PANEL ---
- function renderUserInfoPanel() {
+// --- USER INFO PANEL ---
+function renderUserInfoPanel() {
   const userInfoList = document.getElementById("user-info-list");
   if (!selectedSessionId || !allUserData[selectedSessionId]) {
     userInfoList.innerHTML = "";
     return;
   }
-  
+
   const user = allUserData[selectedSessionId];
   const initials = getInitials(user.name);
   const avatarGradient = getAvatarGradient(user.name + (user.country || "IN"));
@@ -793,14 +793,14 @@ function getLocationMapLink(city, country, lat, lng) {
   const city = user.city || "Unknown City";
   const country = user.country || "IN";
   const countryFlag = getCountryFlagImg(country, 20);
-  
+
   // Get user's current status
   const userStatus = window.userPresence?.[selectedSessionId];
   const statusText = userStatus?.state || "offline";
-  const statusColor = statusText === "online" ? "#13d157" 
-                    : statusText === "away" ? "#ff9500" 
-                    : "#bbb";
-  
+  const statusColor = statusText === "online" ? "#13d157"
+    : statusText === "away" ? "#ff9500"
+      : "#bbb";
+
   // Calculate time (for demo, just show current time)
   const now = new Date();
   const localTime = now.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
@@ -889,10 +889,10 @@ function setUserPresence(userId) {
   // Special Firebase ref: triggers when connection state changes
   const connectedRef = firebase.database().ref(".info/connected");
 
-  connectedRef.on("value", function(snapshot) {
+  connectedRef.on("value", function (snapshot) {
     if (snapshot.val() === true) {
       // Set offline on disconnect
-      presenceRef.onDisconnect().set(amOffline).then(function() {
+      presenceRef.onDisconnect().set(amOffline).then(function () {
         // Set online now
         presenceRef.set(amOnline);
       });
@@ -908,22 +908,22 @@ function setUserPresence(userId) {
 
 
 
-  // --- MODAL ---
-  function openEditModal(sessionId) {
-    const user = allUserData[sessionId] || {};
-    document.getElementById("editModal").setAttribute("data-session-id", sessionId);
-    document.getElementById("editName").value = user.name || "";
-    document.getElementById("editEmail").value = user.email || "";
-    document.getElementById("editLat").value = user.location?.latitude || user.latitude || "";
-    document.getElementById("editLng").value = user.location?.longitude || user.longitude || "";
-    document.getElementById("editModal").style.display = "block";
-    document.getElementById("modalBackdrop").style.display = "block";
-  }
-  function closeModal() {
-    document.getElementById("editModal").style.display = "none";
-    document.getElementById("modalBackdrop").style.display = "none";
-  }
- function saveUserEdit() {
+// --- MODAL ---
+function openEditModal(sessionId) {
+  const user = allUserData[sessionId] || {};
+  document.getElementById("editModal").setAttribute("data-session-id", sessionId);
+  document.getElementById("editName").value = user.name || "";
+  document.getElementById("editEmail").value = user.email || "";
+  document.getElementById("editLat").value = user.location?.latitude || user.latitude || "";
+  document.getElementById("editLng").value = user.location?.longitude || user.longitude || "";
+  document.getElementById("editModal").style.display = "block";
+  document.getElementById("modalBackdrop").style.display = "block";
+}
+function closeModal() {
+  document.getElementById("editModal").style.display = "none";
+  document.getElementById("modalBackdrop").style.display = "none";
+}
+function saveUserEdit() {
   const sessionId = document.getElementById("editModal").getAttribute("data-session-id");
   const name = document.getElementById("editName").value.trim();
   const email = document.getElementById("editEmail").value.trim();
@@ -932,10 +932,10 @@ function setUserPresence(userId) {
   const profilePic = window.newProfilePicData || ""; // base64 or empty
 
   if (!sessionId || !db) return notify("Invalid session or database not initialized.", { type: "error" });
-if (!name || !email) {
-  Swal.fire({ icon: "warning", text: "Name and Email are required" });
-  return;
-}
+  if (!name || !email) {
+    Swal.fire({ icon: "warning", text: "Name and Email are required" });
+    return;
+  }
 
   // Safe update
   const userData = {
@@ -946,17 +946,17 @@ if (!name || !email) {
   db.ref("users/" + sessionId).update(userData)
     .then(() => {
       Swal.fire({
-  text: "User profile updated!",
-  icon: "success",
-  showConfirmButton: true,
-  confirmButtonText: "OK",
-  position: 'center',
-  showConfirmButton: false,
-  timer: 2000,
-  timerProgressBar: true,
-  background: "#f5fafd",
-  color: "#222e3a"
-});
+        text: "User profile updated!",
+        icon: "success",
+        showConfirmButton: true,
+        confirmButtonText: "OK",
+        position: 'center',
+        showConfirmButton: false,
+        timer: 2000,
+        timerProgressBar: true,
+        background: "#f5fafd",
+        color: "#222e3a"
+      });
 
       closeModal();
       window.newProfilePicData = undefined; // Reset
@@ -967,7 +967,7 @@ if (!name || !email) {
 }
 
 
-  function markMessagesAsRead(sessionId, currentUserType) {
+function markMessagesAsRead(sessionId, currentUserType) {
   const messagesRef = db.ref("chats/" + sessionId);
   messagesRef.once("value", (snapshot) => {
     const messages = snapshot.val() || {};
@@ -1014,7 +1014,7 @@ function renderAdminSidebarAvatar() {
   const avatarContainer = document.getElementById("navAdminProfile");
   const img = new Image();
   img.src = ADMIN_PROFILE.avatarUrl;
-  img.onload = function() {
+  img.onload = function () {
     const dot = getStatusDotHtml(window.currentUserId || ""); // YOUR OWN STATUS
     avatarContainer.innerHTML = `
       <div style="position:relative;">
@@ -1024,7 +1024,7 @@ function renderAdminSidebarAvatar() {
         ${dot}
       </div>`;
   };
-  img.onerror = function() {
+  img.onerror = function () {
     avatarContainer.innerHTML = `<div class="sidebar-admin-avatar">${ADMIN_PROFILE.initials}</div>`;
   };
 }
@@ -1037,7 +1037,7 @@ renderAdminSidebarAvatar();
 
 
 
-  // --- CHAT PANEL ---
+// --- CHAT PANEL ---
 function renderChatMessages(chatData) {
   const chatBox = document.getElementById('chatBox');
   chatBox.innerHTML = "";
@@ -1048,74 +1048,74 @@ function renderChatMessages(chatData) {
   const messagesArr = Object.entries(chatData)
     .map(([msgId, msg]) => ({ ...msg, _id: msgId }))
     .sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
-  
+
   let lastMessageDate = null;
-  
+
   messagesArr.forEach((msg) => {
-  const dateObj = msg.timestamp ? new Date(msg.timestamp) : new Date();
-  const day = dateObj.toLocaleDateString();
-  const timeString = dateObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true });
+    const dateObj = msg.timestamp ? new Date(msg.timestamp) : new Date();
+    const day = dateObj.toLocaleDateString();
+    const timeString = dateObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true });
 
-  // FIX: Now includes bot as right side
-  let senderType = (msg.sender || "").toLowerCase();
-  let isRight = senderType === "admin" || senderType === "agent" || senderType === "bot";
-  let avatarHtml = "";
+    // FIX: Now includes bot as right side
+    let senderType = (msg.sender || "").toLowerCase();
+    let isRight = senderType === "admin" || senderType === "agent" || senderType === "bot";
+    let avatarHtml = "";
 
-  if (isRight) {
-    // Bot/Admin/Agent avatar
-    avatarHtml = `<div class="message-avatar" style="padding:2px;background:#fff; ">
+    if (isRight) {
+      // Bot/Admin/Agent avatar
+      avatarHtml = `<div class="message-avatar" style="padding:2px;background:#fff; ">
       <img src="${window.ADMIN_PROFILE.avatarUrl}" alt="Bot/Admin" style="width:32px;height:32px;border-radius:50%;" />
     </div>`;
-} else if (isRight) {
-  // === ADMIN/AGENT AVATAR ===
-  if (window.ADMIN_PROFILE && window.ADMIN_PROFILE.avatarUrl) {
-    avatarHtml = `<div class="message-avatar" style="padding:2px;background:#fff;">
+    } else if (isRight) {
+      // === ADMIN/AGENT AVATAR ===
+      if (window.ADMIN_PROFILE && window.ADMIN_PROFILE.avatarUrl) {
+        avatarHtml = `<div class="message-avatar" style="padding:2px;background:#fff;">
       <img src="${window.ADMIN_PROFILE.avatarUrl}" alt="Admin" style="width:32px;height:32px;border-radius:50%;" />
     </div>`;
-  } else {
-    avatarHtml = `<div class="message-avatar" style="background:#2563eb;color:#fff;">A</div>`;
-  }
-} else {
-  // === USER AVATAR ===
-  const userData = allUserData[selectedSessionId] || {};
-  if (userData.profilePic) {
-    avatarHtml = `<div class="message-avatar" style="padding:2px;background:#fff;">
+      } else {
+        avatarHtml = `<div class="message-avatar" style="background:#2563eb;color:#fff;">A</div>`;
+      }
+    } else {
+      // === USER AVATAR ===
+      const userData = allUserData[selectedSessionId] || {};
+      if (userData.profilePic) {
+        avatarHtml = `<div class="message-avatar" style="padding:2px;background:#fff;">
       <img src="${userData.profilePic}" alt="User" style="width:32px;height:32px;border-radius:50%;" />
     </div>`;
-  } else {
-    let name = userData.name || msg.sender || "";
-    let initials = getInitials(name);
-    let avatarColor = getAvatarGradient(name + (userData.country || "IN"));
-    avatarHtml = `<div class="message-avatar" style="background:${avatarColor};color:#fff;">${initials}</div>`;
-  }
-}
+      } else {
+        let name = userData.name || msg.sender || "";
+        let initials = getInitials(name);
+        let avatarColor = getAvatarGradient(name + (userData.country || "IN"));
+        avatarHtml = `<div class="message-avatar" style="background:${avatarColor};color:#fff;">${initials}</div>`;
+      }
+    }
     // Message Content
-let messageContent = "";
-let bubbleStyle = '';
+    let messageContent = "";
+    let bubbleStyle = '';
 
-if (msg.type === "image" && msg.message) {
-  messageContent = `
+    if (msg.type === "image" && msg.message) {
+      messageContent = `
     <img src="${escapeHtml(msg.message)}" alt="image" onclick="window.open('${escapeHtml(msg.message)}','_blank')" />
     <div class="msg-meta">${timeString} ${getMessageStatusIcon(msg, isRight)}</div>
     <span class="msg-menu" title="More" data-msg-id="${msg._id}">⋮</span>
   `;
-  bubbleStyle = "display:flex;align-items:flex-end;gap:8px;background:transparent;padding:0;margin:0;box-shadow:none;border:none;";
-} else {
-  messageContent = escapeHtml(msg.message || "");
-  if (isRight) {
-    bubbleStyle = "background:#fff;color:#2563eb;";
-  } else {
-    bubbleStyle = "background:linear-gradient(98deg, #2563eb 90%, #1877f2 100%);color:#fff;";
-  }
-}
+      bubbleStyle = "display:flex;align-items:flex-end;gap:8px;background:transparent;padding:0;margin:0;box-shadow:none;border:none;";
+    } else {
+      messageContent = escapeHtml(msg.message || "");
+      if (isRight) {
+        bubbleStyle = "background:#fff;color:#2563eb;";
+      } else {
+        bubbleStyle = "background:linear-gradient(98deg, #2563eb 90%, #1877f2 100%);color:#fff;";
+      }
+    }
 
 
     // Message bubble HTML
     // At the top of your .forEach((msg) => { ... })
-const canEditDelete = senderType === "admin" || senderType === "agent" || senderType === "bot"; // or whatever logic you want
+    const canEditDelete = senderType === "admin" || senderType === "agent" || senderType === "bot"; // or whatever logic you want
 
-// Message bubble HTML, add 3-dot menu if right-side (admin/bot/agent), can do for user too if desired
-chatBox.innerHTML += `
+    // Message bubble HTML, add 3-dot menu if right-side (admin/bot/agent), can do for user too if desired
+    chatBox.innerHTML += `
   <div class="message-row ${isRight ? "self" : senderType}" style="position:relative;">
     ${!isRight ? avatarHtml : ""}
     <div class="message-bubble" style="${bubbleStyle}position:relative;" data-msg-id="${msg._id}">
@@ -1131,11 +1131,11 @@ chatBox.innerHTML += `
     ${isRight ? avatarHtml : ""}
   </div>
 `;
-});
+  });
 
   chatBox.scrollTop = chatBox.scrollHeight;
-   chatBox.querySelectorAll('.msg-menu').forEach(menu => {
-    menu.onclick = function(e) {
+  chatBox.querySelectorAll('.msg-menu').forEach(menu => {
+    menu.onclick = function (e) {
       e.stopPropagation();
       const msgId = this.getAttribute('data-msg-id');
       chatBox.querySelectorAll('.msg-actions').forEach(a => a.style.display = "none");
@@ -1146,7 +1146,7 @@ chatBox.innerHTML += `
 
   // Edit
   chatBox.querySelectorAll('.edit-btn').forEach(btn => {
-    btn.onclick = function(e) {
+    btn.onclick = function (e) {
       e.stopPropagation();
       const msgId = this.getAttribute('data-msg-id');
       editMessage(msgId);
@@ -1156,7 +1156,7 @@ chatBox.innerHTML += `
 
   // Delete
   chatBox.querySelectorAll('.delete-btn').forEach(btn => {
-    btn.onclick = function(e) {
+    btn.onclick = function (e) {
       e.stopPropagation();
       const msgId = this.getAttribute('data-msg-id');
       deleteMessage(msgId);
@@ -1166,7 +1166,7 @@ chatBox.innerHTML += `
 
   // Copy
   chatBox.querySelectorAll('.copy-btn').forEach(btn => {
-    btn.onclick = function(e) {
+    btn.onclick = function (e) {
       e.stopPropagation();
       const msgId = this.getAttribute('data-msg-id');
       const msgContent = chatBox.querySelector(`.message-bubble[data-msg-id="${msgId}"] .msg-content`).textContent || "";
@@ -1194,7 +1194,7 @@ chatBox.innerHTML += `
 // Attach menu toggle
 
 
-  // --- Chat selection & loading ---
+// --- Chat selection & loading ---
 let currentChatListeners = {};
 let messagesMap = {};
 
@@ -1243,7 +1243,7 @@ function loadChat(sessionId) {
 
   renderUserInfoPanel();
   document.getElementById("inputGroup").style.display = "flex";
-  
+
 }
 
 
@@ -1276,29 +1276,29 @@ function renderSingleMessage(msg, msgId, chatBox, messagesMap) {
     }
   }
 
-let messageContent = "";
-let bubbleStyle = '';
+  let messageContent = "";
+  let bubbleStyle = '';
 
-if (msg.type === "image" && msg.message) {
-  // Only pure image, no inline styling needed
-  messageContent = `<img src="${escapeHtml(msg.message)}" alt="image" onclick="window.open('${escapeHtml(msg.message)}','_blank')" />`;
-  bubbleStyle = "background:transparent;padding:0;margin:0;box-shadow:none;border:none;";
-} else {
-  messageContent = escapeHtml(msg.message || "");
-  if (isRight) {
-    bubbleStyle = "background:#fff;color:#2563eb;";
+  if (msg.type === "image" && msg.message) {
+    // Only pure image, no inline styling needed
+    messageContent = `<img src="${escapeHtml(msg.message)}" alt="image" onclick="window.open('${escapeHtml(msg.message)}','_blank')" />`;
+    bubbleStyle = "background:transparent;padding:0;margin:0;box-shadow:none;border:none;";
   } else {
-    bubbleStyle = "background:linear-gradient(98deg, #2563eb 90%, #1877f2 100%);color:#fff;";
+    messageContent = escapeHtml(msg.message || "");
+    if (isRight) {
+      bubbleStyle = "background:#fff;color:#2563eb;";
+    } else {
+      bubbleStyle = "background:linear-gradient(98deg, #2563eb 90%, #1877f2 100%);color:#fff;";
+    }
   }
-}
 
 
   // Build the whole row
   const row = document.createElement("div");
   row.className = `message-row ${isRight ? "self" : senderType}`;
   row.setAttribute("data-msg-id", msgId);
-if (msg.type === "image" && msg.message) {
-  row.innerHTML += `
+  if (msg.type === "image" && msg.message) {
+    row.innerHTML += `
     <div class="message-row ${isRight ? "self" : senderType}" style="position:relative;width: 400px;
 ">
       ${!isRight ? avatarHtml : ""}
@@ -1316,8 +1316,8 @@ if (msg.type === "image" && msg.message) {
       ${isRight ? avatarHtml : ""}
     </div>
   `;
-} else {
-  row.innerHTML = `
+  } else {
+    row.innerHTML = `
     ${!isRight ? avatarHtml : ""}
     <div class="message-bubble" style="${bubbleStyle}position:relative;" data-msg-id="${msgId}">
       <div class="msg-content">${messageContent}</div>
@@ -1331,63 +1331,63 @@ if (msg.type === "image" && msg.message) {
     </div>
     ${isRight ? avatarHtml : ""}
   `;
-}
+  }
 
 
   // --- Event Listeners (same as before) ---
   // Menu
   // Menu
-const msgMenuEl = row.querySelector('.msg-menu');
-if (msgMenuEl) {
-  msgMenuEl.onclick = function(e) {
-    e.stopPropagation();
-    const msgId = this.getAttribute('data-msg-id');
-    chatBox.querySelectorAll('.msg-actions').forEach(a => a.style.display = "none");
-    const actions = row.querySelector(`.msg-actions[data-msg-id="${msgId}"]`);
-    if (actions) actions.style.display = "flex";
-  };
-}
-// Edit
-const editBtnEl = row.querySelector('.edit-btn');
-if (editBtnEl) {
-  editBtnEl.onclick = function(e) {
-    e.stopPropagation();
-    editMessage(msgId);
-    chatBox.querySelectorAll('.msg-actions').forEach(a => a.style.display = "none");
-  };
-}
-// Delete
-const deleteBtnEl = row.querySelector('.delete-btn');
-if (deleteBtnEl) {
-  deleteBtnEl.onclick = function(e) {
-    e.stopPropagation();
-    deleteMessage(msgId);
-    chatBox.querySelectorAll('.msg-actions').forEach(a => a.style.display = "none");
-  };
-}
-// Copy
-const copyBtnEl = row.querySelector('.copy-btn');
-if (copyBtnEl) {
-  copyBtnEl.onclick = function(e) {
-    e.stopPropagation();
-    const msgContent = row.querySelector('.msg-content').textContent || "";
-    navigator.clipboard.writeText(msgContent).then(() => {
-      Swal.fire({
-        text: "Message copied!",
-        icon: "info",
-        showConfirmButton: true,
-        confirmButtonText: "OK",
-        position: 'center',
-        showConfirmButton: false,
-        timer: 2000,
-        timerProgressBar: true,
-        background: "#f5fafd",
-        color: "#222e3a"
+  const msgMenuEl = row.querySelector('.msg-menu');
+  if (msgMenuEl) {
+    msgMenuEl.onclick = function (e) {
+      e.stopPropagation();
+      const msgId = this.getAttribute('data-msg-id');
+      chatBox.querySelectorAll('.msg-actions').forEach(a => a.style.display = "none");
+      const actions = row.querySelector(`.msg-actions[data-msg-id="${msgId}"]`);
+      if (actions) actions.style.display = "flex";
+    };
+  }
+  // Edit
+  const editBtnEl = row.querySelector('.edit-btn');
+  if (editBtnEl) {
+    editBtnEl.onclick = function (e) {
+      e.stopPropagation();
+      editMessage(msgId);
+      chatBox.querySelectorAll('.msg-actions').forEach(a => a.style.display = "none");
+    };
+  }
+  // Delete
+  const deleteBtnEl = row.querySelector('.delete-btn');
+  if (deleteBtnEl) {
+    deleteBtnEl.onclick = function (e) {
+      e.stopPropagation();
+      deleteMessage(msgId);
+      chatBox.querySelectorAll('.msg-actions').forEach(a => a.style.display = "none");
+    };
+  }
+  // Copy
+  const copyBtnEl = row.querySelector('.copy-btn');
+  if (copyBtnEl) {
+    copyBtnEl.onclick = function (e) {
+      e.stopPropagation();
+      const msgContent = row.querySelector('.msg-content').textContent || "";
+      navigator.clipboard.writeText(msgContent).then(() => {
+        Swal.fire({
+          text: "Message copied!",
+          icon: "info",
+          showConfirmButton: true,
+          confirmButtonText: "OK",
+          position: 'center',
+          showConfirmButton: false,
+          timer: 2000,
+          timerProgressBar: true,
+          background: "#f5fafd",
+          color: "#222e3a"
+        });
       });
-    });
-    chatBox.querySelectorAll('.msg-actions').forEach(a => a.style.display = "none");
-  };
-}
+      chatBox.querySelectorAll('.msg-actions').forEach(a => a.style.display = "none");
+    };
+  }
 
   // Hide all menus on outside click
   document.addEventListener('click', function outsideClickHandler(e) {
@@ -1434,8 +1434,8 @@ function removeSingleMessage(msgId, chatBox) {
 
 
 
-  // --- Firebase listeners ---
-  function initializeApp() {
+// --- Firebase listeners ---
+function initializeApp() {
   Promise.all([
     db.ref("chats").once("value"),
     db.ref("users").once("value"),
@@ -1472,10 +1472,10 @@ function debugUserPresence() {
 
 
 
-  window.addEventListener('load', initializeApp);
+window.addEventListener('load', initializeApp);
 
-  // --- Send message ---
-  document.getElementById("sendBtn").onclick = () => {
+// --- Send message ---
+document.getElementById("sendBtn").onclick = () => {
   const msgInput = document.getElementById("msgInput");
   const msg = msgInput.value.trim();
   if (!msg || !selectedSessionId || !db) return;
@@ -1494,82 +1494,82 @@ function debugUserPresence() {
   });
 };
 
-  document.getElementById("msgInput").addEventListener("keypress", (e) => {
-    if (e.key === "Enter") document.getElementById("sendBtn").onclick();
-  });
-
-  // --- Emoji picker ---
-  const emojiBtn = document.getElementById("emojiBtn");
-  const emojiPicker = document.getElementById("emojiPicker");
-  emojiBtn.onclick = (e) => {
-    e.stopPropagation();
-    emojiPicker.style.display = emojiPicker.style.display === "block" ? "none" : "block";
-  };
-  emojiPicker.addEventListener("click", (e) => {
-    if (e.target.tagName === "SPAN") {
-      document.getElementById("msgInput").value += e.target.textContent;
-      document.getElementById("msgInput").focus();
-      emojiPicker.style.display = "none";
-    }
-  });
-  document.addEventListener("click", () => {
-    emojiPicker.style.display = "none";
-  });
-
-  // --- Image Upload ---
-  const fileInput = document.getElementById('fileInput');
-  const uploadBtn = document.getElementById('uploadBtn');
-  uploadBtn.onclick = () => fileInput.click();
-  fileInput.onchange = () => {
-    const file = fileInput.files[0];
-    if (!file) return;
-    if (!selectedSessionId || !db) {
-      notify("Please select a chat session first.", { type: "error" });
-      return;
-    }
-    if (!file.type.startsWith('image/')) {
-Swal.fire({
-  text: "Only image files are allowed.",
-  icon: "warning",
-  background: "#f5fafd",
-  color: "#222e3a",
-  showConfirmButton: true,
-  confirmButtonText: "OK"
+document.getElementById("msgInput").addEventListener("keypress", (e) => {
+  if (e.key === "Enter") document.getElementById("sendBtn").onclick();
 });
 
+// --- Emoji picker ---
+const emojiBtn = document.getElementById("emojiBtn");
+const emojiPicker = document.getElementById("emojiPicker");
+emojiBtn.onclick = (e) => {
+  e.stopPropagation();
+  emojiPicker.style.display = emojiPicker.style.display === "block" ? "none" : "block";
+};
+emojiPicker.addEventListener("click", (e) => {
+  if (e.target.tagName === "SPAN") {
+    document.getElementById("msgInput").value += e.target.textContent;
+    document.getElementById("msgInput").focus();
+    emojiPicker.style.display = "none";
+  }
+});
+document.addEventListener("click", () => {
+  emojiPicker.style.display = "none";
+});
 
-      return;
-    }
-    // NOTE: You need your own image upload handler.
-    // For demo, we'll fake upload by converting to base64 and "uploading" it directly.
-    const reader = new FileReader();
-    reader.onload = function(e) {
-      const messageData = {
-        sender: "agent",
-        message: e.target.result,
-        type: "image",
-        timestamp: Date.now()
-      };
-      db.ref("chats/" + selectedSessionId).push(messageData);
-      fileInput.value = "";
+// --- Image Upload ---
+const fileInput = document.getElementById('fileInput');
+const uploadBtn = document.getElementById('uploadBtn');
+uploadBtn.onclick = () => fileInput.click();
+fileInput.onchange = () => {
+  const file = fileInput.files[0];
+  if (!file) return;
+  if (!selectedSessionId || !db) {
+    notify("Please select a chat session first.", { type: "error" });
+    return;
+  }
+  if (!file.type.startsWith('image/')) {
+    Swal.fire({
+      text: "Only image files are allowed.",
+      icon: "warning",
+      background: "#f5fafd",
+      color: "#222e3a",
+      showConfirmButton: true,
+      confirmButtonText: "OK"
+    });
+
+
+    return;
+  }
+  // NOTE: You need your own image upload handler.
+  // For demo, we'll fake upload by converting to base64 and "uploading" it directly.
+  const reader = new FileReader();
+  reader.onload = function (e) {
+    const messageData = {
+      sender: "agent",
+      message: e.target.result,
+      type: "image",
+      timestamp: Date.now()
     };
-    reader.readAsDataURL(file);
+    db.ref("chats/" + selectedSessionId).push(messageData);
+    fileInput.value = "";
   };
+  reader.readAsDataURL(file);
+};
 
-  // --- Modal close on background click ---
-  document.getElementById("modalBackdrop").onclick = closeModal;
+// --- Modal close on background click ---
+document.getElementById("modalBackdrop").onclick = closeModal;
 
-  // --- Search filter ---
-  document.getElementById("searchInput").addEventListener('input', function() {
-    renderSessions(this.value.toLowerCase());
-  });
+// --- Search filter ---
+document.getElementById("searchInput").addEventListener('input', function () {
+  renderSessions(this.value.toLowerCase());
+});
 
-  // Make saveUserEdit globally available (for modal)
-  window.saveUserEdit = saveUserEdit;
-  window.openEditModal = openEditModal;
-  window.closeModal = closeModal;
-  
-window.closeChatOnMobile = function() {
+// Make saveUserEdit globally available (for modal)
+window.saveUserEdit = saveUserEdit;
+window.openEditModal = openEditModal;
+window.closeModal = closeModal;
+
+window.closeChatOnMobile = function () {
   selectedSessionId = null;
   document.querySelector('.sidebar').classList.remove('mobile-hide');
   document.getElementById('mobileBackBtn').style.display = "none";
@@ -1585,7 +1585,7 @@ window.closeChatOnMobile = function() {
   renderUserInfoPanel();
 }
 
-window.addEventListener("resize", function() {
+window.addEventListener("resize", function () {
   if (window.innerWidth > 700) {
     document.querySelector('.sidebar').classList.remove('mobile-hide');
     document.getElementById('mobileBackBtn').style.display = "none";
