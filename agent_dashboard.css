@@ -588,9 +588,6 @@ body {
   transition: background 0.2s;
 }
 
-.edit-modal button:hover {
-  background-color: #1748b2;
-}
 
 .modal-backdrop {
   position: fixed;
@@ -661,6 +658,7 @@ body {
 }
 
 .input-group {
+  padding-bottom: 10px;
   background: #ffffff;
   gap: 8px;
   border-block-end: 10px solid #e0e0e0;
@@ -668,7 +666,7 @@ body {
 
 .input-group input[type="text"] {
   flex: 1;
-  padding: 0px 10px 10px 10px;
+  padding: 7px 10px;
   border: 1px solid white;
   border-radius: 7px;
   background-color: #f8fafc;
@@ -680,16 +678,15 @@ body {
 
 .input-group button,
 #emojiBtn,
-.user-card button,
-.edit-modal button {
+.user-card button{
   border-radius: 6px;
   font-size: 0.98rem;
-  padding: 0px 10px;
+  padding: 7px 12px;
   font-weight: 600;
   min-width: 36px;
   min-height: 36px;
+  background-color: white;
   border: none;
-  background: white !important;
 }
 
 
