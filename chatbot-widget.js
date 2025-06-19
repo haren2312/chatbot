@@ -15,12 +15,13 @@
   document.head.appendChild(style);
 
   // ---- INJECT HTML ----
-  const widgetHTML = `
+const widgetHTML = `
   <button id="chatbot-toggle">
     <img id="chat-icon-img" src="${IMAGES.chatIcon}" />
     <img id="close-icon-img" src="${IMAGES.closeIcon}" style="display:none;position:absolute;left:10px;top:10px;" />
   </button>
   <div id="chat-container">
+    <!-- PROMPT: Name -->
     <div id="name-prompt" class="prompt-box">
       <div class="prompt-header">
         <div class="bot-avatar"><img src="${IMAGES.logo}" alt="Bot Avatar" class="bot-avatar" /></div>
@@ -35,6 +36,8 @@
         <button id="start-btn" class="next-btn" >Next</button>
       </div>
     </div>
+
+    <!-- PROMPT: Email -->
     <div id="email-prompt" class="prompt-box" style="display:none;">
       <div class="prompt-header">
         <div class="bot-avatar"><img src="${IMAGES.logo}" alt="Bot Avatar" class="bot-avatar" /></div>
@@ -49,6 +52,8 @@
         <button id="email-btn" class="email-btn">Submit Email</button>
       </div>
     </div>
+
+    <!-- PROMPT: Location -->
     <div id="location-prompt" class="prompt-box" style="display:none;">
       <div class="prompt-header">
         <div class="bot-avatar">📍</div>
@@ -64,50 +69,44 @@
         <p id="location-status"></p>
       </div>
     </div>
+
+    <!-- === THE ONLY CHAT AREA === -->
     <div id="chat" class="chat-bot-bg" style="display:none;">
+      <!-- Chat Header -->
       <div class="chat-header">
-  <div class="chat-header-top">
-    <button class="crisp-chat-btn">
-      <span class="chat-icon-circle">
-        <img src="${IMAGES.crispMsg}" alt="Chat Icon" class="chat-icon" />
-      </span>
-      <span class="chat-btn-label">Chat</span>
-    </button>
-  </div>
-<div class="chat-header-main">
-<div class="header-avatar-row">
-  <div class="overlap-logos">
-    <img src="${IMAGES.logo}" class="overlap-avatar" />
-    <span class="overlap-chat-icon">
-      <img src="${IMAGES.crispMsg}" alt="Chat Icon" class="chat-icon" />
-    </span>
-  </div>
-  </div>
-  <div class="header-title">Questions? Chat with us!</div>
-  <div class="header-status-row">
-    <span class="online-dot"></span>
-    <span class="header-status-msg">Typically replies under an hour</span>
-  </div>
-</div>
-  </div>
-</div>
-
+        <div class="chat-header-top">
+          <button class="crisp-chat-btn">
+            <span class="chat-icon-circle">
+              <img src="${IMAGES.crispMsg}" alt="Chat Icon" class="chat-icon" />
+            </span>
+            <span class="chat-btn-label">Chat</span>
+          </button>
+        </div>
+        <div class="chat-header-main">
+          <div class="header-avatar-row">
+            <div class="overlap-logos">
+              <img src="${IMAGES.logo}" class="overlap-avatar" />
+              <span class="overlap-chat-icon">
+                <img src="${IMAGES.crispMsg}" alt="Chat Icon" class="chat-icon" />
+              </span>
+            </div>
+          </div>
+          <div class="header-title">Questions? Chat with us!</div>
+          <div class="header-status-row">
+            <span class="online-dot"></span>
+            <span class="header-status-msg">Typically replies under an hour</span>
+          </div>
+        </div>
+      </div>
+      <!-- Messages Area -->
       <div id="messages" class="chat-messages"></div>
-
-    <div id="typing-indicator" style="display:none;margin:6px 0 0 16px;"></div>
+      <!-- Typing Indicator -->
+      <div id="typing-indicator" style="display:none;margin:6px 0 0 16px;"></div>
+      <!-- Input Area -->
       <div class="input-wrapper">
         <div class="input-row">
           <input id="input" type="text" placeholder="Type your message..." />
         </div>
-        <!-- Image Preview (hidden by default) -->
-<div id="image-preview-area" style="display:none;flex-direction:column;align-items:flex-end;margin-top:8px;">
-  <img id="image-preview" src="" alt="Preview" style="max-width:180px;max-height:160px;border-radius:10px;border:1px solid #e4e4e4;background:#fff;margin-bottom:8px;">
-  <div style="display:flex;gap:8px;">
-    <button id="image-cancel-btn" class="text-bnt" style="background:#fff;color:#222;">Cancel</button>
-    <button id="image-send-btn" class="next-btn" style="background:#2563eb;">Send</button>
-  </div>
-</div>
-
         <div class="input-actions">
           <input type="file" id="imageUpload" accept="image/*" style="display:none;">
           <button id="upload-btn" class="text-bnt"><svg class="chat-svg" xmlns="http://www.w3.org/2000/svg" height="20" width="20" viewBox="0 0 20 20"><path fill="currentColor" d="M10.546 4.363v7.563c0 1.215-.822 2.32-2.011 2.564A2.55 2.55 0 015.455 12V2.99c0-.723.493-1.397 1.208-1.515.91-.151 1.7.55 1.7 1.434v7.636a.364.364 0 01-.727 0V4.363a.728.728 0 00-1.454 0v6.075c0 .952.683 1.82 1.629 1.916a1.82 1.82 0 002.007-1.809V3.038C9.818 1.52 8.711.161 7.2.014A2.912 2.912 0 004 2.91v8.913c0 2.088 1.522 3.955 3.6 4.158A4.005 4.005 0 0012 12V4.363a.728.728 0 00-1.454 0z"/></svg></button>
@@ -120,9 +119,19 @@
           <div id="emoji-picker" style="display:none;position:absolute;bottom:40px;left:110px;z-index:1000;background:#fff;padding:6px 10px;border:1px solid #ddd;border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,0.1);"></div>
         </div>
       </div>
+      <!-- Image Preview Area (hidden by default) -->
+      <div id="image-preview-area" style="display:none;flex-direction:column;align-items:flex-end;margin-top:8px;">
+        <img id="image-preview" src="" alt="Preview" style="max-width:180px;max-height:160px;border-radius:10px;border:1px solid #e4e4e4;background:#fff;margin-bottom:8px;">
+        <div style="display:flex;gap:8px;">
+          <button id="image-cancel-btn" class="text-bnt" style="background:#fff;color:#222;">Cancel</button>
+          <button id="image-send-btn" class="next-btn" style="background:#2563eb;">Send</button>
+        </div>
+      </div>
     </div>
+    <!-- === END CHAT AREA === -->
   </div>
-  `;
+`;
+
   const wrapper = document.createElement('div');
   wrapper.innerHTML = widgetHTML;
   document.body.appendChild(wrapper);
@@ -236,6 +245,23 @@
       const email = localStorage.getItem("chatbot_user_email") || "";
       sessionId = email ? sanitizeEmail(email) : "";
     }
+
+    function showChat() {
+  document.getElementById("chat").style.display = "flex";
+  document.getElementById("chat").classList.add("chat-active");
+  // Hide all prompts
+  document.getElementById("name-prompt").style.display = "none";
+  document.getElementById("email-prompt").style.display = "none";
+  document.getElementById("location-prompt").style.display = "none";
+  // Show chat input
+  document.getElementById("chat-input-area").style.display = "flex";
+}
+
+function showPrompt() {
+  document.getElementById("chat").classList.remove("chat-active");
+  document.getElementById("chat-input-area").style.display = "none";
+}
+
 
     function bootstrapChat() {
       updateSessionIdFromStorage();
@@ -397,7 +423,6 @@
           loadChatMessages();
         }
       });
-      setupUserPresence();
       initPresenceTracking();
       setTimeout(() => { document.getElementById("input").focus(); }, 100);
     }
