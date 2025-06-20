@@ -64,7 +64,7 @@ function attachWebsiteListeners() {
 
 
 document.querySelectorAll('.website-tab').forEach(btn => {
-  btn.addEventListener('click', function() {
+  btn.addEventListener('click', function () {
     // Update active visual
     document.querySelectorAll('.website-tab').forEach(b => b.classList.remove('active'));
     this.classList.add('active');
@@ -400,7 +400,7 @@ function updateMessageStatusUI(msgId, msgData) {
     if (msgData.status === "read") icon = "✔✔";
     else if (msgData.status === "delivered") icon = "✔✔";
     else icon = "✔";
-    timeLabel.innerHTML = timeLabel.textContent.split(' ')[0] + 
+    timeLabel.innerHTML = timeLabel.textContent.split(' ')[0] +
       ` <span style="color:${msgData.status === "read" ? "#2563eb" : "#bababa"};">${icon}</span>`;
   }
 }
@@ -803,14 +803,14 @@ db.ref("chats/" + userId)
 
 
 function getLastMessage(sessionId, callback) {
-db.ref(
-  (selectedWebsiteKey === "einvite")
-    ? "chats/" + sessionId
-    : "chats/" + selectedWebsiteKey + "/" + sessionId
-)
-  .orderByChild("timestamp")
-  .limitToLast(1)
-  .once("value", (snapshot) => {
+  db.ref(
+    (selectedWebsiteKey === "einvite")
+      ? "chats/" + sessionId
+      : "chats/" + selectedWebsiteKey + "/" + sessionId
+  )
+    .orderByChild("timestamp")
+    .limitToLast(1)
+    .once("value", (snapshot) => {
       const val = snapshot.val();
       if (val) {
         const lastMsg = Object.values(val)[0];
@@ -993,7 +993,7 @@ function updateMessageStatusUI(msgId, msgData) {
   const meta = bubble.querySelector('.msg-meta');
   if (!meta) return;
   const timeText = meta.textContent.split('✔')[0].trim();
-  meta.innerHTML = timeText + ' ' + getMessageStatusIcon(msgData, 
+  meta.innerHTML = timeText + ' ' + getMessageStatusIcon(msgData,
     (msgData.sender || '').toLowerCase() === "admin" ||
     (msgData.sender || '').toLowerCase() === "agent" ||
     (msgData.sender || '').toLowerCase() === "bot"
@@ -1090,10 +1090,10 @@ function saveUserEdit() {
 
 function markMessagesAsRead(sessionId, currentUserType) {
   const messagesRef = db.ref(
-  (selectedWebsiteKey === "einvite")
-    ? "chats/" + sessionId
-    : "chats/" + selectedWebsiteKey + "/" + sessionId
-);
+    (selectedWebsiteKey === "einvite")
+      ? "chats/" + sessionId
+      : "chats/" + selectedWebsiteKey + "/" + sessionId
+  );
   messagesRef.once("value", (snapshot) => {
     const messages = snapshot.val() || {};
     Object.entries(messages).forEach(([msgId, msg]) => {
@@ -1222,8 +1222,8 @@ function renderChatMessages(chatData) {
     let messageContent = "";
     let bubbleStyle = '';
 
-if (msg.type === "image" && msg.message) {
-  messageContent = `
+    if (msg.type === "image" && msg.message) {
+      messageContent = `
     <img src="${escapeHtml(msg.message)}" alt="image" onclick="window.open('${escapeHtml(msg.message)}','_blank')" />
     <span class="msg-menu" title="More" data-msg-id="${msg._id}">⋮</span>
   `;
@@ -1406,23 +1406,23 @@ function loadChat(sessionId) {
   // });
 
   // Remove message (delete)
-currentChatListeners.removed = db.ref(
-  (selectedWebsiteKey === "einvite")
-    ? "chats/" + selectedSessionId
-    : "chats/" + selectedWebsiteKey + "/" + selectedSessionId
-).on("child_removed", snapshot => {
-  const msgId = snapshot.key;
-  delete messagesMap[msgId];
-  removeSingleMessage(msgId, chatBox);
-});
+  currentChatListeners.removed = db.ref(
+    (selectedWebsiteKey === "einvite")
+      ? "chats/" + selectedSessionId
+      : "chats/" + selectedWebsiteKey + "/" + selectedSessionId
+  ).on("child_removed", snapshot => {
+    const msgId = snapshot.key;
+    delete messagesMap[msgId];
+    removeSingleMessage(msgId, chatBox);
+  });
 
 
   renderUserInfoPanel();
   document.getElementById("inputGroup").style.display = "flex";
   // Mark all user messages as read when admin opens the chat
-if (document.visibilityState === "visible") {
-  markMessagesAsRead(sessionId, "admin");
-}
+  if (document.visibilityState === "visible") {
+    markMessagesAsRead(sessionId, "admin");
+  }
 
 
 }
@@ -1667,15 +1667,15 @@ document.getElementById("sendBtn").onclick = () => {
     timestamp: Date.now(),
     status: "sent"
   };
-let chatsBasePath = (selectedWebsiteKey === "einvite")
-  ? "chats"
-  : "chats/" + selectedWebsiteKey;
+  let chatsBasePath = (selectedWebsiteKey === "einvite")
+    ? "chats"
+    : "chats/" + selectedWebsiteKey;
 
-db.ref(chatsBasePath + "/" + selectedSessionId)
-  .push(messageData)
-  .then(() => {
-    msgInput.value = ""; // Clear input immediately for snappy UX
-  });
+  db.ref(chatsBasePath + "/" + selectedSessionId)
+    .push(messageData)
+    .then(() => {
+      msgInput.value = ""; // Clear input immediately for snappy UX
+    });
 };
 
 
@@ -1728,19 +1728,19 @@ fileInput.onchange = () => {
   // NOTE: You need your own image upload handler.
   // For demo, we'll fake upload by converting to base64 and "uploading" it directly.
   const reader = new FileReader();
-reader.onload = function (e) {
-  const messageData = {
-    sender: "agent",
-    message: e.target.result, // Set the uploaded image data
-    type: "image",            // Make sure type is 'image'
-    timestamp: Date.now(),
-    status: "sent"
+  reader.onload = function (e) {
+    const messageData = {
+      sender: "agent",
+      message: e.target.result, // Set the uploaded image data
+      type: "image",            // Make sure type is 'image'
+      timestamp: Date.now(),
+      status: "sent"
+    };
+    let chatsBasePath = (selectedWebsiteKey === "einvite") ? "chats" : "chats/" + selectedWebsiteKey;
+    db.ref(chatsBasePath + "/" + selectedSessionId)
+      .push(messageData);
+    fileInput.value = "";
   };
-  let chatsBasePath = (selectedWebsiteKey === "einvite") ? "chats" : "chats/" + selectedWebsiteKey;
-  db.ref(chatsBasePath + "/" + selectedSessionId)
-    .push(messageData);
-  fileInput.value = "";
-};
 
   reader.readAsDataURL(file);
 };

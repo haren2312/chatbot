@@ -15,7 +15,7 @@
   document.head.appendChild(style);
 
   // ---- INJECT HTML ----
-const widgetHTML = `
+  const widgetHTML = `
   <button id="chatbot-toggle">
     <img id="chat-icon-img" src="${IMAGES.chatIcon}" />
     <img id="close-icon-img" src="${IMAGES.closeIcon}" style="display:none;position:absolute;left:10px;top:10px;" />
@@ -175,28 +175,28 @@ const widgetHTML = `
 
 
     // 👇 SET THIS VALUE PER WEBSITE! (for prod, use build variable/env or inline change)
-const WEBSITE_KEY = window.WEBSITE_KEY || "gauravjiandani"; // "gauravjiandani", "gauravjiandani", or "gauravjiandani"
+    const WEBSITE_KEY = window.WEBSITE_KEY || "gauravjiandani"; // "gauravjiandani", "gauravjiandani", or "gauravjiandani"
 
 
-function chatRef(sessionId) {
-  if (WEBSITE_KEY === "einvite") {
-    return db.ref("chats/" + sessionId);
-  } else {
-    return db.ref("chats/" + WEBSITE_KEY + "/" + sessionId);
-  }
-}
+    function chatRef(sessionId) {
+      if (WEBSITE_KEY === "einvite") {
+        return db.ref("chats/" + sessionId);
+      } else {
+        return db.ref("chats/" + WEBSITE_KEY + "/" + sessionId);
+      }
+    }
 
 
-function userRef(sessionId) {
-  return WEBSITE_KEY === "einvite"
-    ? userRef(sessionId)
-    : db.ref("users/" + WEBSITE_KEY + "/" + sessionId);
-}
-function statusRef(sessionId) {
-  return WEBSITE_KEY === "einvite"
-    ? statusRef(sessionId)
-    : db.ref("status/" + WEBSITE_KEY + "/" + sessionId);
-}
+    function userRef(sessionId) {
+      return WEBSITE_KEY === "einvite"
+        ? userRef(sessionId)
+        : db.ref("users/" + WEBSITE_KEY + "/" + sessionId);
+    }
+    function statusRef(sessionId) {
+      return WEBSITE_KEY === "einvite"
+        ? statusRef(sessionId)
+        : db.ref("status/" + WEBSITE_KEY + "/" + sessionId);
+    }
 
 
 
@@ -273,20 +273,20 @@ function statusRef(sessionId) {
     }
 
     function showChat() {
-  document.getElementById("chat").style.display = "flex";
-  document.getElementById("chat").classList.add("chat-active");
-  // Hide all prompts
-  document.getElementById("name-prompt").style.display = "none";
-  document.getElementById("email-prompt").style.display = "none";
-  document.getElementById("location-prompt").style.display = "none";
-  // Show chat input
-  document.getElementById("chat-input-area").style.display = "flex";
-}
+      document.getElementById("chat").style.display = "flex";
+      document.getElementById("chat").classList.add("chat-active");
+      // Hide all prompts
+      document.getElementById("name-prompt").style.display = "none";
+      document.getElementById("email-prompt").style.display = "none";
+      document.getElementById("location-prompt").style.display = "none";
+      // Show chat input
+      document.getElementById("chat-input-area").style.display = "flex";
+    }
 
-function showPrompt() {
-  document.getElementById("chat").classList.remove("chat-active");
-  document.getElementById("chat-input-area").style.display = "none";
-}
+    function showPrompt() {
+      document.getElementById("chat").classList.remove("chat-active");
+      document.getElementById("chat-input-area").style.display = "none";
+    }
 
 
     function bootstrapChat() {
@@ -362,26 +362,26 @@ function showPrompt() {
 
     // EMAIL PROMPT
     document.getElementById("email-btn").onclick = function () {
-  userEmail = document.getElementById("emailInput").value.trim().toLowerCase();
-  if (!userEmail || !validateEmail(userEmail)) {
-    showError("Please enter a valid email address");
-    document.getElementById("emailInput").focus();
-    return;
-  }
-  localStorage.setItem("chatbot_user_email", userEmail);
-  sessionId = sanitizeEmail(userEmail);
-  showLoading("email-prompt", "Saving...");
-  userRef(sessionId).set({
-    name: userName, email: userEmail, timestamp: Date.now()
-  }).then(() => {
-    hideLoading("email-prompt", "Submit Email");
-    document.getElementById("email-prompt").style.display = "none";
-    document.getElementById("location-prompt").style.display = "block";
-  }).catch(() => {
-    hideLoading("email-prompt", "Submit Email");
-    showError("Error saving data. Please try again.");
-  });
-};
+      userEmail = document.getElementById("emailInput").value.trim().toLowerCase();
+      if (!userEmail || !validateEmail(userEmail)) {
+        showError("Please enter a valid email address");
+        document.getElementById("emailInput").focus();
+        return;
+      }
+      localStorage.setItem("chatbot_user_email", userEmail);
+      sessionId = sanitizeEmail(userEmail);
+      showLoading("email-prompt", "Saving...");
+      userRef(sessionId).set({
+        name: userName, email: userEmail, timestamp: Date.now()
+      }).then(() => {
+        hideLoading("email-prompt", "Submit Email");
+        document.getElementById("email-prompt").style.display = "none";
+        document.getElementById("location-prompt").style.display = "block";
+      }).catch(() => {
+        hideLoading("email-prompt", "Submit Email");
+        showError("Error saving data. Please try again.");
+      });
+    };
 
 
     // LOCATION PROMPT
@@ -467,28 +467,28 @@ function showPrompt() {
     }
 
     function updateMessageStatusUI(msgId, msgData) {
-  const msgDiv = document.querySelector(`[data-key="${msgId}"]`);
-  if (!msgDiv) return;
-  const timeLabel = msgDiv.querySelector('.msg-time');
-  if (!timeLabel) return;
-  // Only update ticks for user messages
-  if ((msgData.sender || '').toLowerCase() === 'user') {
-    let icon = '';
-    if (msgData.status === "read") icon = "✔✔";
-    else if (msgData.status === "delivered") icon = "✔✔";
-    else icon = "✔";
-    timeLabel.innerHTML = timeLabel.textContent.split(' ')[0] + 
-      ` <span style="color:${msgData.status === "read" ? "#2563eb" : "#bababa"};">${icon}</span>`;
-  }
-}
+      const msgDiv = document.querySelector(`[data-key="${msgId}"]`);
+      if (!msgDiv) return;
+      const timeLabel = msgDiv.querySelector('.msg-time');
+      if (!timeLabel) return;
+      // Only update ticks for user messages
+      if ((msgData.sender || '').toLowerCase() === 'user') {
+        let icon = '';
+        if (msgData.status === "read") icon = "✔✔";
+        else if (msgData.status === "delivered") icon = "✔✔";
+        else icon = "✔";
+        timeLabel.innerHTML = timeLabel.textContent.split(' ')[0] +
+          ` <span style="color:${msgData.status === "read" ? "#2563eb" : "#bababa"};">${icon}</span>`;
+      }
+    }
 
 
 
     // LOAD & RENDER MESSAGES
- function loadChatMessages(callback) {
-  updateSessionIdFromStorage();
-  if (!sessionId) return;
-  const chatRefInstance = chatRef(sessionId);
+    function loadChatMessages(callback) {
+      updateSessionIdFromStorage();
+      if (!sessionId) return;
+      const chatRefInstance = chatRef(sessionId);
       const messagesContainer = document.getElementById("messages");
       markAllAdminMessagesAsRead();
       messagesContainer.innerHTML = "";
@@ -498,25 +498,25 @@ function showPrompt() {
       chatRefInstance.on("child_added", (snapshot) => {
         const data = snapshot.val();
         const msgDiv = addMessage(data.message, data.sender, null, data.timestamp, snapshot.key);
-        
+
         if (msgDiv) {
           messageElements[snapshot.key] = msgDiv;
           messagesContainer.scrollTop = messagesContainer.scrollHeight;
         }
       });
       chatRefInstance.on("child_changed", (snapshot) => {
-  const updatedMsg = snapshot.val();
-  const msgId = snapshot.key;
-  updateMessageStatusUI(msgId, updatedMsg);
-});
+        const updatedMsg = snapshot.val();
+        const msgId = snapshot.key;
+        updateMessageStatusUI(msgId, updatedMsg);
+      });
 
-chatRefInstance.on("child_removed", (snapshot) => {
-  if (messageElements[snapshot.key]) {
-    messageElements[snapshot.key].remove();
-    delete messageElements[snapshot.key];
-    messagesContainer.scrollTop = messagesContainer.scrollHeight;
-  }
-});
+      chatRefInstance.on("child_removed", (snapshot) => {
+        if (messageElements[snapshot.key]) {
+          messageElements[snapshot.key].remove();
+          delete messageElements[snapshot.key];
+          messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+      });
 
       if (typeof callback === "function") callback();
     }
@@ -584,26 +584,26 @@ chatRefInstance.on("child_removed", (snapshot) => {
         bubbleDiv.appendChild(msgContent);
       }
 
-const timeLabel = document.createElement("span");
-timeLabel.className = "msg-time";
-timeLabel.textContent = timeString;
+      const timeLabel = document.createElement("span");
+      timeLabel.className = "msg-time";
+      timeLabel.textContent = timeString;
 
-// Add tick icon if this is a user message (your own sent), and status exists
-if (sender === "user" && messageKey) {
-  // Get status field from Firebase for this message
-  chatRef(sessionId).child(messageKey)
-.once("value", (snapshot) => {
-    const data = snapshot.val();
-    if (!data || !data.status) return;
-    let icon = "";
-    if (data.status === "read") icon = "✔✔"; // double blue tick (style via CSS)
-    else if (data.status === "delivered") icon = "✔✔"; // double gray tick
-    else icon = "✔"; // single tick
-    // You can use emoji or SVG here
-    timeLabel.innerHTML += ` <span style="color:${data.status === "read" ? "#2563eb" : "#bababa"};">${icon}</span>`;
-  });
-}
-bubbleDiv.appendChild(timeLabel);
+      // Add tick icon if this is a user message (your own sent), and status exists
+      if (sender === "user" && messageKey) {
+        // Get status field from Firebase for this message
+        chatRef(sessionId).child(messageKey)
+          .once("value", (snapshot) => {
+            const data = snapshot.val();
+            if (!data || !data.status) return;
+            let icon = "";
+            if (data.status === "read") icon = "✔✔"; // double blue tick (style via CSS)
+            else if (data.status === "delivered") icon = "✔✔"; // double gray tick
+            else icon = "✔"; // single tick
+            // You can use emoji or SVG here
+            timeLabel.innerHTML += ` <span style="color:${data.status === "read" ? "#2563eb" : "#bababa"};">${icon}</span>`;
+          });
+      }
+      bubbleDiv.appendChild(timeLabel);
 
 
       if (sender === "user" && messageKey) {
@@ -654,19 +654,19 @@ bubbleDiv.appendChild(timeLabel);
       const newText = prompt("Edit your message:", currentText);
       if (newText !== null && newText.trim() !== "" && newText !== currentText) {
         chatRef(sessionId).child(messageKey)
-.update({
-          message: newText, edited: true
-        }).then(() => { msgContent.textContent = newText; });
+          .update({
+            message: newText, edited: true
+          }).then(() => { msgContent.textContent = newText; });
       }
     }
     function deleteMessageFromFirebase(messageKey) {
       if (!sessionId || !messageKey) return;
       if (confirm("Are you sure you want to delete this message for everyone?")) {
         chatRef(sessionId).child(messageKey)
-.remove().then(() => {
-          const msgDiv = document.querySelector(`[data-key="${messageKey}"]`);
-          if (msgDiv) msgDiv.remove();
-        });
+          .remove().then(() => {
+            const msgDiv = document.querySelector(`[data-key="${messageKey}"]`);
+            if (msgDiv) msgDiv.remove();
+          });
       }
     }
     function copyMessageToClipboard(msgContent) {
@@ -685,9 +685,9 @@ bubbleDiv.appendChild(timeLabel);
       const input = document.getElementById("input");
       const msg = (customText || input.value).trim();
       if (!msg) return;
-chatRef(sessionId).push({
-  sender: "user", message: msg, type: "text", timestamp: Date.now(), status: "sent"
-});
+      chatRef(sessionId).push({
+        sender: "user", message: msg, type: "text", timestamp: Date.now(), status: "sent"
+      });
 
       if (!customText) input.value = "";
     }
@@ -852,20 +852,20 @@ chatRef(sessionId).push({
       });
     }
 
-function markAllAdminMessagesAsRead() {
-  if (!sessionId) return;
-  const messagesRef = chatRef(sessionId);
-  messagesRef.once("value", (snapshot) => {
-    const messages = snapshot.val() || {};
-    Object.entries(messages).forEach(([msgId, msg]) => {
-      const sender = (msg.sender || "").toLowerCase();
-      // Only mark admin/agent/bot messages as read if not already read
-      if ((sender === "admin" || sender === "agent" || sender === "bot") && msg.status !== "read") {
-        messagesRef.child(msgId).update({ status: "read" });
-      }
-    });
-  });
-}
+    function markAllAdminMessagesAsRead() {
+      if (!sessionId) return;
+      const messagesRef = chatRef(sessionId);
+      messagesRef.once("value", (snapshot) => {
+        const messages = snapshot.val() || {};
+        Object.entries(messages).forEach(([msgId, msg]) => {
+          const sender = (msg.sender || "").toLowerCase();
+          // Only mark admin/agent/bot messages as read if not already read
+          if ((sender === "admin" || sender === "agent" || sender === "bot") && msg.status !== "read") {
+            messagesRef.child(msgId).update({ status: "read" });
+          }
+        });
+      });
+    }
 
 
 
