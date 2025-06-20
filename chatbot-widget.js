@@ -174,6 +174,32 @@ const widgetHTML = `
     }
 
 
+    // 👇 SET THIS VALUE PER WEBSITE! (for prod, use build variable/env or inline change)
+const WEBSITE_KEY = window.WEBSITE_KEY || "gauravjiandani"; // "gauravjiandani", "gauravjiandani", or "gauravjiandani"
+
+
+function chatRef(sessionId) {
+  if (WEBSITE_KEY === "einvite") {
+    return db.ref("chats/" + sessionId);
+  } else {
+    return db.ref("chats/" + WEBSITE_KEY + "/" + sessionId);
+  }
+}
+
+
+function userRef(sessionId) {
+  return WEBSITE_KEY === "einvite"
+    ? userRef(sessionId)
+    : db.ref("users/" + WEBSITE_KEY + "/" + sessionId);
+}
+function statusRef(sessionId) {
+  return WEBSITE_KEY === "einvite"
+    ? statusRef(sessionId)
+    : db.ref("status/" + WEBSITE_KEY + "/" + sessionId);
+}
+
+
+
     window.skipLocation = skipLocation;
 
     // Call this on any user interaction (mousemove, keydown, click, etc.)
@@ -270,7 +296,7 @@ function showPrompt() {
 
       if (savedEmail) {
         // Try to fetch name from Firebase
-        firebase.database().ref('users/' + sanitizeEmail(savedEmail)).once('value', function (snapshot) {
+        userRef(sanitizeEmail(savedEmail)).once('value', function (snapshot) {
           if (snapshot.exists() && snapshot.val().name) {
             savedName = snapshot.val().name;
             localStorage.setItem('chatbot_user_name', savedName); // cache for next time on this device
@@ -336,29 +362,27 @@ function showPrompt() {
 
     // EMAIL PROMPT
     document.getElementById("email-btn").onclick = function () {
-      userEmail = document.getElementById("emailInput").value.trim().toLowerCase();
-      if (!userEmail || !validateEmail(userEmail)) {
-        showError("Please enter a valid email address");
-        document.getElementById("emailInput").focus();
-        return;
-      }
-      localStorage.setItem("chatbot_user_email", userEmail);
-      sessionId = sanitizeEmail(userEmail);
-      showLoading("email-prompt", "Saving...");
-      db.ref("users/" + sessionId).set({
-        name: userName, email: userEmail, timestamp: Date.now()
-      }).then(() => {
-        hideLoading("email-prompt", "Submit Email");
-        document.getElementById("email-prompt").style.display = "none";
-        document.getElementById("location-prompt").style.display = "block";
-      }).catch(() => {
-        hideLoading("email-prompt", "Submit Email");
-        showError("Error saving data. Please try again.");
-      });
-    };
-    document.getElementById("emailInput").addEventListener("keypress", function (e) {
-      if (e.key === "Enter") document.getElementById("email-btn").click();
-    });
+  userEmail = document.getElementById("emailInput").value.trim().toLowerCase();
+  if (!userEmail || !validateEmail(userEmail)) {
+    showError("Please enter a valid email address");
+    document.getElementById("emailInput").focus();
+    return;
+  }
+  localStorage.setItem("chatbot_user_email", userEmail);
+  sessionId = sanitizeEmail(userEmail);
+  showLoading("email-prompt", "Saving...");
+  userRef(sessionId).set({
+    name: userName, email: userEmail, timestamp: Date.now()
+  }).then(() => {
+    hideLoading("email-prompt", "Submit Email");
+    document.getElementById("email-prompt").style.display = "none";
+    document.getElementById("location-prompt").style.display = "block";
+  }).catch(() => {
+    hideLoading("email-prompt", "Submit Email");
+    showError("Error saving data. Please try again.");
+  });
+};
+
 
     // LOCATION PROMPT
     document.getElementById("location-btn").onclick = function () {
@@ -406,8 +430,8 @@ function showPrompt() {
       if (chatInitialized) return;
       document.getElementById("chat").style.display = "flex";
       chatInitialized = true;
-      const chatRef = db.ref("chats/" + sessionId);
-      chatRef.once("value", (snapshot) => {
+      const chatRefInstance = chatRef(sessionId);
+      chatRefInstance.once("value", (snapshot) => {
         if (!snapshot.exists()) {
           const greetingMsg = {
             sender: "bot",
@@ -415,7 +439,7 @@ function showPrompt() {
             type: "text",
             timestamp: Date.now()
           };
-          db.ref("chats/" + sessionId).push(greetingMsg).then(() => { loadChatMessages(); });
+          chatRef(sessionId).push(greetingMsg).then(() => { loadChatMessages(); });
           sessionStorage.setItem('greeted', 'true');
         } else {
           console.log("sessionId used for chat:", sessionId);
@@ -431,7 +455,7 @@ function showPrompt() {
 
     function sendMessage(message, type = "text") {
       if (!db || !sessionId || !message) return;
-      const newMsgRef = db.ref("chats/" + sessionId).push();
+      const newMsgRef = chatRef(sessionId).push();
       newMsgRef.set({
         message,
         sender: "user",
@@ -461,17 +485,17 @@ function showPrompt() {
 
 
     // LOAD & RENDER MESSAGES
-    function loadChatMessages(callback) {
-      updateSessionIdFromStorage();
-      if (!sessionId) return;
-      const chatRef = db.ref("chats/" + sessionId);
+ function loadChatMessages(callback) {
+  updateSessionIdFromStorage();
+  if (!sessionId) return;
+  const chatRefInstance = chatRef(sessionId);
       const messagesContainer = document.getElementById("messages");
       markAllAdminMessagesAsRead();
       messagesContainer.innerHTML = "";
       windowLastMessageDate = undefined;
-      chatRef.off();
+      chatRefInstance.off();
       const messageElements = {};
-      chatRef.on("child_added", (snapshot) => {
+      chatRefInstance.on("child_added", (snapshot) => {
         const data = snapshot.val();
         const msgDiv = addMessage(data.message, data.sender, null, data.timestamp, snapshot.key);
         
@@ -480,19 +504,20 @@ function showPrompt() {
           messagesContainer.scrollTop = messagesContainer.scrollHeight;
         }
       });
-      chatRef.on("child_changed", (snapshot) => {
+      chatRefInstance.on("child_changed", (snapshot) => {
   const updatedMsg = snapshot.val();
   const msgId = snapshot.key;
   updateMessageStatusUI(msgId, updatedMsg);
 });
 
-      chatRef.on("child_removed", (snapshot) => {
-        if (messageElements[snapshot.key]) {
-          messageElements[snapshot.key].remove();
-          delete messageElements[snapshot.key];
-          messagesContainer.scrollTop = messagesContainer.scrollHeight;
-        }
-      });
+chatRefInstance.on("child_removed", (snapshot) => {
+  if (messageElements[snapshot.key]) {
+    messageElements[snapshot.key].remove();
+    delete messageElements[snapshot.key];
+    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+  }
+});
+
       if (typeof callback === "function") callback();
     }
 
@@ -566,7 +591,8 @@ timeLabel.textContent = timeString;
 // Add tick icon if this is a user message (your own sent), and status exists
 if (sender === "user" && messageKey) {
   // Get status field from Firebase for this message
-  db.ref("chats/" + sessionId + "/" + messageKey).once("value", (snapshot) => {
+  chatRef(sessionId).child(messageKey)
+.once("value", (snapshot) => {
     const data = snapshot.val();
     if (!data || !data.status) return;
     let icon = "";
@@ -627,7 +653,8 @@ bubbleDiv.appendChild(timeLabel);
       const currentText = msgContent.textContent || "";
       const newText = prompt("Edit your message:", currentText);
       if (newText !== null && newText.trim() !== "" && newText !== currentText) {
-        db.ref("chats/" + sessionId + "/" + messageKey).update({
+        chatRef(sessionId).child(messageKey)
+.update({
           message: newText, edited: true
         }).then(() => { msgContent.textContent = newText; });
       }
@@ -635,7 +662,8 @@ bubbleDiv.appendChild(timeLabel);
     function deleteMessageFromFirebase(messageKey) {
       if (!sessionId || !messageKey) return;
       if (confirm("Are you sure you want to delete this message for everyone?")) {
-        db.ref("chats/" + sessionId + "/" + messageKey).remove().then(() => {
+        chatRef(sessionId).child(messageKey)
+.remove().then(() => {
           const msgDiv = document.querySelector(`[data-key="${messageKey}"]`);
           if (msgDiv) msgDiv.remove();
         });
@@ -657,7 +685,7 @@ bubbleDiv.appendChild(timeLabel);
       const input = document.getElementById("input");
       const msg = (customText || input.value).trim();
       if (!msg) return;
-db.ref("chats/" + sessionId).push({
+chatRef(sessionId).push({
   sender: "user", message: msg, type: "text", timestamp: Date.now(), status: "sent"
 });
 
@@ -728,7 +756,7 @@ db.ref("chats/" + sessionId).push({
         .then(data => {
           if (data.secure_url) {
             // Send as chat message
-            db.ref("chats/" + sessionId).push({
+            chatRef(sessionId).push({
               sender: "user",
               message: data.secure_url,
               type: "image",
@@ -826,7 +854,7 @@ db.ref("chats/" + sessionId).push({
 
 function markAllAdminMessagesAsRead() {
   if (!sessionId) return;
-  const messagesRef = db.ref("chats/" + sessionId);
+  const messagesRef = chatRef(sessionId);
   messagesRef.once("value", (snapshot) => {
     const messages = snapshot.val() || {};
     Object.entries(messages).forEach(([msgId, msg]) => {

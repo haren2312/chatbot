@@ -2066,3 +2066,33 @@ body {
   color: #1877f2;
   /* Your hover color */
 }
+
+.website-tabs {
+    display: flex;
+    justify-content: space-between;
+    padding: 10px 10px 5px 10px;
+    background: #fff;
+    border-bottom: 1.5px solid #f3f3f3;
+    margin-bottom: 0;
+}
+.website-tab {
+  flex: 1;
+  background: #f9f9f9;
+  border: 1px solid #ebebeb;
+  outline: none;
+  font-weight: 600;
+  color: #2563eb;
+  font-size: .9em;
+  border-radius: 10px 10px 0 0;
+  margin: 0 5px;
+  padding:10px 5px 10px 5px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  cursor: pointer;
+  transition: background 0.17s, color 0.17s;
+}
+.website-tab.active, .website-tab:hover {
+  background: #2563eb;
+  color: #fff;
+}

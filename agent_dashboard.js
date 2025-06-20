@@ -11,6 +11,74 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 
+let selectedWebsiteKey = "einvite"; // Default: einvite
+
+function attachWebsiteListeners() {
+  // Remove previous listeners
+  db.ref("chats").off();
+  db.ref("users").off();
+  db.ref("status").off();
+
+  if (selectedWebsiteKey === "einvite") {
+    // Listen to flat structure for E Invite
+    db.ref("chats").on("value", (snapshot) => {
+      allSessions = snapshot.val() || {};
+      renderSessions(document.getElementById("searchInput").value.toLowerCase());
+      if (selectedSessionId && allSessions[selectedSessionId]) {
+        renderChatMessages(allSessions[selectedSessionId]);
+      }
+    });
+    db.ref("users").on("value", (snapshot) => {
+      allUserData = snapshot.val() || {};
+      renderSessions(document.getElementById("searchInput").value.toLowerCase());
+      if (selectedSessionId) renderUserInfoPanel();
+    });
+    db.ref("status").on("value", (snapshot) => {
+      window.userPresence = snapshot.val() || {};
+      renderSessions(document.getElementById("searchInput").value.toLowerCase());
+      renderUserInfoPanel();
+    });
+  } else {
+    // Listen to nested structure for other sites
+    db.ref("chats/" + selectedWebsiteKey).on("value", (snapshot) => {
+      allSessions = snapshot.val() || {};
+      renderSessions(document.getElementById("searchInput").value.toLowerCase());
+      if (selectedSessionId && allSessions[selectedSessionId]) {
+        renderChatMessages(allSessions[selectedSessionId]);
+      }
+    });
+    db.ref("users/" + selectedWebsiteKey).on("value", (snapshot) => {
+      allUserData = snapshot.val() || {};
+      renderSessions(document.getElementById("searchInput").value.toLowerCase());
+      if (selectedSessionId) renderUserInfoPanel();
+    });
+    db.ref("status/" + selectedWebsiteKey).on("value", (snapshot) => {
+      window.userPresence = snapshot.val() || {};
+      renderSessions(document.getElementById("searchInput").value.toLowerCase());
+      renderUserInfoPanel();
+    });
+  }
+}
+
+
+
+
+document.querySelectorAll('.website-tab').forEach(btn => {
+  btn.addEventListener('click', function() {
+    // Update active visual
+    document.querySelectorAll('.website-tab').forEach(b => b.classList.remove('active'));
+    this.classList.add('active');
+    selectedWebsiteKey = this.getAttribute('data-site');
+    // Clear session and UI
+    selectedSessionId = null;
+    document.getElementById('chatBox').innerHTML = `<div class="empty-state"><h3>Select a chat to view messages</h3></div>`;
+    document.getElementById("inputGroup").style.display = "none";
+    renderSessions("");
+    renderUserInfoPanel();
+    attachWebsiteListeners();
+  });
+});
+
 
 // === GLOBAL STATE ===
 let selectedSessionId = null;
@@ -456,7 +524,6 @@ chatBox.querySelectorAll('.message-bubble').forEach(bubble => {
 
 function deleteMessage(msgId) {
   if (!selectedSessionId || !msgId) return;
-  // First, ask for confirmation!
   Swal.fire({
     title: "Delete this message?",
     text: "Are you sure you want to delete this message?",
@@ -469,7 +536,12 @@ function deleteMessage(msgId) {
     color: "#222e3a"
   }).then((result) => {
     if (result.isConfirmed) {
-      const chatRef = db.ref("chats/" + selectedSessionId + "/" + msgId);
+      // 👇👇 Use the correct base path!
+      let chatPath = (selectedWebsiteKey === "einvite")
+        ? "chats/" + selectedSessionId + "/" + msgId     // flat path
+        : "chats/" + selectedWebsiteKey + "/" + selectedSessionId + "/" + msgId;  // nested path
+
+      const chatRef = db.ref(chatPath);
       removeSingleMessage(msgId, document.getElementById('chatBox'));
       chatRef.remove()
         .then(() => Swal.fire({
@@ -717,7 +789,7 @@ function renderSessions(filter = "") {
   }
 
   if (!hasResults) {
-    sessionList.innerHTML = '<div class="empty-state">No sessions match your search</div>';
+    sessionList.innerHTML = '<div class="empty-state">No Chats</div>';
   }
 }
 
@@ -731,10 +803,14 @@ db.ref("chats/" + userId)
 
 
 function getLastMessage(sessionId, callback) {
-  db.ref("chats/" + sessionId)
-    .orderByChild("timestamp")
-    .limitToLast(1)
-    .once("value", (snapshot) => {
+db.ref(
+  (selectedWebsiteKey === "einvite")
+    ? "chats/" + sessionId
+    : "chats/" + selectedWebsiteKey + "/" + sessionId
+)
+  .orderByChild("timestamp")
+  .limitToLast(1)
+  .once("value", (snapshot) => {
       const val = snapshot.val();
       if (val) {
         const lastMsg = Object.values(val)[0];
@@ -988,7 +1064,7 @@ function saveUserEdit() {
     location: { latitude: latitude || "", longitude: longitude || "" },
     ...(profilePic && { profilePic }) // Only set if changed
   };
-  db.ref("users/" + sessionId).update(userData)
+  userRef(sessionId).update(userData)
     .then(() => {
       Swal.fire({
         text: "User profile updated!",
@@ -1013,7 +1089,11 @@ function saveUserEdit() {
 
 
 function markMessagesAsRead(sessionId, currentUserType) {
-  const messagesRef = db.ref("chats/" + sessionId);
+  const messagesRef = db.ref(
+  (selectedWebsiteKey === "einvite")
+    ? "chats/" + sessionId
+    : "chats/" + selectedWebsiteKey + "/" + sessionId
+);
   messagesRef.once("value", (snapshot) => {
     const messages = snapshot.val() || {};
     Object.entries(messages).forEach(([msgId, msg]) => {
@@ -1032,7 +1112,10 @@ function markMessagesAsRead(sessionId, currentUserType) {
 markAllAdminMessagesAsRead(selectedSessionId);
 
 function markAllAdminMessagesAsRead(sessionId) {
-  const messagesRef = db.ref("chats/" + sessionId);
+  let chatsBasePath = (selectedWebsiteKey === "einvite")
+    ? "chats"
+    : "chats/" + selectedWebsiteKey;
+  const messagesRef = db.ref(chatsBasePath + "/" + sessionId);
   messagesRef.once("value", (snapshot) => {
     const messages = snapshot.val() || {};
     Object.entries(messages).forEach(([msgId, msg]) => {
@@ -1047,6 +1130,7 @@ function markAllAdminMessagesAsRead(sessionId) {
     });
   });
 }
+
 
 
 const ADMIN_PROFILE = {
@@ -1138,10 +1222,9 @@ function renderChatMessages(chatData) {
     let messageContent = "";
     let bubbleStyle = '';
 
-    if (msg.type === "image" && msg.message) {
-      messageContent = `
+if (msg.type === "image" && msg.message) {
+  messageContent = `
     <img src="${escapeHtml(msg.message)}" alt="image" onclick="window.open('${escapeHtml(msg.message)}','_blank')" />
-    <div class="msg-meta">${timeString} ${getMessageStatusIcon(msg, isRight)}</div>
     <span class="msg-menu" title="More" data-msg-id="${msg._id}">⋮</span>
   `;
       bubbleStyle = "display:flex;align-items:flex-end;gap:8px;background:transparent;padding:0;margin:0;box-shadow:none;border:none;";
@@ -1265,48 +1348,53 @@ document.addEventListener("visibilitychange", handleChatVisibility);
 function loadChat(sessionId) {
   selectedSessionId = sessionId;
   listenForUserTyping(sessionId, allUserData[sessionId]?.name || "User");
-  const chatRef = db.ref("chats/" + selectedSessionId);
 
-  if (window.innerWidth <= 700) {
-    document.querySelector('.sidebar').classList.add('mobile-hide');
-    document.getElementById('mobileBackBtn').style.display = "flex";
-  }
+  // Dynamically pick the path based on selectedWebsiteKey!
+  let chatsBasePath = (selectedWebsiteKey === "einvite")
+    ? "chats"
+    : "chats/" + selectedWebsiteKey;
 
-  // Remove old listeners if present
-   if (currentChatListeners.added) db.ref("chats/" + sessionId).off("child_added", currentChatListeners.added);
-  if (currentChatListeners.changed) db.ref("chats/" + sessionId).off("child_changed", currentChatListeners.changed);
-  if (currentChatListeners.removed) db.ref("chats/" + sessionId).off("child_removed", currentChatListeners.removed);
+  const chatRef = db.ref(chatsBasePath + "/" + selectedSessionId);
+
+  // Remove old listeners if present (defensive: skip if not set)
+  if (typeof currentChatListeners !== "object") currentChatListeners = {};
+  if (currentChatListeners.added) chatRef.off("child_added", currentChatListeners.added);
+  if (currentChatListeners.changed) chatRef.off("child_changed", currentChatListeners.changed);
+  if (currentChatListeners.removed) chatRef.off("child_removed", currentChatListeners.removed);
 
   // Initialize message map and clear UI
   messagesMap = {};
   const chatBox = document.getElementById('chatBox');
   chatBox.innerHTML = "";
 
-  // Add message
-currentChatListeners.added = db.ref("chats/" + sessionId).on("child_added", snapshot => {
-  const msg = snapshot.val();
-  const msgId = snapshot.key;
-  messagesMap[msgId] = { ...msg, _id: msgId };
-  renderSingleMessage(msg, msgId, chatBox, messagesMap);
-});
+  // Add listeners to the correct chatRef!
+  currentChatListeners.added = chatRef.on("child_added", snapshot => {
+    const msg = snapshot.val();
+    const msgId = snapshot.key;
+    messagesMap[msgId] = { ...msg, _id: msgId };
+    renderSingleMessage(msg, msgId, chatBox, messagesMap);
+  });
 
- currentChatListeners.changed = db.ref("chats/" + sessionId).on("child_changed", snapshot => {
-  const updatedMsg = snapshot.val();
-  const msgId = snapshot.key;
+  currentChatListeners.changed = chatRef.on("child_changed", snapshot => {
+    const updatedMsg = snapshot.val();
+    const msgId = snapshot.key;
+    updateMessageStatusUI(msgId, updatedMsg);
 
-  // Update message status icon
-  updateMessageStatusUI(msgId, updatedMsg);
-
-  // --- ADD THIS: update the text in the UI if message changed ---
-  const msgBubble = document.querySelector(`.message-bubble[data-msg-id="${msgId}"] .msg-content`);
-  if (msgBubble && updatedMsg.message !== undefined) {
-    msgBubble.textContent = updatedMsg.message;
-    // Optionally, show (edited) label:
-    if (updatedMsg.edited) {
-      msgBubble.innerHTML += ' <span style="font-size:11px;color:#888;">(edited)</span>';
+    // Update text in the UI if message changed
+    const msgBubble = document.querySelector(`.message-bubble[data-msg-id="${msgId}"] .msg-content`);
+    if (msgBubble && updatedMsg.message !== undefined) {
+      msgBubble.textContent = updatedMsg.message;
+      if (updatedMsg.edited) {
+        msgBubble.innerHTML += ' <span style="font-size:11px;color:#888;">(edited)</span>';
+      }
     }
-  }
-});
+  });
+
+  currentChatListeners.removed = chatRef.on("child_removed", snapshot => {
+    const msgId = snapshot.key;
+    const bubble = document.querySelector(`.message-bubble[data-msg-id="${msgId}"]`);
+    if (bubble) bubble.parentElement.remove();
+  });
 
 
   // Update message (edit)
@@ -1318,11 +1406,16 @@ currentChatListeners.added = db.ref("chats/" + sessionId).on("child_added", snap
   // });
 
   // Remove message (delete)
-  currentChatListeners.removed = db.ref("chats/" + sessionId).on("child_removed", snapshot => {
-    const msgId = snapshot.key;
-    delete messagesMap[msgId];
-    removeSingleMessage(msgId, chatBox);
-  });
+currentChatListeners.removed = db.ref(
+  (selectedWebsiteKey === "einvite")
+    ? "chats/" + selectedSessionId
+    : "chats/" + selectedWebsiteKey + "/" + selectedSessionId
+).on("child_removed", snapshot => {
+  const msgId = snapshot.key;
+  delete messagesMap[msgId];
+  removeSingleMessage(msgId, chatBox);
+});
+
 
   renderUserInfoPanel();
   document.getElementById("inputGroup").style.display = "flex";
@@ -1574,7 +1667,13 @@ document.getElementById("sendBtn").onclick = () => {
     timestamp: Date.now(),
     status: "sent"
   };
-  db.ref("chats/" + selectedSessionId).push(messageData).then(() => {
+let chatsBasePath = (selectedWebsiteKey === "einvite")
+  ? "chats"
+  : "chats/" + selectedWebsiteKey;
+
+db.ref(chatsBasePath + "/" + selectedSessionId)
+  .push(messageData)
+  .then(() => {
     msgInput.value = ""; // Clear input immediately for snappy UX
   });
 };
@@ -1629,17 +1728,20 @@ fileInput.onchange = () => {
   // NOTE: You need your own image upload handler.
   // For demo, we'll fake upload by converting to base64 and "uploading" it directly.
   const reader = new FileReader();
-  reader.onload = function (e) {
-    const messageData = {
-  sender: "agent",
-  message: msg,
-  type: "text",
-  timestamp: Date.now(),
-  status: "sent"
-};
-db.ref("chats/" + selectedSessionId).push(messageData);
-    fileInput.value = "";
+reader.onload = function (e) {
+  const messageData = {
+    sender: "agent",
+    message: e.target.result, // Set the uploaded image data
+    type: "image",            // Make sure type is 'image'
+    timestamp: Date.now(),
+    status: "sent"
   };
+  let chatsBasePath = (selectedWebsiteKey === "einvite") ? "chats" : "chats/" + selectedWebsiteKey;
+  db.ref(chatsBasePath + "/" + selectedSessionId)
+    .push(messageData);
+  fileInput.value = "";
+};
+
   reader.readAsDataURL(file);
 };
 
