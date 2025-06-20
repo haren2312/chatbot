@@ -19,45 +19,24 @@ function attachWebsiteListeners() {
   db.ref("users").off();
   db.ref("status").off();
 
-  if (selectedWebsiteKey === "einvite") {
-    // Listen to flat structure for E Invite
-    db.ref("chats").on("value", (snapshot) => {
-      allSessions = snapshot.val() || {};
-      renderSessions(document.getElementById("searchInput").value.toLowerCase());
-      if (selectedSessionId && allSessions[selectedSessionId]) {
-        renderChatMessages(allSessions[selectedSessionId]);
-      }
-    });
-    db.ref("users").on("value", (snapshot) => {
-      allUserData = snapshot.val() || {};
-      renderSessions(document.getElementById("searchInput").value.toLowerCase());
-      if (selectedSessionId) renderUserInfoPanel();
-    });
-    db.ref("status").on("value", (snapshot) => {
-      window.userPresence = snapshot.val() || {};
-      renderSessions(document.getElementById("searchInput").value.toLowerCase());
-      renderUserInfoPanel();
-    });
-  } else {
-    // Listen to nested structure for other sites
-    db.ref("chats/" + selectedWebsiteKey).on("value", (snapshot) => {
-      allSessions = snapshot.val() || {};
-      renderSessions(document.getElementById("searchInput").value.toLowerCase());
-      if (selectedSessionId && allSessions[selectedSessionId]) {
-        renderChatMessages(allSessions[selectedSessionId]);
-      }
-    });
-    db.ref("users/" + selectedWebsiteKey).on("value", (snapshot) => {
-      allUserData = snapshot.val() || {};
-      renderSessions(document.getElementById("searchInput").value.toLowerCase());
-      if (selectedSessionId) renderUserInfoPanel();
-    });
-    db.ref("status/" + selectedWebsiteKey).on("value", (snapshot) => {
-      window.userPresence = snapshot.val() || {};
-      renderSessions(document.getElementById("searchInput").value.toLowerCase());
-      renderUserInfoPanel();
-    });
+  // Always listen to nested structure, even for "einvite"
+db.ref("chats/" + selectedWebsiteKey).on("value", (snapshot) => {
+  allSessions = snapshot.val() || {};
+  renderSessions(document.getElementById("searchInput").value.toLowerCase());
+  if (selectedSessionId && allSessions[selectedSessionId]) {
+    renderChatMessages(allSessions[selectedSessionId]);
   }
+});
+db.ref("users/" + selectedWebsiteKey).on("value", (snapshot) => {
+  allUserData = snapshot.val() || {};
+  renderSessions(document.getElementById("searchInput").value.toLowerCase());
+  if (selectedSessionId) renderUserInfoPanel();
+});
+db.ref("status/" + selectedWebsiteKey).on("value", (snapshot) => {
+  window.userPresence = snapshot.val() || {};
+  renderSessions(document.getElementById("searchInput").value.toLowerCase());
+  renderUserInfoPanel();
+});
 }
 
 

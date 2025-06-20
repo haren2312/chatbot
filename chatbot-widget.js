@@ -173,30 +173,19 @@
       console.error("Firebase initialization error:", error);
     }
 
-
+    
     // 👇 SET THIS VALUE PER WEBSITE! (for prod, use build variable/env or inline change)
-    const WEBSITE_KEY = window.WEBSITE_KEY || "gauravjiandani"; // "gauravjiandani", "gauravjiandani", or "gauravjiandani"
+    const WEBSITE_KEY = window.WEBSITE_KEY || "todoitservices"; // Set this PER SITE in the embedding page
 
-
-    function chatRef(sessionId) {
-      if (WEBSITE_KEY === "einvite") {
-        return db.ref("chats/" + sessionId);
-      } else {
-        return db.ref("chats/" + WEBSITE_KEY + "/" + sessionId);
-      }
-    }
-
-
-    function userRef(sessionId) {
-      return WEBSITE_KEY === "einvite"
-        ? userRef(sessionId)
-        : db.ref("users/" + WEBSITE_KEY + "/" + sessionId);
-    }
-    function statusRef(sessionId) {
-      return WEBSITE_KEY === "einvite"
-        ? statusRef(sessionId)
-        : db.ref("status/" + WEBSITE_KEY + "/" + sessionId);
-    }
+function chatRef(sessionId) {
+  return db.ref("chats/" + WEBSITE_KEY + "/" + sessionId);
+}
+function userRef(sessionId) {
+  return db.ref("users/" + WEBSITE_KEY + "/" + sessionId);
+}
+function statusRef(sessionId) {
+  return db.ref("status/" + WEBSITE_KEY + "/" + sessionId);
+}
 
 
 
