@@ -8,7 +8,7 @@
   bottom: 15px;
   right: 15px;
   background: #1877f2;
-  border-radius: 50%;
+  border-radius: 50% ;
   width: 50px;
   height: 50px;
   border: none;
@@ -69,16 +69,16 @@ h3 {
 }
 
 #messages {
-  height: 277px;
-  overflow-y: auto;
-  /* border: 1px solid var(--border-color); */
-  /* border-radius: 10px; */
-  /* padding: 12px; */
-  background-color: white;
-  display: flex;
-  flex-direction: column;
-  /* gap: 10px; */
-  /* box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4); */
+    height: 250px;
+    overflow-y: auto;
+    /* border: 1px solid var(--border-color); */
+    /* border-radius: 10px; */
+    /* padding: 12px; */
+    background-color: white;
+    display: flex;
+    flex-direction: column;
+    /* gap: 10px; */
+    /* box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4); */
 }
 
 .msg {
@@ -105,7 +105,7 @@ h3 {
   color: #000000;
   border-bottom-left-radius: 4px;
   /* border: solid black 1px; */
-  margin-top: 10px;
+  margin-top: 5px;
 }
 
 #input {
@@ -1241,4 +1241,120 @@ input[type="email"]::placeholder {
   width: 30px;
   height: 30px;
   display: block;
+}
+
+/* If screen is very small (either by zoom or on mobile), show chatbot in fullscreen */
+@media screen and (max-width: 600px) {
+  #chat-container {
+    position: fixed !important;
+    inset: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    min-width: unset !important;
+    max-width: none !important;
+    max-height: none !important;
+    border-radius: 0 !important;
+    right: 0 !important;
+    left: 0 !important;
+    bottom: 0 !important;
+    top: 0 !important;
+    z-index: 99999 !important;
+  }
+  .prompt-box, .chat-bot-bg, #messages, .input-wrapper {
+    max-height: none !important;
+    height: auto !important;
+    flex: 1 1 0;
+    overflow: auto !important;
+  }
+  #messages {
+    height: calc(100vh - 300px) !important;
+  }
+}
+
+/* Ensure toggle button is always accessible on zoomed screens */
+@media screen and (max-width: 600px) {
+  #chatbot-toggle {
+    position: fixed !important;
+    right: 12px !important;
+    bottom: 18px !important;
+    z-index: 100000 !important;
+  }
+}
+
+/* Responsive Fullscreen Chatbot: For mobile and for desktop with high zoom */
+/* @media screen and (max-width: 500px), (max-height: 650px) {
+  #chat-container {
+    position: fixed !important;
+    inset: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    min-width: 0 !important;
+    max-width: none !important;
+    max-height: none !important;
+    border-radius: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    top: 0 !important;
+    bottom: 0 !important;
+    z-index: 2147483647 !important;
+    box-shadow: none !important;
+  }
+  .prompt-box, .chat-bot-bg, #messages, .input-wrapper {
+    max-height: none !important;
+    height: auto !important;
+    flex: 1 1 0;
+    overflow: auto !important;
+  }
+  #messages {
+    height: calc(100vh - 300px) !important;
+    min-height: 150px !important;
+  }
+  #chatbot-toggle {
+    right: 16px !important;
+    bottom: 18px !important;
+    z-index: 2147483648 !important;
+  }
+} */
+
+/* (Optional) Hide rounded corners for fullscreen mode */
+@media screen and (max-width: 500px), (max-height: 650px) {
+  #chat-container {
+    border-radius: 10px !important;
+  }
+}
+
+
+#chat-container.fullscreen-at-zoom {
+  position: fixed !important;
+  inset: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  min-width: 0 !important;
+  max-width: none !important;
+  max-height: none !important;
+  border-radius: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  top: 0 !important;
+  bottom: 0 !important;
+  z-index: 2147483647 !important;
+  box-shadow: none !important;
+}
+#chat-container.fullscreen-at-zoom .prompt-box,
+#chat-container.fullscreen-at-zoom .chat-bot-bg,
+#chat-container.fullscreen-at-zoom #messages,
+#chat-container.fullscreen-at-zoom .input-wrapper {
+  max-height: none !important;
+  height: auto !important;
+  /* flex: 1 1 0; */
+  overflow: auto !important;
+}
+#chat-container.fullscreen-at-zoom #messages {
+  height: calc(100vh - 300px) !important;
+  min-height: 150px !important;
+}
+#chat-container.fullscreen-at-zoom #chatbot-toggle {
+  right: 16px !important;
+  bottom: 18px !important;
+  z-index: 2147483648 !important;
 }

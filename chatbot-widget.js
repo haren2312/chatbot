@@ -902,6 +902,21 @@ function statusRef(sessionId) {
   //   }
   // });
 
+function setChatbotZoomClass() {
+  // Ratio of outerWidth to innerWidth increases with zoom
+  var zoom = Math.round((window.outerWidth / window.innerWidth) * 100) / 100;
+  var chatbot = document.getElementById('chat-container');
+  if (!chatbot) return;
+  if (zoom >= 1.1) { // Triggers above 100% zoom (110% and more)
+    chatbot.classList.add('fullscreen-at-zoom');
+  } else {
+    chatbot.classList.remove('fullscreen-at-zoom');
+  }
+}
+window.addEventListener('resize', setChatbotZoomClass);
+window.addEventListener('DOMContentLoaded', setChatbotZoomClass);
+// For widgets loaded dynamically, you may want:
+setTimeout(setChatbotZoomClass, 800);
 
 
 })();

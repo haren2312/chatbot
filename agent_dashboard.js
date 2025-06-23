@@ -189,6 +189,69 @@ function startPresenceTracking() {
 }
 
 
+const websites = [
+  { key: "todoitservices", label: "ToDo IT", icon: "✅" },
+  { key: "gauravjiandani", label: "Gaurav Jiandani", icon: "👨‍💼" },
+  { key: "einvite", label: "E Invite", icon: "🌐" }
+];
+let openTabs = ["todoitservices", "gauravjiandani", "einvite"];
+let activeTab = openTabs[0];
+const tabBar = document.getElementById("tabBar");
+
+function renderTabBar() {
+  tabBar.innerHTML = "";
+  openTabs.forEach((key, idx) => {
+    const website = websites.find(w => w.key === key);
+    const tabDiv = document.createElement("div");
+    tabDiv.className = "tab-pro" + (key === activeTab ? " active" : "");
+    tabDiv.innerHTML = `
+      <span class="favicon">${website?.icon || "🗂️"}</span>
+      <span>${website ? website.label : key}</span>
+      ${openTabs.length > 1 ? '<button class="tab-close" title="Close Tab">&times;</button>' : ''}
+    `;
+    tabDiv.onclick = (e) => {
+      if (e.target.classList.contains("tab-close")) return;
+      activeTab = key;
+      selectedWebsiteKey = key;
+      renderTabBar();
+      attachWebsiteListeners();
+    };
+    const closeBtn = tabDiv.querySelector(".tab-close");
+    if (closeBtn) {
+      closeBtn.onclick = (e) => {
+        e.stopPropagation();
+        const idx = openTabs.indexOf(key);
+        openTabs.splice(idx, 1);
+        if (activeTab === key) {
+          activeTab = openTabs[Math.max(0, idx - 1)];
+          selectedWebsiteKey = activeTab;
+        }
+        renderTabBar();
+        attachWebsiteListeners();
+      };
+    }
+    tabBar.appendChild(tabDiv);
+  });
+  // "+" add tab
+  const addBtn = document.createElement("button");
+  addBtn.className = "tab-add-pro";
+  addBtn.innerHTML = "+";
+  addBtn.onclick = () => {
+    const closed = websites.filter(w => !openTabs.includes(w.key));
+    if (closed.length === 0) {
+      Swal && Swal.fire("All sites open!"); // optional SweetAlert
+      return;
+    }
+    const toOpen = closed[0];
+    openTabs.push(toOpen.key);
+    activeTab = toOpen.key;
+    selectedWebsiteKey = toOpen.key;
+    renderTabBar();
+    attachWebsiteListeners();
+  };
+  tabBar.appendChild(addBtn);
+}
+document.addEventListener("DOMContentLoaded", renderTabBar);
 
 
 
@@ -229,6 +292,9 @@ document.addEventListener('DOMContentLoaded', function () {
       }
     });
   }
+
+
+  
 
   // Expose modal open/close globally, defensively
   window.openProfileModal = function () {
