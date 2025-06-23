@@ -403,12 +403,14 @@ document.getElementById("email-btn").onclick = function () {
     };
 
     document.getElementById("skip-location-btn").onclick = skipLocation;
-function skipLocation() {
-  // ... rest of your code ...
-  setTimeout(() => initializeChat(), 100);
-  listenForAgentTyping();
-  loadChatMessages(); // <--- ADD THIS HERE
-}
+    function skipLocation() {
+      // --- SET LOCATION FLAG HERE ---
+      localStorage.setItem("chatbot_location_set", "1");
+      document.getElementById("location-prompt").style.display = "none";
+      setTimeout(() => initializeChat(), 100); // short delay for DOM ready
+
+      listenForAgentTyping();
+    }
 
 
 
