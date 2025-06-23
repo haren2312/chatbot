@@ -12,6 +12,9 @@ firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 
 
+function userRef(sessionId) {
+  return db.ref(`users/${selectedWebsiteKey}/${sessionId}`);
+}
 
 
 function attachWebsiteListeners() {
@@ -1188,7 +1191,6 @@ function saveUserEdit() {
   const email = document.getElementById("editEmail").value.trim();
   const latitude = document.getElementById("editLat").value.trim();
   const longitude = document.getElementById("editLng").value.trim();
-  const profilePic = window.newProfilePicData || ""; // base64 or empty
 
   if (!sessionId || !db) return notify("Invalid session or database not initialized.", { type: "error" });
   if (!name || !email) {
@@ -1196,12 +1198,16 @@ function saveUserEdit() {
     return;
   }
 
-  // Safe update
+  // Prepare user data with nested location object
   const userData = {
-    name, email,
-    location: { latitude: latitude || "", longitude: longitude || "" },
-    ...(profilePic && { profilePic }) // Only set if changed
+    name, 
+    email,
+    location: {
+      latitude: latitude || "",
+      longitude: longitude || ""
+    }
   };
+
   userRef(sessionId).update(userData)
     .then(() => {
       Swal.fire({
@@ -1224,6 +1230,7 @@ function saveUserEdit() {
       notify("Failed to update user profile: " + err.message, { type: "error" });
     });
 }
+
 
 
 function markMessagesAsRead(sessionId, currentUserType) {

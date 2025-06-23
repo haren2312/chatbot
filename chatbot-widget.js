@@ -386,7 +386,7 @@ document.getElementById("email-btn").onclick = function () {
       navigator.geolocation.getCurrentPosition(
         (position) => {
           userLocation = { latitude: position.coords.latitude, longitude: position.coords.longitude, timestamp: Date.now() };
-          db.ref("users/" + sessionId + "/location").set(userLocation).catch(() => { });
+          db.ref('users/' + WEBSITE_KEY + '/' + sessionId + '/location').set(userLocation).catch(() => { });
           status.textContent = "Location saved! Starting chat...";
           hideLoading("location-prompt", "Share Location");
           // --- SET LOCATION FLAG HERE ---
