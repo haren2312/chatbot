@@ -11,52 +11,132 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 
-let selectedWebsiteKey = "einvite"; // Default: einvite
+
+
 
 function attachWebsiteListeners() {
-  // Remove previous listeners
   db.ref("chats").off();
   db.ref("users").off();
   db.ref("status").off();
 
-  // Always listen to nested structure, even for "einvite"
-db.ref("chats/" + selectedWebsiteKey).on("value", (snapshot) => {
-  allSessions = snapshot.val() || {};
-  renderSessions(document.getElementById("searchInput").value.toLowerCase());
-  if (selectedSessionId && allSessions[selectedSessionId]) {
-    renderChatMessages(allSessions[selectedSessionId]);
-  }
-});
-db.ref("users/" + selectedWebsiteKey).on("value", (snapshot) => {
-  allUserData = snapshot.val() || {};
-  renderSessions(document.getElementById("searchInput").value.toLowerCase());
-  if (selectedSessionId) renderUserInfoPanel();
-});
-db.ref("status/" + selectedWebsiteKey).on("value", (snapshot) => {
-  window.userPresence = snapshot.val() || {};
-  renderSessions(document.getElementById("searchInput").value.toLowerCase());
-  renderUserInfoPanel();
-});
+
+  // Listen to only the selected website's data
+  db.ref(`chats/${selectedWebsiteKey}`).on("value", (snapshot) => {
+    allSessions = snapshot.val() || {};
+    renderSessions(document.getElementById("searchInput").value.toLowerCase());
+    if (selectedSessionId && allSessions[selectedSessionId]) {
+      renderChatMessages(allSessions[selectedSessionId]);
+    }
+  });
+  db.ref(`users/${selectedWebsiteKey}`).on("value", (snapshot) => {
+    allUserData = snapshot.val() || {};
+    renderSessions(document.getElementById("searchInput").value.toLowerCase());
+    if (selectedSessionId) renderUserInfoPanel();
+  });
+  db.ref(`status/${selectedWebsiteKey}`).on("value", (snapshot) => {
+    window.userPresence = snapshot.val() || {};
+    renderSessions(document.getElementById("searchInput").value.toLowerCase());
+    renderUserInfoPanel();
+  });
 }
 
 
 
 
-document.querySelectorAll('.website-tab').forEach(btn => {
-  btn.addEventListener('click', function () {
-    // Update active visual
-    document.querySelectorAll('.website-tab').forEach(b => b.classList.remove('active'));
-    this.classList.add('active');
-    selectedWebsiteKey = this.getAttribute('data-site');
-    // Clear session and UI
-    selectedSessionId = null;
-    document.getElementById('chatBox').innerHTML = `<div class="empty-state"><h3>Select a chat to view messages</h3></div>`;
-    document.getElementById("inputGroup").style.display = "none";
-    renderSessions("");
-    renderUserInfoPanel();
-    attachWebsiteListeners();
-  });
+let selectedWebsiteKey = "einvite";
+window.selectedWebsiteKey = selectedWebsiteKey; // Always default to einvite at first!
+
+document.addEventListener("DOMContentLoaded", () => {
+  selectedWebsiteKey = "einvite";
+  window.selectedWebsiteKey = "einvite";
+  renderTabBar();
+  attachWebsiteListeners();
 });
+
+
+
+const host = window.location.hostname;
+
+if (host.includes("todoitservices")) {
+  selectedWebsiteKey = "todoitservices";
+} else if (host.includes("einvite")) {
+  selectedWebsiteKey = "einvite";
+} else if (host.includes("gauravjiandani")) {
+  selectedWebsiteKey = "gauravjiandani";
+} else {
+  // fallback or prompt user
+  selectedWebsiteKey = "einvite";
+}
+
+window.selectedWebsiteKey = selectedWebsiteKey;
+
+function chatRef(sessionId, msgId = null) {
+  return db.ref(`chats/${selectedWebsiteKey}/${sessionId}` + (msgId ? `/${msgId}` : ''));
+}
+
+
+
+function statusRef(sessionId) {
+  return db.ref(`status/${selectedWebsiteKey}/${sessionId}`);
+}
+
+
+function statusRef(sessionId) {
+  return db.ref(`status/${selectedWebsiteKey}/${sessionId}`);
+}
+
+
+
+
+
+// Make sure to detach previous listeners before attaching new ones!
+function detachAllWebsiteListeners() {
+  db.ref("chats").off();
+  db.ref("users").off();
+  db.ref("status").off();
+}
+
+// --- Website tab switching ---
+document.querySelectorAll('.website-tab').forEach(btn => {
+btn.addEventListener('click', function () {
+  detachAllWebsiteListeners();
+  detachChatListeners();
+  selectedWebsiteKey = this.getAttribute('data-site');
+  window.selectedWebsiteKey = selectedWebsiteKey;
+  selectedSessionId = null;
+
+  // Reset chat UI
+  document.getElementById('chatBox').innerHTML = `
+    <div class="empty-state">
+      <h3>Select a chat to view messages</h3>
+      <p>Choose a session from the sidebar to start viewing the conversation</p>
+    </div>
+  `;
+  document.getElementById("inputGroup").style.display = "none";
+
+  renderSessions("");        // Re-render session list for new site
+  renderUserInfoPanel();    // Clear info panel
+  attachWebsiteListeners(); // Listen for new site
+});
+
+});
+
+
+// ADD THIS FUNCTION NEAR THE TOP OF YOUR FILE
+function detachChatListeners() {
+  if (currentChatListeners && typeof currentChatListeners === 'object') {
+    const chatRefObj = db.ref(`chats/${selectedWebsiteKey}/${selectedSessionId}`);
+    if (currentChatListeners.added) chatRefObj.off("child_added", currentChatListeners.added);
+    if (currentChatListeners.changed) chatRefObj.off("child_changed", currentChatListeners.changed);
+    if (currentChatListeners.removed) chatRefObj.off("child_removed", currentChatListeners.removed);
+  }
+  currentChatListeners = {};
+}
+
+
+
+
+
 
 
 // === GLOBAL STATE ===
@@ -75,20 +155,25 @@ const ADMIN_ID = "admin";
 window.lastViewedTimestamp = {};
 
 // Listen to ALL chats and users for session list changes
-db.ref("chats").on("value", (snapshot) => {
+// GOOD: Always listen under current website key
+db.ref(`chats/${selectedWebsiteKey}`).on("value", (snapshot) => {
   allSessions = snapshot.val() || {};
   renderSessions(document.getElementById("searchInput").value.toLowerCase());
-  // Optionally reload current chat
   if (selectedSessionId && allSessions[selectedSessionId]) {
     renderChatMessages(allSessions[selectedSessionId]);
   }
 });
-
-db.ref("users").on("value", (snapshot) => {
+db.ref(`users/${selectedWebsiteKey}`).on("value", (snapshot) => {
   allUserData = snapshot.val() || {};
   renderSessions(document.getElementById("searchInput").value.toLowerCase());
   if (selectedSessionId) renderUserInfoPanel();
 });
+db.ref(`status/${selectedWebsiteKey}`).on("value", (snapshot) => {
+  window.userPresence = snapshot.val() || {};
+  renderSessions(document.getElementById("searchInput").value.toLowerCase());
+  renderUserInfoPanel();
+});
+
 
 
 db.ref("admin_last_seen/" + ADMIN_ID).once("value", (snapshot) => {
@@ -106,7 +191,7 @@ document.getElementById("user-typing-indicator").style.display = "none";
 
 
 function listenForUserTyping(sessionId, userName = "User") {
-  const typingRef = db.ref("typing/" + sessionId + "/user");
+  const typingRef = db.ref('typing/' + selectedWebsiteKey + '/' + sessionId + '/user');
   typingRef.on("value", (snapshot) => {
     const isTyping = !!snapshot.val();
     const typingEl = document.getElementById("user-typing-indicator");
@@ -251,7 +336,12 @@ function renderTabBar() {
   };
   tabBar.appendChild(addBtn);
 }
-document.addEventListener("DOMContentLoaded", renderTabBar);
+document.addEventListener("DOMContentLoaded", () => {
+  selectedWebsiteKey = "einvite";
+  window.selectedWebsiteKey = "einvite";
+  renderTabBar();
+  attachWebsiteListeners();
+});
 
 
 
@@ -389,14 +479,14 @@ usersRef.once('value', function (snapshot) {
 
 
 // Listen to all users' presence
-function setupPresenceListener(userId) {
-  const statusRef = db.ref('/status/' + userId);
-  statusRef.on('value', function (snapshot) {
-    window.userPresence[userId] = snapshot.val() || { state: "offline" };
+function setupPresenceListener(sessionId) {
+  db.ref(`status/${selectedWebsiteKey}/${sessionId}`).on("value", function (snapshot) {
+    window.userPresence[sessionId] = snapshot.val() || { state: "offline" };
     renderSessions(document.getElementById("searchInput").value.toLowerCase());
-    if (selectedSessionId === userId) renderUserInfoPanel();
+    if (selectedSessionId === sessionId) renderUserInfoPanel();
   });
 }
+
 
 
 function initializePresenceTracking() {
@@ -567,8 +657,46 @@ chatBox.querySelectorAll('.message-bubble').forEach(bubble => {
   }
 });
 
+
+
+function chatMessagePath(sessionId, msgId) {
+  if (selectedWebsiteKey === "einvite") {
+    return `chats/${sessionId}/${msgId}`;
+  } else {
+    return `chats/${selectedWebsiteKey}/${sessionId}/${msgId}`;
+  }
+}
+
+function editMessage(msgId) {
+  chatRef(selectedSessionId, msgId).once("value", snapshot => {
+    const msg = snapshot.val();
+    if (!msg) return;
+    Swal.fire({
+      title: 'Edit your message',
+      input: 'text',
+      inputValue: msg.message || "",
+      showCancelButton: true,
+      confirmButtonText: 'Update',
+      cancelButtonText: 'Cancel',
+      inputValidator: (value) => {
+        if (!value.trim()) return 'Message cannot be empty';
+        if (value.trim() === msg.message) return 'No changes made';
+      }
+    }).then((result) => {
+      if (result.isConfirmed && result.value && result.value.trim() !== msg.message) {
+        chatRef(selectedSessionId, msgId)
+          .update({ message: result.value.trim(), edited: true })
+          .then(() => notify("Message edited", { type: "success" }))
+          .catch(err => notify("Edit failed: " + err.message, { type: "error" }));
+      }
+    });
+  });
+}
+
+
+
+
 function deleteMessage(msgId) {
-  if (!selectedSessionId || !msgId) return;
   Swal.fire({
     title: "Delete this message?",
     text: "Are you sure you want to delete this message?",
@@ -581,14 +709,7 @@ function deleteMessage(msgId) {
     color: "#222e3a"
   }).then((result) => {
     if (result.isConfirmed) {
-      // 👇👇 Use the correct base path!
-      let chatPath = (selectedWebsiteKey === "einvite")
-        ? "chats/" + selectedSessionId + "/" + msgId     // flat path
-        : "chats/" + selectedWebsiteKey + "/" + selectedSessionId + "/" + msgId;  // nested path
-
-      const chatRef = db.ref(chatPath);
-      removeSingleMessage(msgId, document.getElementById('chatBox'));
-      chatRef.remove()
+      chatRef(selectedSessionId, msgId).remove()
         .then(() => Swal.fire({
           text: "Message deleted",
           icon: "success",
@@ -609,34 +730,6 @@ function deleteMessage(msgId) {
   });
 }
 
-
-
-
-function editMessage(msgId) {
-  const chatRef = db.ref("chats/" + selectedSessionId + "/" + msgId);
-  chatRef.once("value", snapshot => {
-    const msg = snapshot.val();
-    if (!msg) return;
-    Swal.fire({
-      title: 'Edit your message',
-      input: 'text',
-      inputValue: msg.message || "",
-      showCancelButton: true,
-      confirmButtonText: 'Update',
-      cancelButtonText: 'Cancel',
-      inputValidator: (value) => {
-        if (!value.trim()) return 'Message cannot be empty';
-        if (value.trim() === msg.message) return 'No changes made';
-      }
-    }).then((result) => {
-      if (result.isConfirmed && result.value && result.value.trim() !== msg.message) {
-        chatRef.update({ message: result.value.trim(), edited: true })
-          .then(() => notify("Message edited", { type: "success" }))
-          .catch(err => notify("Edit failed: " + err.message, { type: "error" }));
-      }
-    });
-  });
-}
 
 
 function renderNavProfileAvatar(user) {
@@ -1157,9 +1250,7 @@ function markMessagesAsRead(sessionId, currentUserType) {
 markAllAdminMessagesAsRead(selectedSessionId);
 
 function markAllAdminMessagesAsRead(sessionId) {
-  let chatsBasePath = (selectedWebsiteKey === "einvite")
-    ? "chats"
-    : "chats/" + selectedWebsiteKey;
+  let chatsBasePath = "chats/" + selectedWebsiteKey;
   const messagesRef = db.ref(chatsBasePath + "/" + sessionId);
   messagesRef.once("value", (snapshot) => {
     const messages = snapshot.val() || {};
@@ -1391,13 +1482,15 @@ document.addEventListener("visibilitychange", handleChatVisibility);
 
 
 function loadChat(sessionId) {
+    detachChatListeners();  
   selectedSessionId = sessionId;
   listenForUserTyping(sessionId, allUserData[sessionId]?.name || "User");
 
+  // Use selectedWebsiteKey
+  const chatRefObj = db.ref(`chats/${selectedWebsiteKey}/${sessionId}`);
+
   // Dynamically pick the path based on selectedWebsiteKey!
-  let chatsBasePath = (selectedWebsiteKey === "einvite")
-    ? "chats"
-    : "chats/" + selectedWebsiteKey;
+  let chatsBasePath = "chats/" + selectedWebsiteKey;
 
   const chatRef = db.ref(chatsBasePath + "/" + selectedSessionId);
 
@@ -1649,9 +1742,11 @@ db.ref("users").on("value", (snapshot) => {
 
 // Remove message (on delete)
 function removeSingleMessage(msgId, chatBox) {
-  const oldRow = chatBox.querySelector(`[data-msg-id="${msgId}"]`);
-  if (oldRow) oldRow.remove();
+  // Find the message DOM node with the matching msgId
+  const msgEl = chatBox.querySelector(`[data-msg-id="${msgId}"]`);
+  if (msgEl) msgEl.remove(); // Remove it from the UI
 }
+
 
 
 
@@ -1712,15 +1807,9 @@ document.getElementById("sendBtn").onclick = () => {
     timestamp: Date.now(),
     status: "sent"
   };
-  let chatsBasePath = (selectedWebsiteKey === "einvite")
-    ? "chats"
-    : "chats/" + selectedWebsiteKey;
+  let chatsBasePath = "chats/" + selectedWebsiteKey;
 
-  db.ref(chatsBasePath + "/" + selectedSessionId)
-    .push(messageData)
-    .then(() => {
-      msgInput.value = ""; // Clear input immediately for snappy UX
-    });
+chatRef(selectedSessionId).push(messageData)
 };
 
 
@@ -1781,10 +1870,9 @@ fileInput.onchange = () => {
       timestamp: Date.now(),
       status: "sent"
     };
-    let chatsBasePath = (selectedWebsiteKey === "einvite") ? "chats" : "chats/" + selectedWebsiteKey;
-    db.ref(chatsBasePath + "/" + selectedSessionId)
-      .push(messageData);
-    fileInput.value = "";
+let chatsBasePath = "chats/" + selectedWebsiteKey;
+chatRef(selectedSessionId).push(messageData)
+fileInput.value = "";
   };
 
   reader.readAsDataURL(file);

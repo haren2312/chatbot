@@ -175,7 +175,7 @@
 
     
     // 👇 SET THIS VALUE PER WEBSITE! (for prod, use build variable/env or inline change)
-    const WEBSITE_KEY = window.WEBSITE_KEY || "todoitservices"; // Set this PER SITE in the embedding page
+    const WEBSITE_KEY = window.WEBSITE_KEY || "einvite"; // Set this PER SITE in the embedding page
 
 function chatRef(sessionId) {
   return db.ref("chats/" + WEBSITE_KEY + "/" + sessionId);
@@ -193,11 +193,9 @@ function statusRef(sessionId) {
 
     // Call this on any user interaction (mousemove, keydown, click, etc.)
     // Presence update function (keep!)
-    function setPresence(state) {
-      if (!sessionId) return;
-      db.ref('status/' + sessionId).set({
-        state: state,
-        last_changed: firebase.database.ServerValue.TIMESTAMP
+function setPresence(state) {
+  if (!sessionId) return;
+  db.ref('status/' + sessionId).set({ state, last_changed: firebase.database.ServerValue.TIMESTAMP
       });
     }
 
@@ -350,27 +348,29 @@ function statusRef(sessionId) {
     });
 
     // EMAIL PROMPT
-    document.getElementById("email-btn").onclick = function () {
-      userEmail = document.getElementById("emailInput").value.trim().toLowerCase();
-      if (!userEmail || !validateEmail(userEmail)) {
-        showError("Please enter a valid email address");
-        document.getElementById("emailInput").focus();
-        return;
-      }
-      localStorage.setItem("chatbot_user_email", userEmail);
-      sessionId = sanitizeEmail(userEmail);
-      showLoading("email-prompt", "Saving...");
-      userRef(sessionId).set({
-        name: userName, email: userEmail, timestamp: Date.now()
-      }).then(() => {
-        hideLoading("email-prompt", "Submit Email");
-        document.getElementById("email-prompt").style.display = "none";
-        document.getElementById("location-prompt").style.display = "block";
-      }).catch(() => {
-        hideLoading("email-prompt", "Submit Email");
-        showError("Error saving data. Please try again.");
-      });
-    };
+document.getElementById("email-btn").onclick = function () {
+  userEmail = document.getElementById("emailInput").value.trim().toLowerCase();
+  if (!userEmail || !validateEmail(userEmail)) {
+    showError("Please enter a valid email address");
+    document.getElementById("emailInput").focus();
+    return;
+  }
+  localStorage.setItem("chatbot_user_email", userEmail);
+  sessionId = sanitizeEmail(userEmail);
+  showLoading("email-prompt", "Saving...");
+  userRef(sessionId).set({
+    name: userName, email: userEmail, timestamp: Date.now()
+  }).then(() => {
+    hideLoading("email-prompt", "Submit Email");
+    document.getElementById("email-prompt").style.display = "none";
+    document.getElementById("location-prompt").style.display = "block";
+    loadChatMessages(); // <--- NOW ADDED**
+  }).catch(() => {
+    hideLoading("email-prompt", "Submit Email");
+    showError("Error saving data. Please try again.");
+  });
+};
+
 
 
     // LOCATION PROMPT
@@ -403,14 +403,12 @@ function statusRef(sessionId) {
     };
 
     document.getElementById("skip-location-btn").onclick = skipLocation;
-    function skipLocation() {
-      // --- SET LOCATION FLAG HERE ---
-      localStorage.setItem("chatbot_location_set", "1");
-      document.getElementById("location-prompt").style.display = "none";
-      setTimeout(() => initializeChat(), 100); // short delay for DOM ready
-
-      listenForAgentTyping();
-    }
+function skipLocation() {
+  // ... rest of your code ...
+  setTimeout(() => initializeChat(), 100);
+  listenForAgentTyping();
+  loadChatMessages(); // <--- ADD THIS HERE
+}
 
 
 
@@ -861,7 +859,7 @@ function statusRef(sessionId) {
 
     function setTyping(isTyping) {
       if (!db || !sessionId) return;
-      db.ref("typing/" + sessionId + "/user").set(isTyping);
+      db.ref('typing/' + WEBSITE_KEY + '/' + sessionId + '/user').set(true/false);
     }
 
     function hideTypingIndicator() {
