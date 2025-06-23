@@ -36,11 +36,11 @@ function attachWebsiteListeners() {
     renderSessions(document.getElementById("searchInput").value.toLowerCase());
     if (selectedSessionId) renderUserInfoPanel();
   });
-  db.ref(`status/${selectedWebsiteKey}`).on("value", (snapshot) => {
-    window.userPresence = snapshot.val() || {};
-    renderSessions(document.getElementById("searchInput").value.toLowerCase());
-    renderUserInfoPanel();
-  });
+db.ref("status").on("value", (snapshot) => {
+  window.userPresence = snapshot.val() || {};
+  renderSessions(document.getElementById("searchInput").value.toLowerCase());
+  renderUserInfoPanel();
+});
 }
 
 
@@ -171,7 +171,7 @@ db.ref(`users/${selectedWebsiteKey}`).on("value", (snapshot) => {
   renderSessions(document.getElementById("searchInput").value.toLowerCase());
   if (selectedSessionId) renderUserInfoPanel();
 });
-db.ref(`status/${selectedWebsiteKey}`).on("value", (snapshot) => {
+db.ref("status").on("value", (snapshot) => {
   window.userPresence = snapshot.val() || {};
   renderSessions(document.getElementById("searchInput").value.toLowerCase());
   renderUserInfoPanel();
@@ -483,7 +483,7 @@ usersRef.once('value', function (snapshot) {
 
 // Listen to all users' presence
 function setupPresenceListener(sessionId) {
-  db.ref(`status/${selectedWebsiteKey}/${sessionId}`).on("value", function (snapshot) {
+  db.ref(`status/${sessionId}`).on("value", function (snapshot) {
     window.userPresence[sessionId] = snapshot.val() || { state: "offline" };
     renderSessions(document.getElementById("searchInput").value.toLowerCase());
     if (selectedSessionId === sessionId) renderUserInfoPanel();
@@ -965,10 +965,8 @@ function getLastMessage(sessionId, callback) {
 
 // Add a status indicator (dot) based on presence
 function getStatusDotHtml(userId) {
-  // Get the user's presence state from the global userPresence object
-  const userStatus = window.userPresence?.[userId];
+  const userStatus = window.userPresence?.[selectedSessionId];
   const state = userStatus?.state || "offline";
-
   // Define colors for different states
   const color = state === "online" ? "#03d500"   // Green for online
     : state === "away" ? "#fd7b1f"   // Orange for away  
