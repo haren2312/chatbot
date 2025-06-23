@@ -1813,8 +1813,9 @@ document.getElementById("sendBtn").onclick = () => {
     status: "sent"
   };
   let chatsBasePath = "chats/" + selectedWebsiteKey;
+  chatRef(selectedSessionId).push(messageData)
+  msgInput.value = "";
 
-chatRef(selectedSessionId).push(messageData)
 };
 
 
