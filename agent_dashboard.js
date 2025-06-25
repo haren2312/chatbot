@@ -929,7 +929,7 @@ function renderSessions(filter = "") {
       <div style="display:flex;align-items:center;gap:11px;position:relative;">
         <div style="position:relative;width:45px;height:45px;">
           <div class="user-avatar"
-            style="width:43px;height:43px;border-radius:50%;background:${avatarGradient};display:flex;align-items:center;justify-content:center;font-weight:700;color:#fff;font-size:1rem;box-shadow:0 1px 8px #15193544;">
+            style="width:43px;height:43px;border-radius:50%;background:${avatarGradient};display:flex;align-items:center;justify-content:center;font-weight:700;color:#fff;font-size:1rem;box-shadow:0 1px 8px #15193544; box-shadow: inset 0 1px 20px 2px #00000044;">
             ${escapeHtml(initials)}
              ${statusDot}
 
