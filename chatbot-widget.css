@@ -557,6 +557,7 @@ input[type="email"]::placeholder {
   color: #fff;
   font-weight: 500;
   margin-left: 50px;
+  max-width: 200px;
 }
 
 .msg.agent .bubble {
