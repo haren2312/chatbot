@@ -1087,7 +1087,7 @@ function renderUserInfoPanel() {
 
   userInfoList.innerHTML = `
     <div class="modern-user-card" id="user-info-${selectedSessionId}">
-      <div class="modern-avatar" style="background:${avatarGradient};color:#fff;position:relative;box-shadow:0 3px 10px #15193533; width: 60px;height: 60px;display:inline-flex;align-items:center;justify-content:center;border-radius:50%;">
+      <div class="modern-avatar" style="background:${avatarGradient};color:#fff;position:relative;box-shadow:0 3px 10px #15193533; width: 60px;height: 60px;display:inline-flex;align-items:center;justify-content:center;border-radius:50%; box-shadow: inset 0 1px 20px 2px #00000044;">
         ${initials}
         <span class="country-flag" title="${country}" style="position:absolute;right:-8px;bottom:-5px;">
           ${countryFlag}
