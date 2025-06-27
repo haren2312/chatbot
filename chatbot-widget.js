@@ -82,6 +82,7 @@
             <span class="chat-btn-label">Chat</span>
           </button>
         </div>
+        
         <div class="chat-header-main">
           <div class="header-avatar-row">
             <div class="overlap-logos">
@@ -132,6 +133,8 @@
   </div>
 `;
 
+
+
   const wrapper = document.createElement('div');
   wrapper.innerHTML = widgetHTML;
   document.body.appendChild(wrapper);
@@ -173,19 +176,37 @@
       console.error("Firebase initialization error:", error);
     }
 
-    
+
+    if (!document.getElementById('chatbot-fullscreen-image-overlay')) {
+  const overlay = document.createElement('div');
+  overlay.id = 'chatbot-fullscreen-image-overlay';
+  overlay.style = `
+    display:none; position:fixed; left:0;top:0;width:100vw;height:100vh;z-index:2147483647;
+    background:rgba(15,20,40,0.92); justify-content:center;align-items:center;cursor:zoom-out;
+  `;
+  overlay.innerHTML = `<img src="" style="max-width:96vw;max-height:96vh;border-radius:16px;box-shadow:0 6px 64px #000a;background:#fff;">`;
+  document.body.appendChild(overlay);
+  overlay.onclick = function(e) {
+    if (e.target === overlay) {
+      overlay.style.display = 'none';
+      overlay.querySelector('img').src = '';
+    }
+  };
+}
+
+
     // 👇 SET THIS VALUE PER WEBSITE! (for prod, use build variable/env or inline change)
     const WEBSITE_KEY = window.WEBSITE_KEY || "einvite"; // Set this PER SITE in the embedding page
 
-function chatRef(sessionId) {
-  return db.ref("chats/" + WEBSITE_KEY + "/" + sessionId);
-}
-function userRef(sessionId) {
-  return db.ref("users/" + WEBSITE_KEY + "/" + sessionId);
-}
-function statusRef(sessionId) {
-  return db.ref("status/" + WEBSITE_KEY + "/" + sessionId);
-}
+    function chatRef(sessionId) {
+      return db.ref("chats/" + WEBSITE_KEY + "/" + sessionId);
+    }
+    function userRef(sessionId) {
+      return db.ref("users/" + WEBSITE_KEY + "/" + sessionId);
+    }
+    function statusRef(sessionId) {
+      return db.ref("status/" + WEBSITE_KEY + "/" + sessionId);
+    }
 
 
 
@@ -193,9 +214,10 @@ function statusRef(sessionId) {
 
     // Call this on any user interaction (mousemove, keydown, click, etc.)
     // Presence update function (keep!)
-function setPresence(state) {
-  if (!sessionId) return;
-  db.ref('status/' + sessionId).set({ state, last_changed: firebase.database.ServerValue.TIMESTAMP
+    function setPresence(state) {
+      if (!sessionId) return;
+      db.ref('status/' + sessionId).set({
+        state, last_changed: firebase.database.ServerValue.TIMESTAMP
       });
     }
 
@@ -348,29 +370,32 @@ function setPresence(state) {
     });
 
     // EMAIL PROMPT
-document.getElementById("email-btn").onclick = function () {
-  userEmail = document.getElementById("emailInput").value.trim().toLowerCase();
-  if (!userEmail || !validateEmail(userEmail)) {
-    showError("Please enter a valid email address");
-    document.getElementById("emailInput").focus();
-    return;
-  }
-  localStorage.setItem("chatbot_user_email", userEmail);
-  sessionId = sanitizeEmail(userEmail);
-  showLoading("email-prompt", "Saving...");
-  userRef(sessionId).set({
-    name: userName, email: userEmail, timestamp: Date.now()
-  }).then(() => {
-    hideLoading("email-prompt", "Submit Email");
-    document.getElementById("email-prompt").style.display = "none";
-    document.getElementById("location-prompt").style.display = "block";
-    loadChatMessages(); // <--- NOW ADDED**
-  }).catch(() => {
-    hideLoading("email-prompt", "Submit Email");
-    showError("Error saving data. Please try again.");
-  });
-};
+    document.getElementById("email-btn").onclick = function () {
+      userEmail = document.getElementById("emailInput").value.trim().toLowerCase();
+      if (!userEmail || !validateEmail(userEmail)) {
+        showError("Please enter a valid email address");
+        document.getElementById("emailInput").focus();
+        return;
+      }
+      localStorage.setItem("chatbot_user_email", userEmail);
+      sessionId = sanitizeEmail(userEmail);
+      showLoading("email-prompt", "Saving...");
+      userRef(sessionId).set({
+        name: userName, email: userEmail, timestamp: Date.now()
+      }).then(() => {
+        hideLoading("email-prompt", "Submit Email");
+        document.getElementById("email-prompt").style.display = "none";
+        document.getElementById("location-prompt").style.display = "block";
+        loadChatMessages(); // <--- NOW ADDED**
+      }).catch(() => {
+        hideLoading("email-prompt", "Submit Email");
+        showError("Error saving data. Please try again.");
+      });
+    };
 
+    document.getElementById("emailInput").addEventListener("keypress", function (e) {
+      if (e.key === "Enter") document.getElementById("email-btn").click();
+    });
 
 
     // LOCATION PROMPT
@@ -515,7 +540,11 @@ document.getElementById("email-btn").onclick = function () {
 
 
     function addMessage(text, sender, name, timestamp = Date.now(), messageKey = null, container = null) {
-      const messagesContainer = container || document.getElementById("messages");
+  const messagesContainer = container || document.getElementById("messages");
+  if (!messagesContainer) {
+    console.error("No messages container found to append message to.");
+    return;
+  }
       const now = new Date(timestamp);
       const dayString = now.toLocaleDateString([], { weekday: "long", day: "numeric", month: "long" });
       const timeString = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true });
@@ -546,32 +575,34 @@ document.getElementById("email-btn").onclick = function () {
       let bubbleDiv, msgContent;
 
       if (isImageMsg) {
-        bubbleDiv = document.createElement("div");
-        bubbleDiv.className = "bubble image-bubble"; // special class for image messages
-        bubbleDiv.style.background = "transparent";
-        bubbleDiv.style.boxShadow = "none";
-        bubbleDiv.style.padding = "0";
-        bubbleDiv.style.marginLeft = "0";
-        bubbleDiv.style.display = "flex";
-        bubbleDiv.style.flexDirection = "column";
-        msgContent = document.createElement("img");
-        msgContent.src = text.startsWith('/') ? window.location.origin + text : text;
-        msgContent.alt = "Sent image";
-        msgContent.style.maxWidth = "200px";
-        msgContent.style.maxHeight = "200px";
-        msgContent.style.borderRadius = "10px";
-        msgContent.style.display = "block";
-        msgContent.style.background = "#fff";
-        msgContent.style.margin = "1px 0 10px 50px";
-        msgContent.style.border = "1px solid #e4e4e4";
-        bubbleDiv.appendChild(msgContent);
-      } else {
-        bubbleDiv = document.createElement("div");
-        bubbleDiv.className = "bubble";
-        msgContent = document.createElement("div");
-        msgContent.textContent = text;
-        bubbleDiv.appendChild(msgContent);
+  bubbleDiv = document.createElement("div");
+  bubbleDiv.className = "bubble image-bubble";
+  bubbleDiv.style.background = "transparent";
+  bubbleDiv.style.boxShadow = "none";
+  bubbleDiv.style.padding = "0";
+  bubbleDiv.style.marginLeft = "0";
+  bubbleDiv.style.display = "flex";
+  bubbleDiv.style.flexDirection = "column";
+  msgContent = document.createElement("img");
+  msgContent.src = text.startsWith('/') ? window.location.origin + text : text;
+  msgContent.alt = "Sent image";
+  msgContent.style.maxWidth = "200px";
+  msgContent.style.maxHeight = "200px";
+  msgContent.style.borderRadius = "10px";
+  msgContent.style.display = "block";
+  msgContent.style.background = "#fff";
+  msgContent.style.margin = "1px 0 10px 50px";
+  msgContent.style.border = "1px solid #e4e4e4";
+  // ADD THIS BLOCK:
+  msgContent.style.cursor = "zoom-in";
+  msgContent.onclick = function() {
+    const overlay = document.getElementById('chatbot-fullscreen-image-overlay');
+    overlay.querySelector('img').src = this.src;
+    overlay.style.display = 'flex';
+  };
+          bubbleDiv.appendChild(msgContent);
       }
+
 
       const timeLabel = document.createElement("span");
       timeLabel.className = "msg-time";
@@ -638,6 +669,19 @@ document.getElementById("email-btn").onclick = function () {
       }
       return msgDiv;
     }
+
+
+    document.querySelectorAll('.chatbot-chat-img').forEach(img => {
+  img.style.cursor = "zoom-in";
+  img.onclick = function() {
+    const overlay = document.getElementById('chatbot-fullscreen-image-overlay');
+    overlay.querySelector('img').src = this.src;
+    overlay.style.display = 'flex';
+  };
+});
+
+
+
     function editMessageFromFirebase(messageKey, msgContent, bubbleDiv) {
       const currentText = msgContent.textContent || "";
       const newText = prompt("Edit your message:", currentText);
@@ -861,7 +905,7 @@ document.getElementById("email-btn").onclick = function () {
 
     function setTyping(isTyping) {
       if (!db || !sessionId) return;
-      db.ref('typing/' + WEBSITE_KEY + '/' + sessionId + '/user').set(true/false);
+      db.ref('typing/' + WEBSITE_KEY + '/' + sessionId + '/user').set(true / false);
     }
 
     function hideTypingIndicator() {
@@ -902,21 +946,21 @@ document.getElementById("email-btn").onclick = function () {
   //   }
   // });
 
-function setChatbotZoomClass() {
-  // Ratio of outerWidth to innerWidth increases with zoom
-  var zoom = Math.round((window.outerWidth / window.innerWidth) * 100) / 100;
-  var chatbot = document.getElementById('chat-container');
-  if (!chatbot) return;
-  if (zoom >= 1.1) { // Triggers above 100% zoom (110% and more)
-    chatbot.classList.add('fullscreen-at-zoom');
-  } else {
-    chatbot.classList.remove('fullscreen-at-zoom');
+  function setChatbotZoomClass() {
+    // Ratio of outerWidth to innerWidth increases with zoom
+    var zoom = Math.round((window.outerWidth / window.innerWidth) * 100) / 100;
+    var chatbot = document.getElementById('chat-container');
+    if (!chatbot) return;
+    if (zoom >= 1.1) { // Triggers above 100% zoom (110% and more)
+      chatbot.classList.add('fullscreen-at-zoom');
+    } else {
+      chatbot.classList.remove('fullscreen-at-zoom');
+    }
   }
-}
-window.addEventListener('resize', setChatbotZoomClass);
-window.addEventListener('DOMContentLoaded', setChatbotZoomClass);
-// For widgets loaded dynamically, you may want:
-setTimeout(setChatbotZoomClass, 800);
+  window.addEventListener('resize', setChatbotZoomClass);
+  window.addEventListener('DOMContentLoaded', setChatbotZoomClass);
+  // For widgets loaded dynamically, you may want:
+  setTimeout(setChatbotZoomClass, 800);
 
 
 })();

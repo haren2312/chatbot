@@ -148,6 +148,16 @@ document.querySelectorAll('.website-tab').forEach(btn => {
 });
 
 
+if (!document.getElementById('chat-preview-fullscreen-overlay')) {
+  const overlay = document.createElement('div');
+  overlay.id = 'chat-preview-fullscreen-overlay';
+  overlay.style = `
+    display:none; position:fixed; left:0;top:0;width:100vw;height:100vh;z-index:2147483647;
+    background:rgba(15,20,40,0.9); justify-content:center;align-items:center;cursor:zoom-out;
+  `;
+  overlay.innerHTML = `<img src="" style="max-width:96vw;max-height:96vh;border-radius:16px;box-shadow:0 6px 64px #000a;background:#fff;">`;
+  document.body.appendChild(overlay);
+}
 
 
 
@@ -1391,8 +1401,11 @@ function renderChatMessages(chatData) {
 
 if (msg.type === "image" && msg.message) {
   messageContent = `
-    <img src="${escapeHtml(msg.message)}" alt="image" class="chat-img" onclick="window.open('${escapeHtml(msg.message)}','_blank')" />
-  `;
+  <img src="${escapeHtml(msg.message)}" alt="image" class="chat-img"
+    style="cursor:zoom-in;max-width:130px;max-height:100px;border-radius:10px;"
+    onclick="showChatImageFullscreen(this.src)" />
+`;
+
   bubbleStyle = "background:transparent;padding:6px 10px 3px 10px;box-shadow:none;border:none;display:flex;flex-direction:column;align-items:flex-start;gap:2px;";
 } else {
       messageContent = escapeHtml(msg.message || "");
@@ -1426,6 +1439,31 @@ if (msg.type === "image" && msg.message) {
   </div>
 `;
   });
+
+  if (!document.getElementById('chat-preview-fullscreen-overlay')) {
+  const overlay = document.createElement('div');
+  overlay.id = 'chat-preview-fullscreen-overlay';
+  overlay.style = `
+    display:none; position:fixed; left:0;top:0;width:100vw;height:100vh;z-index:2147483647;
+    background:rgba(15,20,40,0.92); justify-content:center;align-items:center;cursor:zoom-out;
+  `;
+  overlay.innerHTML = `<img src="" style="max-width:96vw;max-height:96vh;border-radius:16px;box-shadow:0 6px 64px #000a;background:#fff;">`;
+  document.body.appendChild(overlay);
+  // Hide overlay when clicked outside image
+  overlay.onclick = function(e) {
+    if (e.target === overlay) {
+      overlay.style.display = 'none';
+      overlay.querySelector('img').src = '';
+    }
+  }
+}
+
+function showChatImageFullscreen(src) {
+  const overlay = document.getElementById('chat-preview-fullscreen-overlay');
+  overlay.querySelector('img').src = src;
+  overlay.style.display = 'flex';
+}
+
 
   chatBox.scrollTop = chatBox.scrollHeight;
   chatBox.querySelectorAll('.msg-menu').forEach(menu => {
@@ -1779,6 +1817,15 @@ function removeSingleMessage(msgId, chatBox) {
 
 
 
+// When preview image is clicked, show fullscreen overla
+
+// Hide overlay on click outside image
+document.getElementById('chat-preview-fullscreen-overlay').onclick = function(e) {
+  if (e.target === this) {
+    this.style.display = 'none';
+    this.querySelector('img').src = '';
+  }
+};
 
 
 
@@ -1871,6 +1918,7 @@ document.addEventListener("click", () => {
 const fileInput = document.getElementById('fileInput');
 const uploadBtn = document.getElementById('uploadBtn');
 uploadBtn.onclick = () => fileInput.click();
+
 fileInput.onchange = () => {
   const file = fileInput.files[0];
   if (!file) return;
@@ -1895,7 +1943,7 @@ fileInput.onchange = () => {
       title: "Send this image?",
       html: `
         <div style="display:flex; flex-direction:column; align-items:center;">
-          <img src="${e.target.result}" alt="Preview" style="max-width:260px;max-height:200px;border-radius:10px;box-shadow:0 2px 18px #2563eb15; margin-bottom:18px;" />
+          <img id="swal-image-preview" src="${e.target.result}" alt="Preview" style="max-width:260px;max-height:200px;border-radius:10px;box-shadow:0 2px 18px #2563eb15; margin-bottom:18px;cursor:zoom-in;" />
           <div style="margin-top:8px;color:#5a5a5a;font-size:.97em;">Are you sure you want to send this image to the user?</div>
         </div>
       `,
@@ -1907,6 +1955,33 @@ fileInput.onchange = () => {
       customClass: {
         confirmButton: 'save-btn',
         cancelButton: 'swal2-cancel-btn'
+      },
+      didOpen: () => {
+        // Add fullscreen overlay logic
+        const img = document.getElementById('swal-image-preview');
+        if (img) {
+          img.onclick = function () {
+            let overlay = document.getElementById('chat-preview-fullscreen-overlay');
+            if (!overlay) {
+              overlay = document.createElement('div');
+              overlay.id = 'chat-preview-fullscreen-overlay';
+              overlay.style = `
+                display:flex; position:fixed; left:0;top:0;width:100vw;height:100vh;z-index:2147483647;
+                background:rgba(15,20,40,0.92); justify-content:center;align-items:center;cursor:zoom-out;
+              `;
+              overlay.innerHTML = `<img src="" style="max-width:96vw;max-height:96vh;border-radius:16px;box-shadow:0 6px 64px #000a;background:#fff;">`;
+              document.body.appendChild(overlay);
+            }
+            overlay.querySelector('img').src = img.src;
+            overlay.style.display = 'flex';
+            overlay.onclick = function(e) {
+              if (e.target === overlay) {
+                overlay.style.display = 'none';
+                overlay.querySelector('img').src = '';
+              }
+            };
+          };
+        }
       }
     }).then((result) => {
       if (result.isConfirmed) {
@@ -1967,6 +2042,8 @@ window.addEventListener("resize", function () {
     document.getElementById('mobileBackBtn').style.display = "flex";
   }
 });
+
+
 
 document.addEventListener("visibilitychange", function () {
   if (document.visibilityState === "visible" && selectedSessionId) {
