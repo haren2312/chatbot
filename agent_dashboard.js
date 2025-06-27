@@ -1117,7 +1117,7 @@ function renderUserInfoPanel() {
     </div>
     <!-- Extra user info like in the Jira-style panel -->
     <div>
-      <p style="border-bottom: 1px solid lightgray; padding: 0px 0 15px 1px; text-align: center; width: 230px;font-weight: 700; color: #aaaaaa;">Main Information</p><br>
+      <p style="border-bottom: 1px solid lightgray; padding: 4px 0 15px 0px; text-align: center; width: 230px;font-weight: 700; color:rgb(138, 138, 138);">Users Information</p><br>
     </div>
     <div class="modern-user-extra">
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:7px;">
