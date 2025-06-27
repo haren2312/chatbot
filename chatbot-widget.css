@@ -93,9 +93,9 @@ h3 {
 }
 
 #input {
-  margin-top: 10px;
+  margin-top: 0px;
   flex-grow: 1;
-  padding: 10px 10px 0 10px;
+  padding: 0px 10px 0 10px;
   font-size: 14px;
   outline: none;
   background: white;
@@ -109,12 +109,12 @@ h3 {
 .text-bnt {
   color: #a0a0a0;
   border: solid white 0px;
-  padding: 10px 10px 5px 10px;
+  padding: 10px 5px 5px 5px;
   border-radius: 8px;
   font-size: 15px;
   cursor: pointer;
   transition: background 0.3s;
-  margin-bottom: 5px;
+  margin-bottom: 0px;
   background: white;
 }
 
@@ -1015,12 +1015,14 @@ input[type="email"]::placeholder {
   display: flex;
   /* flex: 1; */
   gap: 10px;
+  height: 50px;
 }
 
 .input-actions {
   display: flex;
   justify-content: flex-end;
-  gap: 6px;
+  gap: 4px;
+  margin-top: 5px;
   /* margin-top: 6px; */
 }
 
@@ -1251,7 +1253,7 @@ input[type="email"]::placeholder {
     overflow: auto !important;
   }
   #messages {
-    height: calc(100vh - 300px) !important;
+    height: calc(105vh - 300px) !important;
   }
 }
 
@@ -1335,9 +1337,10 @@ input[type="email"]::placeholder {
   overflow: auto !important;
 }
 #chat-container.fullscreen-at-zoom #messages {
-  height: calc(100vh - 300px) !important;
-  min-height: 150px !important;
+  height: calc(100vh - 180px) !important; /* Adjust this value */
+  min-height: 80px !important; /* reduce min-height if needed */
 }
+
 #chat-container.fullscreen-at-zoom #chatbot-toggle {
   right: 16px !important;
   bottom: 18px !important;
@@ -1355,8 +1358,8 @@ input[type="email"]::placeholder {
   right: 10px;
   background: transparent;
   border: none;
-  color: #222;
-  font-size: 2.2rem;
+  color: #ffffff;
+  font-size: 1.5rem;
   line-height: 1;
   z-index: 1001;
   cursor: pointer;
@@ -1367,7 +1370,7 @@ input[type="email"]::placeholder {
   transition: color 0.15s, background 0.15s;
 }
 #chatbot-close-floating:hover, #chatbot-close-floating:focus {
-  color: #ffffff;
+  color: #000000;
   background: transparent;
   outline: none;
 }

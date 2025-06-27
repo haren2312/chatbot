@@ -108,7 +108,6 @@
       <div class="input-wrapper">
         <div class="input-row">
           <input id="input" type="text" placeholder="Type your message..." />
-        </div>
         <div class="input-actions">
           <input type="file" id="imageUpload" accept="image/*" style="display:none;">
           <button id="upload-btn" class="text-bnt"><svg class="chat-svg" xmlns="http://www.w3.org/2000/svg" height="20" width="20" viewBox="0 0 20 20"><path fill="currentColor" d="M10.546 4.363v7.563c0 1.215-.822 2.32-2.011 2.564A2.55 2.55 0 015.455 12V2.99c0-.723.493-1.397 1.208-1.515.91-.151 1.7.55 1.7 1.434v7.636a.364.364 0 01-.727 0V4.363a.728.728 0 00-1.454 0v6.075c0 .952.683 1.82 1.629 1.916a1.82 1.82 0 002.007-1.809V3.038C9.818 1.52 8.711.161 7.2.014A2.912 2.912 0 004 2.91v8.913c0 2.088 1.522 3.955 3.6 4.158A4.005 4.005 0 0012 12V4.363a.728.728 0 00-1.454 0z"/></svg></button>
@@ -118,7 +117,8 @@
 
           
           <button id="send-btn" class="text-bnt" onclick="sendMsg()" title="Send Message" ><svg class="chat-svg" xmlns="http://www.w3.org/2000/svg" height="20" width="20" viewBox="0 0 20 20"><clipPath id="a"><path fill="currentColor" d="M14.84.054a.864.864 0 011.107 1.107l-5.189 14.27a.864.864 0 01-1.423.316L6.15 12.56a.864.864 0 01-.056-1.16l7.03-8.522L4.6 9.908a.864.864 0 01-1.16-.056L.252 6.666A.864.864 0 01.57 5.243z"/></clipPath><g clip-path="url(#a)" transform="rotate(45 6.516 4.341)"><path d="M0 0h16v16H0z"/></g></svg></button>
-          <div id="emoji-picker" style="display:none;position:absolute;bottom:40px;left:110px;z-index:1000;background:#fff;padding:6px 10px;border:1px solid #ddd;border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,0.1);"></div>
+          <div id="emoji-picker" style="width: 300px;display:none;position:absolute;bottom:100px;left:30px;z-index:1000;background:#fff;padding:1px 5px;border:1px solid #ddd;border-radius:10px;box-shadow: inset rgb(0 0 0 / 12%) 0px 0px 20px;"></div>
+        </div>
         </div>
       </div>
       <!-- Image Preview Area (hidden by default) -->
@@ -833,7 +833,7 @@
       }
     };
     const emojis = ["😀", "😂", "😍", "🥰", "😎", "😭", "😡", "😱", "👍", "🙏", "🎉", "🎂", "🔥", "🤔", "🤖", "❤️"];
-    document.getElementById("emoji-picker").innerHTML = emojis.map(e => `<span style="cursor:pointer;font-size:22px;padding:2px;">${e}</span>`).join('');
+    document.getElementById("emoji-picker").innerHTML = emojis.map(e => `<span style="cursor:pointer;font-size:20px;padding:2px;">${e}</span>`).join('');
     document.addEventListener('click', function (e) {
       if (!document.getElementById("emoji-btn").contains(e.target) && !document.getElementById("emoji-picker").contains(e.target)) {
         document.getElementById("emoji-picker").style.display = 'none';
