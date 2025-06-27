@@ -1347,10 +1347,6 @@ input[type="email"]::placeholder {
   z-index: 2147483648 !important;
 }
 
-
-
-
-
 #chatbot-close-floating {
   display: none; /* Hide by default */
   position: absolute;

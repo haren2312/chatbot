@@ -1081,7 +1081,7 @@ body {
 .message-bubble {
   max-width: 25vw;
   padding: 14px 18px 9px 18px;
-  border-radius: 16px;
+  border-radius: 10px;
   min-width: 20px;
   font-size: .7rem;
   box-shadow: 0 1px 7px #2563eb12;
@@ -1683,12 +1683,12 @@ filter-btn,
   position: absolute;
   top: 0px;
   right: 0px;
-  font-size: 1.2em;
-  color: #ababab;
+  font-size: 1.5em;
+  color: #000000;
   /* background: #fff; */
   border-radius: 50%;
-  width: 25px;
-  height: 25px;
+  width: 20px;
+  height: 5px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -2123,19 +2123,21 @@ body {
 
 /* --- Chrome-Style Tab Bar --- */
 .tab-bar-pro {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    min-width: 0;
-    z-index: 100;
-    display: flex;
-    align-items: flex-end;
-    background: #f8fafc;
-    border-bottom: 2px solid #eaeaea;
-    box-shadow: 0 4px 18px 0 rgba(36, 56, 85, 0.04);
-    margin-left: 51px;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  min-width: 0;
+  z-index: 100;
+  display: flex;
+  align-items: flex-end;
+  background: #f8fafc;
+  border-bottom: 2px solid #eaeaea;
+  box-shadow: 0 4px 18px 0 rgba(36, 56, 85, 0.04);
+  margin-left: 51px;
+  height: 44px; /* set the height for a crisp tab bar */
 }
+
 
 body, .container {
   padding-top: 22px;  /* match .tab-bar-pro height! */
@@ -2144,35 +2146,50 @@ body, .container {
 
 /* Tab */
 .tab-pro {
-    display: flex;
-    align-items: center;
-    background: #ffffff;
-    border: 1px solid #e1e5ee;
-    border-bottom: none;
-    border-radius: 10px 10px 0 0;
-    margin-right: 10px;
-    margin-top: 0;
-    padding: 0 22px 0 16px;
-    font-size: 11px;
-    color: #2563eb;
-    cursor: pointer;
-    min-width: 120px;
-    font-weight: 600;
-    height: 40px;
-    transition: background .19s, color .14s, box-shadow .15s;
-    position: relative;
-    /* box-shadow: 0 2px 9px rgb(255 255 255 / 9%); */
-    opacity: 1;
-    outline: none;
+  display: flex;
+  align-items: center;
+  background: #fff;
+  border: 1px solid #e1e5ee;
+  border-bottom: none;
+  border-radius: 8px 8px 0 0;
+  margin-right: 6px;
+  margin-top: 0;
+  padding: 0 25px 0 15px;
+  font-size: 13px;
+  color: #2563eb;
+  cursor: pointer;
+  min-width: 120px;
+  font-weight: 600;
+  height: 38px;
+  position: relative;
+  transition: background .19s, color .14s, box-shadow .15s;
+  box-shadow: 0 2px 8px 0 rgba(36, 56, 85, 0.03);
+  z-index: 2;
+}
+
+.tab-pro:not(.active) {
+  background: #f7f8fa;
+  border-bottom: 2.5px solid #eaeaea;
+  color: #7e8ca7;
+  margin-bottom: -2px; /* step it visually "down" */
+  z-index: 1;
+  box-shadow: none;
 }
 
 .tab-pro.active {
   background: #2563eb;
   color: #ffffff;
-  font-weight: 700;
-  box-shadow: 0 6px 22px 0 rgba(56,106,255,0.06);
-  opacity: 1;
+  border-bottom: 3px solid #ffffff; /* visually merge into the panel */
+  box-shadow: 0 4px 16px 0 rgba(56,106,255,0.04);
+  z-index: 10;
+  margin-bottom: 0;
 }
+.main-content-panel {
+  background: #fff;
+  border-top: none !important;
+  margin-top: 0 !important;
+}
+
 
 /* Favicon/icon */
 .tab-pro .favicon {
@@ -2193,7 +2210,6 @@ body, .container {
     cursor: pointer;
     position: absolute;
     right: 5px;
-    top: 9px;
     padding: 0;
     line-height: 1;
     opacity: 1;
