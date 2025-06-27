@@ -1,12 +1,12 @@
 (function () {
   // ---- CONFIGURATION ----
   const IMAGES = {
-    logo: 'http://localhost:8888/code/chatbot/images/logo.jpg',
-    chatIcon: 'http://localhost:8888/code/chatbot/images/chat-icon.png',
-    closeIcon: 'http://localhost:8888/code/chatbot/images/close-icon.png',
-    crispMsg: 'http://localhost:8888/code/chatbot/images/crsip-msg.png'
+    logo: '/code/chatbot/images/logo.jpg',
+    chatIcon: '/code/chatbot/images/chat-icon.png',
+    closeIcon: '/code/chatbot/images/close-icon.png',
+    crispMsg: '/code/chatbot/images/crsip-msg.png'
   };
-  const CSS_URL = 'http://localhost:8888/code/chatbot/chatbot-widget.css';
+  const CSS_URL = '/code/chatbot/chatbot-widget.css';
 
   // ---- INJECT CSS ----
   var style = document.createElement('link');
@@ -74,6 +74,7 @@
     <div id="chat" class="chat-bot-bg" style="display:none;">
       <!-- Chat Header -->
       <div class="chat-header">
+      <button id="chatbot-close-floating" title="Close Chat">&times;</button>
         <div class="chat-header-top">
           <button class="crisp-chat-btn">
             <span class="chat-icon-circle">
@@ -130,7 +131,6 @@
       </div>
     </div>
     <!-- === END CHAT AREA === -->
-  </div>
 `;
 
 
@@ -575,32 +575,31 @@
       let bubbleDiv, msgContent;
 
       if (isImageMsg) {
-  bubbleDiv = document.createElement("div");
-  bubbleDiv.className = "bubble image-bubble";
-  bubbleDiv.style.background = "transparent";
-  bubbleDiv.style.boxShadow = "none";
-  bubbleDiv.style.padding = "0";
-  bubbleDiv.style.marginLeft = "0";
-  bubbleDiv.style.display = "flex";
-  bubbleDiv.style.flexDirection = "column";
-  msgContent = document.createElement("img");
-  msgContent.src = text.startsWith('/') ? window.location.origin + text : text;
-  msgContent.alt = "Sent image";
-  msgContent.style.maxWidth = "200px";
-  msgContent.style.maxHeight = "200px";
-  msgContent.style.borderRadius = "10px";
-  msgContent.style.display = "block";
-  msgContent.style.background = "#fff";
-  msgContent.style.margin = "1px 0 10px 50px";
-  msgContent.style.border = "1px solid #e4e4e4";
-  // ADD THIS BLOCK:
-  msgContent.style.cursor = "zoom-in";
-  msgContent.onclick = function() {
-    const overlay = document.getElementById('chatbot-fullscreen-image-overlay');
-    overlay.querySelector('img').src = this.src;
-    overlay.style.display = 'flex';
-  };
-          bubbleDiv.appendChild(msgContent);
+   bubbleDiv = document.createElement("div");
+        bubbleDiv.className = "bubble image-bubble"; // special class for image messages
+        bubbleDiv.style.background = "transparent";
+        bubbleDiv.style.boxShadow = "none";
+        bubbleDiv.style.padding = "0";
+        bubbleDiv.style.marginLeft = "0";
+        bubbleDiv.style.display = "flex";
+        bubbleDiv.style.flexDirection = "column";
+        msgContent = document.createElement("img");
+        msgContent.src = text.startsWith('/') ? window.location.origin + text : text;
+        msgContent.alt = "Sent image";
+        msgContent.style.maxWidth = "200px";
+        msgContent.style.maxHeight = "200px";
+        msgContent.style.borderRadius = "10px";
+        msgContent.style.display = "block";
+        msgContent.style.background = "#fff";
+        msgContent.style.margin = "1px 0 10px 50px";
+        msgContent.style.border = "1px solid #e4e4e4";
+        bubbleDiv.appendChild(msgContent);
+      } else {
+        bubbleDiv = document.createElement("div");
+        bubbleDiv.className = "bubble";
+        msgContent = document.createElement("div");
+        msgContent.textContent = text;
+        bubbleDiv.appendChild(msgContent);
       }
 
 
@@ -842,20 +841,59 @@
     });
 
     // TOGGLE BUTTON
-    document.getElementById("chatbot-toggle").onclick = function () {
-      const chatContainer = document.getElementById("chat-container");
-      const chatIcon = document.getElementById("chat-icon-img");
-      const closeIcon = document.getElementById("close-icon-img");
-      const isVisible = chatContainer.style.display === "flex";
-      chatContainer.style.display = isVisible ? "none" : "flex";
-      chatIcon.style.display = isVisible ? "block" : "none";
-      closeIcon.style.display = isVisible ? "none" : "block";
-      setTimeout(() => {
-        if (document.getElementById("name-prompt").style.display !== "none") document.getElementById("nameInput").focus();
-        else if (document.getElementById("email-prompt").style.display !== "none") document.getElementById("emailInput").focus();
-        else if (document.getElementById("chat").style.display !== "none") document.getElementById("input").focus();
-      }, 100);
-    };
+const chatContainer = document.getElementById('chat-container');
+const closeBtn = document.getElementById('chatbot-close-floating');
+const toggleBtn = document.getElementById('chatbot-toggle');
+
+// Helper to detect mobile or zoomed-in fullscreen mode
+function isMobileView() {
+  // true if mobile or fullscreen at zoom
+  return window.innerWidth <= 450 || window.innerHeight <= 600 || chatContainer.classList.contains('fullscreen-at-zoom');
+}
+
+function updateButtonsOnChatToggle() {
+  const chatOpen = chatContainer.style.display === "flex";
+  if (isMobileView()) {
+    closeBtn.style.display = chatOpen ? "block" : "none";   // Show cross only if chat open
+    toggleBtn.style.display = chatOpen ? "none" : "flex";   // Show toggle only if chat closed
+  } else {
+    closeBtn.style.display = "none";                        // Hide cross always
+    toggleBtn.style.display = "flex";                       // Show toggle always
+  }
+}
+
+toggleBtn.onclick = function () {
+  const chatOpen = chatContainer.style.display === "flex";
+  chatContainer.style.display = chatOpen ? "none" : "flex";
+  updateButtonsOnChatToggle();
+  // focus logic...
+};
+
+closeBtn.onclick = function () {
+  chatContainer.style.display = "none";
+  updateButtonsOnChatToggle();
+};
+
+window.addEventListener("resize", updateButtonsOnChatToggle);
+window.addEventListener("orientationchange", updateButtonsOnChatToggle);
+window.addEventListener('DOMContentLoaded', updateButtonsOnChatToggle);
+setTimeout(updateButtonsOnChatToggle, 800);
+
+function setChatbotZoomClass() {
+  var zoom = Math.round((window.outerWidth / window.innerWidth) * 100) / 100;
+  var chatbot = document.getElementById('chat-container');
+  if (!chatbot) return;
+  if (zoom >= 1.1) {
+    chatbot.classList.add('fullscreen-at-zoom');
+  } else {
+    chatbot.classList.remove('fullscreen-at-zoom');
+  }
+  updateButtonsOnChatToggle(); // Ensure correct button after zoom
+}
+window.addEventListener('resize', setChatbotZoomClass);
+window.addEventListener('DOMContentLoaded', setChatbotZoomClass);
+setTimeout(setChatbotZoomClass, 800);
+
 
     // TYPING INDICATOR (OPTIONAL)
     function showTypingIndicator(who) {

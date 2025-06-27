@@ -3,22 +3,6 @@
   --font-family: "Segoe UI", Arial, sans-serif;
 }
 
-#chatbot-toggle {
-  position: fixed;
-  bottom: 15px;
-  right: 15px;
-  background: #1877f2;
-  border-radius: 50% ;
-  width: 50px;
-  height: 50px;
-  border: none;
-  box-shadow: 0 4px 20px rgba(59, 130, 246, 0.15);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0;
-}
-
 #chatbot-toggle img {
   width: 30px;
   /* or whatever looks best */
@@ -541,7 +525,7 @@ input[type="email"]::placeholder {
 .msg-time {
   display: block;
   font-size: 0.7em;
-  color: #ffffff;
+  color: #b9b9b9;
   text-align: right;
   margin-top: 5px;
   margin-bottom: -5px;
@@ -1359,64 +1343,62 @@ input[type="email"]::placeholder {
   bottom: 18px !important;
   z-index: 2147483648 !important;
 }
+
+
+
+
+
 #chatbot-close-floating {
   display: none; /* Hide by default */
-  position: fixed;
-  top: 22px;
-  right: 22px;
-  z-index: 9999;
-  background: transparent !important;
-  border: none !important;
-  box-shadow: none !important;
-  color: #232323;
-  font-size: 38px;
-  cursor: pointer;
-  line-height: 1;
-  padding: 0 8px 6px 8px;
-  opacity: 0.95;
-  transition: background 0.15s, color 0.15s;
-}
-
-/* Only show the close button on mobile/fullscreen */
-@media screen and (max-width: 600px) {
-  #chatbot-close-floating {
-    display: block;
-  }
-}
-
-/* Hide close button if chat is closed */
-#chat-container:not([style*="display: flex"]) ~ #chatbot-close-floating,
-#chat-container[style*="display: none"] ~ #chatbot-close-floating {
-  display: none !important;
-}
-
-#chatbot-close-floating {
-  display: none; /* Only visible in mobile/fullscreen mode */
   position: absolute;
   top: 10px;
   right: 10px;
-  background: transparent !important;
-  border: none !important;
-  color: #222;  /* Or #fff for white cross */
+  background: transparent;
+  border: none;
+  color: #222;
   font-size: 2.2rem;
   line-height: 1;
   z-index: 1001;
   cursor: pointer;
   padding: 0;
-  box-shadow: none !important;
+  box-shadow: none;
   outline: none;
+  opacity: 0.95;
+  transition: color 0.15s, background 0.15s;
 }
-
 #chatbot-close-floating:hover, #chatbot-close-floating:focus {
-  color: #e53935;
-  background: transparent !important;
+  color: #ffffff;
+  background: transparent;
   outline: none;
 }
-
-/* Only show on small/mobile/fullscreen */
+/* Only show on mobile/fullscreen-at-zoom and only when chat is open */
 @media (max-width: 650px), (max-height: 650px) {
   #chatbot-close-floating {
     display: block;
   }
 }
 
+#chatbot-toggle {
+  position: fixed;
+  bottom: 15px;
+  right: 15px;
+  background: #1877f2;
+  border-radius: 50%;
+  width: 50px;
+  height: 50px;
+  border: none;
+  box-shadow: 0 4px 20px rgba(59, 130, 246, 0.15);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  z-index: 100000; /* always on top */
+}
+@media screen and (max-width: 600px) {
+  #chatbot-toggle {
+    right: 10px;
+    bottom: 5px;
+    width: 60px;
+    height: 60px;
+  }
+}
