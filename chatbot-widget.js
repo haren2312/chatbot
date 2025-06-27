@@ -125,7 +125,7 @@
       <div id="image-preview-area" style="display:none;flex-direction:column;align-items:flex-end;margin-top:8px;">
         <img id="image-preview" src="" alt="Preview" style="max-width:180px;max-height:160px;border-radius:10px;border:1px solid #e4e4e4;background:#fff;margin-bottom:8px;">
         <div style="display:flex;gap:8px;">
-          <button id="image-cancel-btn" class="text-bnt" style="background:#fff;color:#222;">Cancel</button>
+          <button id="image-cancel-btn" class="text-bnt" style="background:#fff;color:#222; font-size:13px; background-color: #ebebeb; ">Cancel</button>
           <button id="image-send-btn" class="next-btn" style="background:#2563eb;">Send</button>
         </div>
       </div>
@@ -402,7 +402,7 @@
     document.getElementById("location-btn").onclick = function () {
       const status = document.getElementById("location-status");
       if (!navigator.geolocation) {
-        status.textContent = "Geolocation is not supported by your browser.";
+        status.textContent = "No Users Location";
         setTimeout(skipLocation, 2000);
         return;
       }
@@ -412,7 +412,7 @@
         (position) => {
           userLocation = { latitude: position.coords.latitude, longitude: position.coords.longitude, timestamp: Date.now() };
           db.ref('users/' + WEBSITE_KEY + '/' + sessionId + '/location').set(userLocation).catch(() => { });
-          status.textContent = "Location saved! Starting chat...";
+          status.textContent = "Location Saved! Starting chat...";
           hideLoading("location-prompt", "Share Location");
           // --- SET LOCATION FLAG HERE ---
           localStorage.setItem("chatbot_location_set", "1");
@@ -496,6 +496,21 @@
       }
     }
 
+    function markAllAdminMessagesAsRead(sessionId) {
+  chatRef(sessionId).once("value", function(snapshot) {
+    const messages = snapshot.val() || {};
+    Object.entries(messages).forEach(([msgId, msg]) => {
+      const sender = (msg.sender || "").toLowerCase();
+      if (
+        (sender === "admin" || sender === "bot" || sender === "agent") &&
+        msg.status !== "read"
+      ) {
+        chatRef(sessionId).child(msgId).update({ status: "read" });
+      }
+    });
+  });
+}
+
 
 
     // LOAD & RENDER MESSAGES
@@ -504,7 +519,7 @@
       if (!sessionId) return;
       const chatRefInstance = chatRef(sessionId);
       const messagesContainer = document.getElementById("messages");
-      markAllAdminMessagesAsRead();
+      markAllAdminMessagesAsRead(sessionId);
       messagesContainer.innerHTML = "";
       windowLastMessageDate = undefined;
       chatRefInstance.off();
@@ -586,6 +601,13 @@
         msgContent = document.createElement("img");
         msgContent.src = text.startsWith('/') ? window.location.origin + text : text;
         msgContent.alt = "Sent image";
+        msgContent.style.cursor = "zoom-in";
+        msgContent.onclick = function() {
+        const overlay = document.getElementById('chatbot-fullscreen-image-overlay');
+        overlay.querySelector('img').src = this.src;
+        overlay.style.display = 'flex';
+      };
+
         msgContent.style.maxWidth = "200px";
         msgContent.style.maxHeight = "200px";
         msgContent.style.borderRadius = "10px";
@@ -923,20 +945,7 @@ setTimeout(setChatbotZoomClass, 800);
       });
     }
 
-    function markAllAdminMessagesAsRead() {
-      if (!sessionId) return;
-      const messagesRef = chatRef(sessionId);
-      messagesRef.once("value", (snapshot) => {
-        const messages = snapshot.val() || {};
-        Object.entries(messages).forEach(([msgId, msg]) => {
-          const sender = (msg.sender || "").toLowerCase();
-          // Only mark admin/agent/bot messages as read if not already read
-          if ((sender === "admin" || sender === "agent" || sender === "bot") && msg.status !== "read") {
-            messagesRef.child(msgId).update({ status: "read" });
-          }
-        });
-      });
-    }
+
 
 
 
@@ -1000,8 +1009,4 @@ setTimeout(setChatbotZoomClass, 800);
   // For widgets loaded dynamically, you may want:
   setTimeout(setChatbotZoomClass, 800);
 
-
 })();
-
-
-

@@ -566,6 +566,20 @@ function getInitials(name) {
   return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
 }
 
+// === ADD THIS FUNCTION ===
+function isValidLocation(lat, lng) {
+  // Add any fake/test/demo values here:
+  const defaultLat = "23.0696448";
+  const defaultLng = "70.1095879";
+  if (!lat || !lng) return false;
+  if (isNaN(Number(lat)) || isNaN(Number(lng))) return false;
+  if (lat === "" || lng === "") return false;
+  // Optional: Prevent specific fake value
+  if (String(lat) === defaultLat && String(lng) === defaultLng) return false;
+  return true;
+}
+
+
 // --- Chat path helpers: Always use for all read/write/listener ops ---
 function chatSessionPath(sessionId) {
   if (selectedWebsiteKey === "einvite") {
@@ -1081,6 +1095,7 @@ function renderUserInfoPanel() {
   const lng = user.location?.longitude || user.longitude;
   const city = user.city || "Users Location";
   const country = user.country || "IN";
+  
   const countryFlag = getCountryFlagImg(country, 20);
 
   // Get user's current status
@@ -1124,17 +1139,20 @@ function renderUserInfoPanel() {
         <span style="font-size:1.2em;">📧</span>
         <span style="white-space: nowrap;overflow: hidden;text-overflow: ellipsis; color:rgb(0, 142, 2);">${escapeHtml(user.email || "")}</span>
       </div>
-      <div style="display:flex;align-items:center;gap:10px;margin-bottom:7px;">
-        📍<span>
-  <a href="${getLocationMapLink(city, country, lat, lng)}" target="_blank" style="color:rgb(255, 0, 0);
-    text-decoration: none;
-    font-size: .9em;
-    padding-left: 3.5px;">
-    ${city}, ${country}
-  </a>
-</span>
 
-      </div>
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:7px;">
+  📍<span>
+    ${
+      isValidLocation(lat, lng)
+        ? `<a href="https://www.google.com/maps?q=${lat},${lng}" target="_blank" style="color:rgb(255, 0, 0); text-decoration: none; font-size: .9em; padding-left: 3.5px;">
+              ${city}, ${country}
+           </a>`
+        : `<span style="color: #e53935; font-weight: 600; font-size: .9em;">Location not available</span>`
+    }
+  </span>
+  
+</div>
+
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:7px;">
         <span style="font-size:1.2em;">🕒</span>
         <span>${localTime} <span style="color:#7a8599;font-size:.8em;">(${timezoneOffset})</span></span>
@@ -1400,14 +1418,12 @@ function renderChatMessages(chatData) {
     let bubbleStyle = '';
 
 if (msg.type === "image" && msg.message) {
-  messageContent = `
-  <img src="${escapeHtml(msg.message)}" alt="image" class="chat-img"
-    style="cursor:zoom-in;max-width:130px;max-height:100px;border-radius:10px;"
-    onclick="showChatImageFullscreen(this.src)" />
-`;
+  messageContent = `<img src="${escapeHtml(msg.message)}" alt="image" class="chat-img"
+    style="cursor:zoom-in;max-width:130px;max-height:100px;border-radius:10px;" />`;
 
   bubbleStyle = "background:transparent;padding:6px 10px 3px 10px;box-shadow:none;border:none;display:flex;flex-direction:column;align-items:flex-start;gap:2px;";
-} else {
+}
+ else {
       messageContent = escapeHtml(msg.message || "");
       if (isRight) {
         bubbleStyle = "background:#fff;color:#2563eb;";
@@ -1457,6 +1473,28 @@ if (msg.type === "image" && msg.message) {
     }
   }
 }
+
+// Attach this ONCE, not in every render!
+document.addEventListener('click', function(e) {
+  // Only trigger for .chat-img (images in chat bubbles)
+  if (e.target && e.target.classList.contains('chat-img')) {
+    const overlay = document.getElementById('chat-fullscreen-image-overlay');
+    overlay.querySelector('img').src = e.target.src;
+    overlay.style.display = 'flex';
+    overlay.classList.add('active');
+  }
+});
+
+// Hide overlay when clicking the dark area
+document.getElementById('chat-fullscreen-image-overlay').onclick = function(e) {
+  if (e.target === this) {
+    this.style.display = 'none';
+    this.classList.remove('active');
+    this.querySelector('img').src = '';
+  }
+};
+
+
 
 function showChatImageFullscreen(src) {
   const overlay = document.getElementById('chat-preview-fullscreen-overlay');
@@ -1666,11 +1704,13 @@ function renderSingleMessage(msg, msgId, chatBox, messagesMap) {
   let messageContent = "";
   let bubbleStyle = '';
 
-  if (msg.type === "image" && msg.message) {
-    // Only pure image, no inline styling needed
-    messageContent = `<img src="${escapeHtml(msg.message)}" alt="image" onclick="window.open('${escapeHtml(msg.message)}','_blank')" />`;
-    bubbleStyle = "background:transparent;padding:0;margin:0;box-shadow:none;border:none;";
-  } else {
+if (msg.type === "image" && msg.message) {
+  messageContent = `<img src="${escapeHtml(msg.message)}" alt="image" class="chat-img"
+    style="cursor:zoom-in;max-width:130px;max-height:100px;border-radius:10px;" />`;
+
+  bubbleStyle = "background:transparent;padding:6px 10px 3px 10px;box-shadow:none;border:none;display:flex;flex-direction:column;align-items:flex-start;gap:2px;";
+}
+ else {
     messageContent = escapeHtml(msg.message || "");
     if (isRight) {
       bubbleStyle = "background:#fff;color:#2563eb;";
@@ -1691,7 +1731,7 @@ function renderSingleMessage(msg, msgId, chatBox, messagesMap) {
       ${!isRight ? avatarHtml : ""}
       <div class="message-bubble image-bubble" data-msg-id="${msg._id}" style="position:relative;display:inline-block;background:none;box-shadow:none;">
         <img src="${escapeHtml(msg.message)}" alt="image" class="chat-img"
-             style="display:block;max-width:20px;max-height:10px;border-radius:12px;box-shadow:0 2px 8px #2563eb12;" />
+           style="display:block;max-width:130px;max-height:100px;border-radius:12px;box-shadow:0 2px 8px #2563eb12;cursor:zoom-in;" />
         <span class="msg-menu" title="More" data-msg-id="${msg._id}">⋮</span>
         <div class="msg-actions" data-msg-id="${msg._id}" style="display:none;">
           <button class="edit-btn" data-msg-id="${msg._id}" title="Edit">Edit</button>
@@ -2002,6 +2042,26 @@ fileInput.onchange = () => {
   reader.readAsDataURL(file);
 };
 
+// Add this only ONCE in your JS!
+function ensureImageOverlay() {
+  if (!document.getElementById('chatbot-fullscreen-image-overlay')) {
+    const overlay = document.createElement('div');
+    overlay.id = 'chatbot-fullscreen-image-overlay';
+    overlay.style = `
+      display:none; position:fixed; left:0;top:0;width:100vw;height:100vh;z-index:2147483647;
+      background:rgba(15,20,40,0.92); justify-content:center;align-items:center;cursor:zoom-out;
+    `;
+    overlay.innerHTML = `<img src="" style="max-width:96vw;max-height:96vh;border-radius:16px;box-shadow:0 6px 64px #000a;background:#fff;">`;
+    document.body.appendChild(overlay);
+    overlay.onclick = function(e) {
+      if (e.target === overlay) {
+        overlay.style.display = 'none';
+        overlay.querySelector('img').src = '';
+      }
+    };
+  }
+}
+ensureImageOverlay();
 
 
 // --- Modal close on background click ---

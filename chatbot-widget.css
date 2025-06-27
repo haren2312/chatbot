@@ -109,7 +109,6 @@ h3 {
 .text-bnt {
   color: #a0a0a0;
   border: solid white 0px;
-  padding: 10px 5px 5px 5px;
   border-radius: 8px;
   font-size: 15px;
   cursor: pointer;
@@ -135,12 +134,11 @@ h3 {
 .next-btn {
   color: rgb(255, 255, 255);
   border: solid white 0px;
-  padding: 10px 10px 5px 10px;
+  padding: 5px 10px 5px 10px;
   border-radius: 8px;
   font-size: 15px;
   cursor: pointer;
   transition: background 0.3s;
-  margin-bottom: 5px;
   background: #2563eb;
 }
 
@@ -361,7 +359,7 @@ input[type="email"]::placeholder {
     left: 10px;
     max-width: none;
     width: auto;
-    max-height: 80vh;
+    max-height: 100vh;
   }
 
   .chatbot-chat-message {
@@ -510,7 +508,7 @@ input[type="email"]::placeholder {
 
 .bubble {
   border-radius: 10px;
-  padding: 5px 15px;
+  padding: 10px 15px;
   font-size: .75rem;
   font-family: inherit;
   box-shadow: 0 2px 8px rgba(60, 70, 80, 0.05);
@@ -1337,7 +1335,7 @@ input[type="email"]::placeholder {
   overflow: auto !important;
 }
 #chat-container.fullscreen-at-zoom #messages {
-  height: calc(100vh - 180px) !important; /* Adjust this value */
+  height: calc(100vh - 300px) !important; /* Adjust this value */
   min-height: 80px !important; /* reduce min-height if needed */
 }
 
@@ -1401,3 +1399,73 @@ input[type="email"]::placeholder {
     height: 60px;
   }
 }
+
+@media screen and (max-width: 600px) {
+  #chat-container {
+    position: fixed !important;
+    inset: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    flex-direction: column !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    z-index: 99999 !important;
+  }
+
+  .input-wrapper {
+    margin: 0 !important;
+    padding: 0 8px 0 8px !important;
+    border-top: 1px solid #ddd !important;
+    background: #fff !important;
+  }
+  .input-row {
+    margin: 0 !important;
+    padding-right: 15px !important;
+    height: 50px !important;
+    align-items: center !important;
+  }
+
+  
+}
+
+#messages {
+    height: calc(100vh - 300px) !important; /* REMOVE this for mobile! */
+}
+
+@media screen and (max-width: 600px) {
+  #chat-container {
+    position: fixed !important;
+    inset: 0 !important;
+    flex-direction: column !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    z-index: 99999 !important;
+    background: #fff !important;
+  }
+
+  /* Key part: FIX the input at the bottom */
+  .input-wrapper {
+    position: fixed !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    width: 100vw !important;
+    padding: 0 8px 8px 8px !important;
+    background: #fff !important;
+    box-shadow: 0 -2px 12px rgba(60, 70, 80, 0.08) !important;
+    z-index: 999999 !important;
+    border-radius: 0 !important;
+    border-top: 1px solid #eee !important;
+  }
+
+  /* Give the messages area bottom padding to prevent overlap */
+  #messages {
+    flex: 1 1 auto !important;
+    overflow-y: auto !important;
+    padding-bottom: 65px !important; /* must be >= .input-wrapper height */
+    margin-bottom: 0 !important;
+    min-height: 0 !important;
+    max-height: none !important;
+  }
+}
+
