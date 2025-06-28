@@ -1428,10 +1428,6 @@ input[type="email"]::placeholder {
   
 }
 
-#messages {
-    height: calc(100vh - 300px) !important; /* REMOVE this for mobile! */
-}
-
 @media screen and (max-width: 600px) {
   #chat-container {
     position: fixed !important;
