@@ -91,6 +91,14 @@
 
         <!-- <hr style="width: 90%; margin-left: 45px; border: 1px solid #ebebeb;"> -->
 
+        <div id="replyPreview" style="display:none;position:relative;padding:6px 16px 6px 20px;border-left:3px solid #2563eb;background:#f3f7ff;color:#123;margin-bottom:6px;border-radius:5px;max-width:99%;">
+        <span id="replyPreviewSender" style="font-weight:bold;color:#2563eb"></span>
+        <span id="replyPreviewMsg" style="margin-left:8px;"></span>
+        <button id="cancelReplyBtn" style="position:absolute;top:5px;right:10px;background:none;border:none;font-size:18px;color:#b30400;cursor:pointer;">&times;</button>
+        </div>
+
+
+
         <div class="input-group" id="inputGroup" style="display: none;">
           <input type="text" id="msgInput" placeholder="Type your message..." maxlength="500" autocomplete="off">
           <button id="emojiBtn" class="text-bnt"><svg class="chat-svg" xmlns="http://www.w3.org/2000/svg" height="20"

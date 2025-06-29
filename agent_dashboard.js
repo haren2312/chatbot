@@ -62,6 +62,9 @@ function clearChatBox() {
 }
 
 
+function isImageUrl(url) {
+  return typeof url === "string" && /\.(jpeg|jpg|gif|png|webp|svg)$/i.test(url);
+}
 
 
 
@@ -75,7 +78,7 @@ document.addEventListener("DOMContentLoaded", () => {
   attachWebsiteListeners();
 });
 
-
+let replyToMsg = null; // Stores the message being replied to
 
 const host = window.location.hostname;
 
@@ -1358,6 +1361,102 @@ function renderAdminSidebarAvatar() {
 
 renderAdminSidebarAvatar();
 
+function attachReplyButtonHandlers(chatBox) {
+  chatBox.querySelectorAll('.reply-btn').forEach(btn => {
+    btn.onclick = function(e) {
+      e.stopPropagation();
+      const msgId = this.getAttribute('data-msg-id');
+      const msgBubble = chatBox.querySelector(`.message-bubble[data-msg-id="${msgId}"]`);
+      const msgContent = msgBubble.querySelector('.msg-content').innerText;
+      const msgSender = msgBubble.parentElement.classList.contains('self') ? "You" : "User";
+      replyToMsg = { id: msgId, content: msgContent, sender: msgSender };
+      showReplyPreview();
+      chatBox.querySelectorAll('.msg-actions').forEach(a => a.style.display = "none");
+      document.getElementById("msgInput").focus();
+    };
+  });
+}
+
+function attachMessageHandlers(row, chatBox) {
+  // Menu toggle
+  const msgMenuEl = row.querySelector('.msg-menu');
+  if (msgMenuEl) {
+    msgMenuEl.onclick = function (e) {
+      e.stopPropagation();
+      const msgId = this.getAttribute('data-msg-id');
+      chatBox.querySelectorAll('.msg-actions').forEach(a => a.style.display = "none");
+      const actions = row.querySelector(`.msg-actions[data-msg-id="${msgId}"]`);
+      if (actions) actions.style.display = "flex";
+    };
+  }
+  // Reply
+  const replyBtn = row.querySelector('.reply-btn');
+if (replyBtn) {
+  replyBtn.onclick = function(e) {
+    e.stopPropagation();
+    const msgId = this.getAttribute('data-msg-id');
+    const msgBubble = row.querySelector(`.message-bubble[data-msg-id="${msgId}"]`);
+    // For images, msg-content may be empty so handle accordingly:
+    let msgContent = "";
+    const contentEl = msgBubble.querySelector('.msg-content');
+    if (contentEl) {
+      msgContent = contentEl.innerText || contentEl.textContent || "";
+    } else {
+      // Try to get <img> src
+      const imgEl = msgBubble.querySelector('img');
+      if (imgEl) msgContent = imgEl.src;
+    }
+    const msgSender = msgBubble.parentElement.classList.contains('self') ? "You" : "User";
+    replyToMsg = { id: msgId, content: msgContent, sender: msgSender };
+    if (typeof showReplyPreview === "function") showReplyPreview();
+    chatBox.querySelectorAll('.msg-actions').forEach(a => a.style.display = "none");
+    document.getElementById("msgInput").focus();
+  };
+}
+
+  // Edit
+  const editBtn = row.querySelector('.edit-btn');
+  if (editBtn) {
+    editBtn.onclick = function(e) {
+      e.stopPropagation();
+      const msgId = this.getAttribute('data-msg-id');
+      editMessage(msgId);
+      chatBox.querySelectorAll('.msg-actions').forEach(a => a.style.display = "none");
+    };
+  }
+  // Delete
+  const deleteBtn = row.querySelector('.delete-btn');
+  if (deleteBtn) {
+    deleteBtn.onclick = function(e) {
+      e.stopPropagation();
+      const msgId = this.getAttribute('data-msg-id');
+      deleteMessage(msgId);
+      chatBox.querySelectorAll('.msg-actions').forEach(a => a.style.display = "none");
+    };
+  }
+  // Copy
+  const copyBtn = row.querySelector('.copy-btn');
+  if (copyBtn) {
+    copyBtn.onclick = function(e) {
+      e.stopPropagation();
+      const msgId = this.getAttribute('data-msg-id');
+      const msgContent = row.querySelector('.msg-content').textContent || "";
+      navigator.clipboard.writeText(msgContent).then(() => {
+        Swal.fire({
+          text: "Message copied!",
+          icon: "info",
+          showConfirmButton: true,
+          confirmButtonText: "OK",
+          timer: 2000,
+          timerProgressBar: true,
+          background: "#f5fafd",
+          color: "#222e3a"
+        });
+      });
+      chatBox.querySelectorAll('.msg-actions').forEach(a => a.style.display = "none");
+    };
+  }
+}
 
 
 
@@ -1416,21 +1515,43 @@ function renderChatMessages(chatData) {
     // Message Content
     let messageContent = "";
     let bubbleStyle = '';
+    let replyHtml = "";
+if (msg.reply) {
+  if (msg.reply.content && msg.reply.content.startsWith("data:image")) {
+    replyHtml = `
+      <div class="msg-reply-ref" style="margin-bottom: 2px; padding: 4px 8px; background: #f5f7fa; border-radius: 6px; font-size: 0.92em; color: #666;">
+        <b>${msg.reply.sender} replied to image:</b><br>
+        <img src="${escapeHtml(msg.reply.content)}" alt="image" style="max-width:60px;max-height:45px;border-radius:4px;margin-top:2px;">
+      </div>`;
+  } else {
+    replyHtml = `
+      <div class="msg-reply-ref" style="margin-bottom: 2px; padding: 4px 8px; background: #f5f7fa; border-radius: 6px; font-size: 0.92em; color: #666;">
+        <b>${msg.reply.sender}:</b> ${escapeHtml(msg.reply.content)}
+      </div>`;
+  }
+}
+
 
 if (msg.type === "image" && msg.message) {
+  // Already an image upload via base64
   messageContent = `<img src="${escapeHtml(msg.message)}" alt="image" class="chat-img"
     style="cursor:zoom-in;max-width:130px;max-height:100px;border-radius:10px;" />`;
-
   bubbleStyle = "background:transparent;padding:6px 10px 3px 10px;box-shadow:none;border:none;display:flex;flex-direction:column;align-items:flex-start;gap:2px;";
+} else if (isImageUrl(msg.message)) {
+  // If the message is just an image URL, treat as image!
+  messageContent = `<img src="${escapeHtml(msg.message)}" alt="image" class="chat-img"
+    style="cursor:zoom-in;max-width:130px;max-height:100px;border-radius:10px;" />`;
+  bubbleStyle = "background:transparent;padding:6px 10px 3px 10px;box-shadow:none;border:none;display:flex;flex-direction:column;align-items:flex-start;gap:2px;";
+} else {
+  // Normal text
+  messageContent = escapeHtml(msg.message || "");
+  if (isRight) {
+    bubbleStyle = "background:#fff;color:#2563eb;";
+  } else {
+    bubbleStyle = "background:linear-gradient(98deg, #2563eb 90%, #1877f2 100%);color:#fff;";
+  }
 }
- else {
-      messageContent = escapeHtml(msg.message || "");
-      if (isRight) {
-        bubbleStyle = "background:#fff;color:#2563eb;";
-      } else {
-        bubbleStyle = "background:linear-gradient(98deg, #2563eb 90%, #1877f2 100%);color:#fff;";
-      }
-    }
+
 
 
     // Message bubble HTML
@@ -1442,10 +1563,12 @@ if (msg.type === "image" && msg.message) {
   <div class="message-row ${isRight ? "self" : senderType}" style="position:relative;">
     ${!isRight ? avatarHtml : ""}
     <div class="message-bubble" style="${bubbleStyle}position:relative;" data-msg-id="${msg._id}">
+    ${replyHtml}
       <div class="msg-content">${messageContent}</div>
       <div class="msg-meta">${timeString} ${getMessageStatusIcon(msg, isRight)}</div>
       <span class="msg-menu" title="More" data-msg-id="${msg._id}">⋮</span>
       <div class="msg-actions" data-msg-id="${msg._id}" style="display:none;">
+        <button class="reply-btn" data-msg-id="${msg._id}" title="Reply">Reply</button>
         <button class="edit-btn" data-msg-id="${msg._id}" title="Edit">Edit</button>
         <button class="delete-btn" data-msg-id="${msg._id}" title="Delete">Delete</button>
         <button class="copy-btn" data-msg-id="${msg._id}" title="Copy">Copy</button>
@@ -1473,6 +1596,30 @@ if (msg.type === "image" && msg.message) {
     }
   }
 }
+
+let replyToMsg = null;
+function showReplyPreview() {
+  if (!replyToMsg) return;
+  document.getElementById("replyPreviewSender").innerText = replyToMsg.sender + ":";
+  document.getElementById("replyPreviewMsg").innerText = replyToMsg.content;
+  document.getElementById("replyPreview").style.display = "block";
+}
+window.showReplyPreview = showReplyPreview;
+
+
+
+document.getElementById("cancelReplyBtn").onclick = function() {
+  replyToMsg = null;
+  document.getElementById("replyPreview").style.display = "none";
+};
+
+
+// Add handler for Reply buttons
+chatBox.querySelectorAll('.message-row').forEach(row => {
+  attachMessageHandlers(row, chatBox);
+});
+
+
 
 // Attach this ONCE, not in every render!
 document.addEventListener('click', function(e) {
@@ -1703,21 +1850,43 @@ function renderSingleMessage(msg, msgId, chatBox, messagesMap) {
 
   let messageContent = "";
   let bubbleStyle = '';
+  let replyHtml = "";
+if (msg.reply) {
+  if (msg.reply.content && msg.reply.content.startsWith("data:image")) {
+    replyHtml = `
+      <div class="msg-reply-ref" style="margin-bottom: 2px; padding: 4px 8px; background: #f5f7fa; border-radius: 6px; font-size: 0.92em; color: #666;">
+        <b>${msg.reply.sender} replied to image:</b><br>
+        <img src="${escapeHtml(msg.reply.content)}" alt="image" style="max-width:60px;max-height:45px;border-radius:4px;margin-top:2px;">
+      </div>`;
+  } else {
+    replyHtml = `
+      <div class="msg-reply-ref" style="margin-bottom: 2px; padding: 4px 8px; background: #f5f7fa; border-radius: 6px; font-size: 0.92em; color: #666;">
+        <b>${msg.reply.sender}:</b> ${escapeHtml(msg.reply.content)}
+      </div>`;
+  }
+}
+
 
 if (msg.type === "image" && msg.message) {
+  // Already an image upload via base64
   messageContent = `<img src="${escapeHtml(msg.message)}" alt="image" class="chat-img"
     style="cursor:zoom-in;max-width:130px;max-height:100px;border-radius:10px;" />`;
-
   bubbleStyle = "background:transparent;padding:6px 10px 3px 10px;box-shadow:none;border:none;display:flex;flex-direction:column;align-items:flex-start;gap:2px;";
-}
- else {
-    messageContent = escapeHtml(msg.message || "");
-    if (isRight) {
-      bubbleStyle = "background:#fff;color:#2563eb;";
-    } else {
-      bubbleStyle = "background:linear-gradient(98deg, #2563eb 90%, #1877f2 100%);color:#fff;";
-    }
+} else if (isImageUrl(msg.message)) {
+  // If the message is just an image URL, treat as image!
+  messageContent = `<img src="${escapeHtml(msg.message)}" alt="image" class="chat-img"
+    style="cursor:zoom-in;max-width:130px;max-height:100px;border-radius:10px;" />`;
+  bubbleStyle = "background:transparent;padding:6px 10px 3px 10px;box-shadow:none;border:none;display:flex;flex-direction:column;align-items:flex-start;gap:2px;";
+} else {
+  // Normal text
+  messageContent = escapeHtml(msg.message || "");
+  if (isRight) {
+    bubbleStyle = "background:#fff;color:#2563eb;";
+  } else {
+    bubbleStyle = "background:linear-gradient(98deg, #2563eb 90%, #1877f2 100%);color:#fff;";
   }
+}
+
 
 
   // Build the whole row
@@ -1725,15 +1894,15 @@ if (msg.type === "image" && msg.message) {
   row.className = `message-row ${isRight ? "self" : senderType}`;
   row.setAttribute("data-msg-id", msgId);
   if (msg.type === "image" && msg.message) {
-    row.innerHTML += `
-    <div class="message-row ${isRight ? "self" : senderType}" style="position:relative;width: 400px;
-">
+  row.innerHTML += `
+    <div class="message-row ${isRight ? "self" : senderType}" style="position:relative;width: 400px;">
       ${!isRight ? avatarHtml : ""}
       <div class="message-bubble image-bubble" data-msg-id="${msg._id}" style="position:relative;display:inline-block;background:none;box-shadow:none;">
         <img src="${escapeHtml(msg.message)}" alt="image" class="chat-img"
            style="display:block;max-width:130px;max-height:100px;border-radius:12px;box-shadow:0 2px 8px #2563eb12;cursor:zoom-in;" />
         <span class="msg-menu" title="More" data-msg-id="${msg._id}">⋮</span>
         <div class="msg-actions" data-msg-id="${msg._id}" style="display:none;">
+          <button class="reply-btn" data-msg-id="${msg._id}" title="Reply">Reply</button>
           <button class="edit-btn" data-msg-id="${msg._id}" title="Edit">Edit</button>
           <button class="delete-btn" data-msg-id="${msg._id}" title="Delete">Delete</button>
           <button class="copy-btn" data-msg-id="${msg._id}" title="Copy">Copy</button>
@@ -1743,14 +1912,17 @@ if (msg.type === "image" && msg.message) {
       ${isRight ? avatarHtml : ""}
     </div>
   `;
-  } else {
-    row.innerHTML = `
+} else {
+  // ADD REPLY BUTTON HERE TOO!
+  row.innerHTML = `
     ${!isRight ? avatarHtml : ""}
     <div class="message-bubble" style="${bubbleStyle}position:relative;" data-msg-id="${msgId}">
+    ${replyHtml}
       <div class="msg-content">${messageContent}</div>
       <div class="msg-meta">${timeString} ${getMessageStatusIcon(msg, isRight)}</div>
       <span class="msg-menu" title="More" data-msg-id="${msgId}">⋮</span>
       <div class="msg-actions" data-msg-id="${msgId}" style="display:none;">
+        <button class="reply-btn" data-msg-id="${msgId}" title="Reply">Reply</button>
         <button class="edit-btn" data-msg-id="${msgId}" title="Edit">Edit</button>
         <button class="delete-btn" data-msg-id="${msgId}" title="Delete">Delete</button>
         <button class="copy-btn" data-msg-id="${msgId}" title="Copy">Copy</button>
@@ -1758,7 +1930,8 @@ if (msg.type === "image" && msg.message) {
     </div>
     ${isRight ? avatarHtml : ""}
   `;
-  }
+}
+
 
 
   // --- Event Listeners (same as before) ---
@@ -1825,8 +1998,10 @@ if (msg.type === "image" && msg.message) {
   });
 
   // --- Append and scroll ---
-  chatBox.appendChild(row);
-  chatBox.scrollTop = chatBox.scrollHeight;
+chatBox.appendChild(row);
+attachMessageHandlers(row, chatBox); // <-- Add this line!
+chatBox.scrollTop = chatBox.scrollHeight;
+
 }
 
 // Update message (on edit)
@@ -1925,9 +2100,20 @@ document.getElementById("sendBtn").onclick = () => {
     timestamp: Date.now(),
     status: "sent"
   };
+  if (replyToMsg) {
+    messageData.reply = {
+      id: replyToMsg.id,
+      sender: replyToMsg.sender,
+      content: replyToMsg.content
+    };
+    // Clear reply state
+    replyToMsg = null;
+    document.getElementById("replyPreview").style.display = "none";
+  }
   chatRef(selectedSessionId).push(messageData);
   msgInput.value = "";
 };
+
 
 
 
@@ -2110,3 +2296,19 @@ document.addEventListener("visibilitychange", function () {
     markMessagesAsRead(selectedSessionId, "admin");
   }
 });
+
+document.addEventListener('click', function(e) {
+  // This closes all open msg-actions if you click anywhere except the menu or cross button
+  if (
+    !e.target.classList.contains('msg-menu') &&
+    !e.target.closest('.msg-actions')
+  ) {
+    document.querySelectorAll('.msg-actions').forEach(menu => menu.style.display = 'none');
+  }
+});
+document.addEventListener('click', function(e) {
+  if (e.target && e.target.classList.contains('chat-img')) {
+    showChatImageFullscreen(e.target.src);
+  }
+});
+
