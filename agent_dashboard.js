@@ -977,7 +977,7 @@ function renderSessions(filter = "") {
           ${showBadge ? `<span class="badge-notification" style="position:absolute;top:-6px;right:-8px;background:#b30400;color:white;border-radius:9px;padding:0 6px;font-size:0.8em;">1</span>` : ""}
         </div>
         <div style="flex:1;min-width:0;">
-          <div style="font-weight:600;font-size:.9em;color:black;text-overflow:ellipsis;overflow:hidden;">
+          <div class="session-name" >
             ${escapeHtml(userData.name)}
           </div>
           <div class="session-info" style="text-overflow:ellipsis;white-space:nowrap;overflow:hidden;color:#656e7e;">
@@ -1145,7 +1145,7 @@ function renderUserInfoPanel() {
     </div>
     <!-- Extra user info like in the Jira-style panel -->
     <div>
-      <p style="border-bottom: 1px solid lightgray; padding: 4px 0 15px 0px; text-align: center; width: 230px;font-weight: 700; color:rgb(138, 138, 138);font-size: 1.3rem;">Users Information</p><br>
+      <p style="border-bottom: 1px solid lightgray; padding: 4px 0 15px 0px; text-align: center; width: 250px;font-weight: 700; color:rgb(138, 138, 138);font-size: 1.3rem;">Users Information</p><br>
     </div>
     <div class="modern-user-extra">
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:7px;">
@@ -1166,7 +1166,7 @@ function renderUserInfoPanel() {
   
 </div>
 
-      <div style="display:flex;align-items:center;gap:10px;margin-bottom:7px;">
+      <div class="time-date" style="display:flex;align-items:center;gap:10px;margin-bottom:7px;">
         <span style="font-size:1.2em;">🕒</span>
         <span>${localTime} <span style="color:#7a8599;font-size:.8em;">(${timezoneOffset})</span></span>
       </div>
@@ -1174,7 +1174,7 @@ function renderUserInfoPanel() {
         <span style="font-size:1.2em;">🌍</span>
         <span>${countryFlag}</span>
       </div>
-      <div style="display:flex;align-items:center;gap:12px;margin-bottom:9px;">
+      <div class="time-date" style="display:flex;align-items:center;gap:12px;margin-bottom:9px;">
         <span style="font-size:1.3em;">📆</span>
         <span>${getFormattedDateByTimezone()}</span>
       </div>
@@ -2330,4 +2330,43 @@ document.addEventListener('click', function(e) {
     overlay.querySelector('img').src = e.target.src;
     overlay.style.display = 'flex';
   }
+});
+
+
+// --- DARK/LIGHT THEME TOGGLE LOGIC ---
+
+const THEME_KEY = "agent_panel_theme";
+const themeToggleBtn = document.getElementById("theme-toggle-btn");
+const themeIcon = document.getElementById("theme-toggle-icon");
+const themeLabel = document.getElementById("theme-toggle-label");
+
+// Utility to apply theme
+function setTheme(mode) {
+  const isDark = mode === "dark";
+  document.body.classList.toggle("dark-theme", isDark);
+  // Swap icon/label
+  if (isDark) {
+    themeIcon.textContent = "☀️";
+    themeLabel.textContent = "☀️";
+  } else {
+    themeIcon.textContent = "🌙";
+    themeLabel.textContent = "🌙";
+  }
+  localStorage.setItem(THEME_KEY, mode);
+}
+
+// Detect initial theme on page load
+function getPreferredTheme() {
+  const stored = localStorage.getItem(THEME_KEY);
+  if (stored) return stored;
+  // Fallback: check OS preference
+  return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+}
+
+// Init theme on load
+window.addEventListener("DOMContentLoaded", () => {
+  setTheme(getPreferredTheme());
+  themeToggleBtn.addEventListener("click", () => {
+    setTheme(document.body.classList.contains("dark-theme") ? "light" : "dark");
+  });
 });
