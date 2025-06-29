@@ -88,7 +88,6 @@ body {
   background-color: #f6f6ff;
   flex: 1;
   overflow-y: auto;
-  padding: 10px 10px;
 }
 
 .session-item {
@@ -370,7 +369,7 @@ body {
   margin-bottom: 0;
   background: #fff;
   box-shadow: 0 4px 16px #2563eb08;
-  padding: 10px;
+  padding: 5px;
   display: flex;
   flex-direction: column;
   scroll-behavior: smooth;
@@ -571,7 +570,7 @@ body {
   margin: 6px 0;
   border: 1.5px solid #e5e9ef;
   border-radius: 6px;
-  color: #1a2441;
+  color: #000000;
 }
 
 .edit-modal button {
@@ -599,6 +598,7 @@ body {
 }
 
 #modalBackdrop {
+  backdrop-filter: blur(10px);
   display: none;
   position: fixed;
   top: 0;
@@ -606,7 +606,7 @@ body {
   right: 0;
   bottom: 0;
   background: rgba(40, 70, 180, 0.13);
-  z-index: 998;
+  z-index: 1500;
 }
 
 .session-info {
@@ -752,11 +752,11 @@ body {
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 3px;
+  gap: 2px;
 }
 
 .modern-user-name {
-  font-size: 1.1rem;
+  font-size: 1.2rem;
   font-weight: 700;
   color: #1748b2;
   margin-bottom: 2px;
@@ -767,7 +767,7 @@ body {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  width: 150px;
+  width: 160px;
   display: block;
 }
 
@@ -785,7 +785,7 @@ body {
   width: 200px;
   display: block;
   font-weight: 600;
-  width: 150px;
+  width: 160px;
 }
 
 .modern-user-meta {
@@ -1212,7 +1212,7 @@ body {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 10px 20px 12px 20px;
+  padding: 5px 0px 5px 0px;
   background: #fff;
   border-bottom: 1.5px solid #ecedf1;
   position: sticky;
@@ -1308,9 +1308,9 @@ filter-btn,
 .modern-user-extra {
   background: #f9fbfd;
   /* border-radius: 10px; */
-  padding: 15px 15px 5px 15px;
+  /* padding: 15px 15px 5px 15px; */
   box-shadow: 0 1px 5px #2563eb0a;
-  font-size: .9rem;
+  font-size: 1.1rem;
   margin-bottom: 10px;
   border-bottom: 1px solid lightgray;
 }
@@ -1463,7 +1463,7 @@ filter-btn,
 .nav-bar .nav-toggle {
   background: none;
   border: none;
-  margin: 18px 0 20px 0;
+  margin: 13px 0 20px 0;
   padding: 0;
   cursor: pointer;
   display: flex;
@@ -1515,7 +1515,7 @@ filter-btn,
 }
 
 .nav-settings {
-  margin-bottom: 24px;
+  margin-bottom: 5px;
   margin-top: auto;
   width: 44px;
   height: 44px;
@@ -2132,7 +2132,6 @@ body {
   display: flex;
   align-items: flex-end;
   background: #ffffff;
-  border-bottom: 2px solid #e9e9e9;
   box-shadow: 0 4px 18px 0 rgba(36, 56, 85, 0.04);
   margin-left: 51px;
   height: 44px; /* set the height for a crisp tab bar */
@@ -2169,7 +2168,6 @@ body, .container {
 
 .tab-pro:not(.active) {
   background: #f7f8fa;
-  border-bottom: 2.5px solid #eaeaea;
   color: #7e8ca7;
   margin-bottom: -2px; /* step it visually "down" */
   z-index: 1;
@@ -2179,7 +2177,6 @@ body, .container {
 .tab-pro.active {
   background: #2563eb;
   color: #ffffff;
-  border-bottom: 3px solid #ffffff; /* visually merge into the panel */
   box-shadow: 0 4px 16px 0 rgba(56,106,255,0.04);
   z-index: 10;
   margin-bottom: 0;

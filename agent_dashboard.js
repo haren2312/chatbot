@@ -151,16 +151,26 @@ document.querySelectorAll('.website-tab').forEach(btn => {
 });
 
 
+// Create the overlay if not already present (best: after DOMContentLoaded)
 if (!document.getElementById('chat-preview-fullscreen-overlay')) {
   const overlay = document.createElement('div');
   overlay.id = 'chat-preview-fullscreen-overlay';
   overlay.style = `
     display:none; position:fixed; left:0;top:0;width:100vw;height:100vh;z-index:2147483647;
-    background:rgba(15,20,40,0.9); justify-content:center;align-items:center;cursor:zoom-out;
+    background:rgba(15,20,40,0.92); justify-content:center;align-items:center;cursor:zoom-out;
   `;
   overlay.innerHTML = `<img src="" style="max-width:96vw;max-height:96vh;border-radius:16px;box-shadow:0 6px 64px #000a;background:#fff;">`;
   document.body.appendChild(overlay);
+
+  // Hide on overlay click (outside image)
+  overlay.onclick = function(e) {
+    if (e.target === overlay) {
+      overlay.style.display = 'none';
+      overlay.querySelector('img').src = '';
+    }
+  };
 }
+
 
 
 
@@ -652,7 +662,7 @@ function getCountryFlagImg(countryCode = "IN", size = 15) {
   // All SVGs are at /3x2/{CODE}.svg (e.g., .../3x2/IN.svg)
   return `<img src="https://unpkg.com/country-flag-icons@1.5.19/3x2/${countryCode.toUpperCase()}.svg"
     alt="${countryCode.toUpperCase()} flag"
-    style="vertical-align:middle;width:${size}px;height:${size * 1}px;object-fit:cover;display:inline-block;border-radius: 50%; border: 2px solid #ffffff;" />`;
+    style="vertical-align:middle;width:${size}px;height:${size * 1}px;object-fit:cover;display:inline-block;border-radius: 50%; border: 3px solid #ffffff;" />`;
 }
 
 
@@ -1135,7 +1145,7 @@ function renderUserInfoPanel() {
     </div>
     <!-- Extra user info like in the Jira-style panel -->
     <div>
-      <p style="border-bottom: 1px solid lightgray; padding: 4px 0 15px 0px; text-align: center; width: 230px;font-weight: 700; color:rgb(138, 138, 138);">Users Information</p><br>
+      <p style="border-bottom: 1px solid lightgray; padding: 4px 0 15px 0px; text-align: center; width: 230px;font-weight: 700; color:rgb(138, 138, 138);font-size: 1.3rem;">Users Information</p><br>
     </div>
     <div class="modern-user-extra">
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:7px;">
@@ -1150,7 +1160,7 @@ function renderUserInfoPanel() {
         ? `<a href="https://www.google.com/maps?q=${lat},${lng}" target="_blank" style="color:rgb(255, 0, 0); text-decoration: none; font-size: .9em; padding-left: 3.5px;">
               ${city}, ${country}
            </a>`
-        : `<span style="color: #e53935; font-weight: 600; font-size: .9em;">Location not available</span>`
+        : `<span style="color: #e53935; font-weight: 600; font-size: .9em; padding-left:5px; ">Location not available</span>`
     }
   </span>
   
@@ -1170,7 +1180,7 @@ function renderUserInfoPanel() {
       </div>
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:35px;">
         <span style="font-size:1.2em;">📊</span>
-        <span style="color:${statusColor};font-weight:600;">Status: ${statusText}</span>
+        <span style="color:${statusColor};font-weight:600; padding-left:3px;">Status: ${statusText}</span>
       </div>
     </div>
   `;
@@ -1579,7 +1589,8 @@ if (msg.type === "image" && msg.message) {
 `;
   });
 
-  if (!document.getElementById('chat-preview-fullscreen-overlay')) {
+// Create the overlay if not already present (best: after DOMContentLoaded)
+if (!document.getElementById('chat-preview-fullscreen-overlay')) {
   const overlay = document.createElement('div');
   overlay.id = 'chat-preview-fullscreen-overlay';
   overlay.style = `
@@ -1588,14 +1599,16 @@ if (msg.type === "image" && msg.message) {
   `;
   overlay.innerHTML = `<img src="" style="max-width:96vw;max-height:96vh;border-radius:16px;box-shadow:0 6px 64px #000a;background:#fff;">`;
   document.body.appendChild(overlay);
-  // Hide overlay when clicked outside image
+
+  // Hide on overlay click (outside image)
   overlay.onclick = function(e) {
     if (e.target === overlay) {
       overlay.style.display = 'none';
       overlay.querySelector('img').src = '';
     }
-  }
+  };
 }
+
 
 let replyToMsg = null;
 function showReplyPreview() {
@@ -1645,9 +1658,12 @@ document.getElementById('chat-fullscreen-image-overlay').onclick = function(e) {
 
 function showChatImageFullscreen(src) {
   const overlay = document.getElementById('chat-preview-fullscreen-overlay');
+  if (!overlay) return;
+  if (overlay.style.display === 'flex' && overlay.querySelector('img').src === src) return;
   overlay.querySelector('img').src = src;
   overlay.style.display = 'flex';
 }
+
 
 
   chatBox.scrollTop = chatBox.scrollHeight;
@@ -2306,9 +2322,12 @@ document.addEventListener('click', function(e) {
     document.querySelectorAll('.msg-actions').forEach(menu => menu.style.display = 'none');
   }
 });
+
 document.addEventListener('click', function(e) {
   if (e.target && e.target.classList.contains('chat-img')) {
-    showChatImageFullscreen(e.target.src);
+    const overlay = document.getElementById('chat-preview-fullscreen-overlay');
+    if (!overlay) return;
+    overlay.querySelector('img').src = e.target.src;
+    overlay.style.display = 'flex';
   }
 });
-
