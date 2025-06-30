@@ -64,7 +64,7 @@ body.dark-theme .modern-user-card{
 body.dark-theme .session-item.selected,
 body.dark-theme .modern-user-card.selected {
   background: var(--highlight-bg) !important;
-  border-left: 4px solid var(--accent) !important;
+  border-left: 1px solid var(--accent) !important;
   color: var(--primary-text) !important;
 }
 
@@ -107,11 +107,14 @@ body.dark-theme .tab-pro.active {
 
 body.dark-theme .empty-state,
 body.dark-theme .session-info,
-body.dark-theme .modern-user-email,
 body.dark-theme .msg-meta,
 body.dark-theme .msg-time,
 body.dark-theme .session-item .session-info {
   color: var(--secondary-text) !important;
+}
+
+body.dark-theme .modern-user-email{
+  color: #ffffff !important;
 }
 
 body.input-group {
@@ -129,9 +132,14 @@ body.input-bg {
 body.dark-theme .chat-msg,
 body.dark-theme .message-bubble,
 body.dark-theme .profile-modal-content {
-  background: #2563eb !important;
+  background: #4c4c4c !important;
   color: var(--primary-text) !important;
   box-shadow: var(--card-shadow);
+}
+
+body.msg-reply-ref {
+  background-color: a1a1a1 !important;
+  color:  white !important;
 }
 
 body.dark-theme .edit-modal{
@@ -141,7 +149,7 @@ body.dark-theme .edit-modal{
 }
 
 body.dark-theme .message-row.self .message-bubble {
-    background: linear-gradient(98deg, #303030 90%, #0043bf 100%) !important;
+    background: #303030 !important;
     color: #ffffff !important;
 }
 
@@ -579,7 +587,7 @@ body {
   margin-bottom: 0;
   background: #fff;
   box-shadow: 0 4px 16px #2563eb08;
-  padding: 5px;
+  padding: 5px 10px;
   display: flex;
   flex-direction: column;
   scroll-behavior: smooth;
@@ -1531,7 +1539,7 @@ filter-btn,
   font-size: 1.1rem;
   margin-bottom: 10px;
   border-bottom: 1px solid lightgray;
-  width: 250px;
+  width: 230px;
 }
 
 .modern-user-extra div {
@@ -1900,8 +1908,6 @@ filter-btn,
   right: 0px;
   font-size: 1.5em;
   color: #000000;
-  /* background: #fff; */
-  border-radius: 50%;
   width: 10px;
   height: 8px;
   display: flex;
@@ -1911,8 +1917,8 @@ filter-btn,
   opacity: 0;
   transition: opacity 0.2s;
   z-index: 4;
-  background: #ffffff69;
-  padding: 10px;
+  background: #ffffff;
+  padding: 8px;
   margin: -6px -4px -4px -4px !important;
   border-bottom-left-radius: 50%;
 }
@@ -2353,12 +2359,12 @@ body {
   background: #ffffff;
   box-shadow: 0 4px 18px 0 rgba(36, 56, 85, 0.04);
   margin-left: 50px;
-  height: 44px; /* set the height for a crisp tab bar */
+  height: 30px; /* set the height for a crisp tab bar */
 }
 
 
 body, .container {
-  padding-top: 22px;  /* match .tab-bar-pro height! */
+  padding-top: 17px;  /* match .tab-bar-pro height! */
 }
 
 
@@ -2369,7 +2375,7 @@ body, .container {
   background: #fff;
   border: 1px solid #e1e5ee;
   border-bottom: none;
-  border-radius: 8px 8px 0 0;
+  border-radius: 5px 5px 0 0;
   margin-right: 6px;
   margin-top: 0;
   padding: 0 25px 0 15px;
@@ -2378,7 +2384,7 @@ body, .container {
   cursor: pointer;
   min-width: 120px;
   font-weight: 600;
-  height: 38px;
+  height: 25px;
   position: relative;
   transition: background .19s, color .14s, box-shadow .15s;
   box-shadow: 0 2px 8px 0 rgba(36, 56, 85, 0.03);
@@ -2388,10 +2394,8 @@ body, .container {
 .tab-pro:not(.active) {
   background: #f7f8fa;
   color: #7e8ca7;
-  margin-bottom: -2px; /* step it visually "down" */
   z-index: 1;
   box-shadow: none;
-  margin-bottom: 1px;
 }
 
 .tab-pro.active {
@@ -2410,9 +2414,8 @@ body, .container {
 
 /* Favicon/icon */
 .tab-pro .favicon {
-    width: 10px;
-    height: 20px;
-    margin-right: 10px;
+    width: auto;
+    height: 19px;
     border-radius: 4px;
     font-size: 14px;
 }
@@ -2420,13 +2423,14 @@ body, .container {
 /* Close (X) button */
 .tab-pro .tab-close {
     margin-left: 15px;
-    font-size: 22px;
+    font-size: 15px;
     color: #ffffff;
     background: none;
     border: none;
     cursor: pointer;
     position: absolute;
     right: 5px;
+    top: 6px;
     padding: 0;
     line-height: 1;
     opacity: 1;
@@ -2434,7 +2438,7 @@ body, .container {
 }
 
 .tab-pro .tab-close:hover {
-  color: #eb2525;
+  color: #1748b2;
   opacity: 1;
   font-weight: bold;
   background: transparent;
@@ -2445,19 +2449,16 @@ body, .container {
     background: none;
     border: none;
     color: #9ca6b6;
-    font-size: 26px;
+    font-size: 20px;
     font-weight: 700;
-    margin-top: 3px;
     cursor: pointer;
-    height: 40px;
-    width: 40px;
+    width: 45px;
     border-radius: 50%;
     transition: background .13s;
 }
 
 .tab-add-pro:hover {
-  background: #f1f5ff;
-  color: #f21818;
+  color: #1748b2;
 }
 
 .swal2-cancel-btn {
@@ -2492,3 +2493,15 @@ body, .container {
   opacity: 1;
 }
 
+
+
+.user-info-section.hide {
+  display: none !important;
+}
+
+.chat-area.full-chat .user-info-section {
+  display: none !important;
+}
+.chat-area.full-chat .input-bg {
+  flex: 1 1 100%;
+}

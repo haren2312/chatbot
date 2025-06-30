@@ -66,17 +66,20 @@ function isImageUrl(url) {
   return typeof url === "string" && /\.(jpeg|jpg|gif|png|webp|svg)$/i.test(url);
 }
 
-
-
-let selectedWebsiteKey = "einvite";
-window.selectedWebsiteKey = selectedWebsiteKey; // Always default to einvite at first!
+let activeTab = null;                 // No tab selected at start
+let selectedWebsiteKey = null;       // No chat selected at start
+window.selectedWebsiteKey = null;
 
 document.addEventListener("DOMContentLoaded", () => {
-  selectedWebsiteKey = "einvite";
-  window.selectedWebsiteKey = "einvite";
+  activeTab = null;
+  selectedWebsiteKey = null;
+  window.selectedWebsiteKey = null;
+  selectedSessionId = null;
   renderTabBar();
-  attachWebsiteListeners();
+  clearChatBox(); // Shows "Select tabs to view chats"
+  renderUserInfoPanel(); // Will clear user info panel
 });
+
 
 let replyToMsg = null; // Stores the message being replied to
 
@@ -129,22 +132,12 @@ document.querySelectorAll('.website-tab').forEach(btn => {
     detachChatListeners();
     selectedWebsiteKey = this.getAttribute('data-site');
     window.selectedWebsiteKey = selectedWebsiteKey;
-    selectedSessionId = null;
 
     // Always clear the chat UI immediately
     clearChatBox();
 
     renderSessions("");        // Show new sessions for selected tab
     renderUserInfoPanel();     // Clear user info panel
-
-    // If only one user/session, auto-load that chat (optional)
-    setTimeout(() => {
-      const sessionIds = Object.keys(allSessions);
-      if (sessionIds.length === 1 && !selectedSessionId) {
-        loadChat(sessionIds[0]);
-        renderSessions(""); // update UI to highlight/select
-      }
-    }, 100); // slight delay to ensure allSessions is updated
 
     attachWebsiteListeners();  // Listen for new site
   });
@@ -334,7 +327,6 @@ const websites = [
   { key: "einvite", label: "E Invite", icon: "🌐" }
 ];
 let openTabs = ["todoitservices", "gauravjiandani", "einvite"];
-let activeTab = openTabs[0];
 const tabBar = document.getElementById("tabBar");
 
 function renderTabBar() {
@@ -349,12 +341,18 @@ function renderTabBar() {
       ${openTabs.length > 1 ? '<button class="tab-close" title="Close Tab">&times;</button>' : ''}
     `;
     tabDiv.onclick = (e) => {
-      if (e.target.classList.contains("tab-close")) return;
-      activeTab = key;
-      selectedWebsiteKey = key;
-      renderTabBar();
-      attachWebsiteListeners();
-    };
+  if (e.target.classList.contains("tab-close")) return;
+  activeTab = key;
+  selectedWebsiteKey = key;
+  window.selectedWebsiteKey = key;
+  selectedSessionId = null; // No chat selected
+  renderTabBar();
+  renderSessions("");        // Show session list (user list) for that site
+  clearChatBox();           // Chat area shows "Select a chat to view messages"
+  renderUserInfoPanel();    // User panel blank
+  attachWebsiteListeners(); // Start listeners for new site
+};
+
     const closeBtn = tabDiv.querySelector(".tab-close");
     if (closeBtn) {
       closeBtn.onclick = (e) => {
@@ -391,11 +389,15 @@ function renderTabBar() {
   tabBar.appendChild(addBtn);
 }
 document.addEventListener("DOMContentLoaded", () => {
-  selectedWebsiteKey = "einvite";
-  window.selectedWebsiteKey = "einvite";
+  activeTab = null;
+  selectedWebsiteKey = null;
+  window.selectedWebsiteKey = null;
+  selectedSessionId = null;
   renderTabBar();
-  attachWebsiteListeners();
+  clearChatBox(); // Shows "Select tabs to view chats"
+  renderUserInfoPanel(); // Will clear user info panel
 });
+
 
 
 
@@ -1005,7 +1007,7 @@ sessionBtn.onclick = () => {
   }
 
   if (!hasResults) {
-    sessionList.innerHTML = '<div class="empty-state">No Chats</div>';
+    sessionList.innerHTML = '<div class="empty-state">Select Tab</div>';
   }
 }
 
@@ -1098,9 +1100,12 @@ function renderUserInfoPanel() {
   const userInfoList = document.getElementById("user-info-list");
   if (!selectedSessionId || !allUserData[selectedSessionId]) {
     userInfoList.innerHTML = "";
+    userInfoList.classList.add("hide");
     return;
   }
 
+  userInfoList.classList.remove("hide"); 
+  
   const user = allUserData[selectedSessionId];
   const initials = getInitials(user.name);
   const avatarGradient = getAvatarGradient(user.name + (user.country || "IN"));
@@ -1138,14 +1143,14 @@ function renderUserInfoPanel() {
         <span class="modern-user-email">${escapeHtml(user.email || "")}</span>
         <div style="font-size:0.8em;color:${statusColor};font-weight:600;margin-top:2px;display:flex;">
           ${statusText.charAt(0).toUpperCase() + statusText.slice(1)}
-          <button class="modern-edit-btn" onclick="openEditModal('${selectedSessionId}')">Edit</button>
+          <button class="modern-edit-btn" onclick="openEditModal('${selectedSessionId}')"></button>
         </div>
         
       </div>
     </div>
     <!-- Extra user info like in the Jira-style panel -->
     <div>
-      <p style="border-bottom: 1px solid lightgray; padding: 4px 0 15px 0px; text-align: center; width: 250px;font-weight: 700; color:rgb(138, 138, 138);font-size: 1.3rem;">Users Information</p><br>
+      <p style="border-bottom: 1px solid lightgray; padding: 4px 0 15px 0px; text-align: center; width: 230px;font-weight: 700; color:rgb(138, 138, 138);font-size: 1.3rem;">Users Information</p><br>
     </div>
     <div class="modern-user-extra">
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:7px;">
@@ -1236,6 +1241,19 @@ function setUserPresence(userId) {
   });
 }
 
+function showUserInfoSection(show) {
+  const userInfoSection = document.getElementById("user-info-list");
+  const chatArea = document.querySelector(".chat-area");
+
+  if (show) {
+    userInfoSection.classList.remove("hide");
+    chatArea.classList.remove("full-chat");
+  } else {
+    userInfoSection.classList.add("hide");
+    chatArea.classList.add("full-chat");
+    userInfoSection.innerHTML = ""; // Optionally clear content
+  }
+}
 
 
 
@@ -2020,6 +2038,49 @@ chatBox.scrollTop = chatBox.scrollHeight;
 
 }
 
+(function(){
+  // 1. Try to detect dark mode from website (standard ways)
+  function isDarkTheme() {
+    // Most sites use class on <html> or <body>, but never touch them!
+    // Check for [data-theme], [class*="dark"], or forced by prefers-color-scheme
+    const html = document.documentElement;
+    if (html.getAttribute('data-theme') === 'dark') return true;
+    if (html.className && html.className.toLowerCase().includes('dark')) return true;
+    if (window.matchMedia('(prefers-color-scheme: dark)').matches) return true;
+    // Try common container classes
+    if (document.body.className && document.body.className.toLowerCase().includes('dark')) return true;
+    return false;
+  }
+
+  // 2. Toggle theme for your widget only
+  function setChatbotTheme(dark) {
+    var container = document.getElementById('chat-container') || document.getElementById('chatbot-chat-container');
+    if (!container) return;
+    if (dark) {
+      container.classList.add('chatbot-dark');
+    } else {
+      container.classList.remove('chatbot-dark');
+    }
+  }
+
+  // 3. Initial apply
+  setChatbotTheme(isDarkTheme());
+
+  // 4. Auto-adapt if website theme changes
+  // Listen for system/website theme changes (prefers-color-scheme)
+  window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function(e) {
+    setChatbotTheme(e.matches);
+  });
+
+  // (Advanced) Listen for mutations to html/body class/data-theme
+  var obs = new MutationObserver(function(){
+    setChatbotTheme(isDarkTheme());
+  });
+  obs.observe(document.documentElement, { attributes:true, attributeFilter:['class','data-theme'] });
+  obs.observe(document.body, { attributes:true, attributeFilter:['class','data-theme'] });
+})();
+
+
 // Update message (on edit)
 // Real-time all chats and all users
 // db.ref("chats").on("value", (snapshot) => {
@@ -2369,4 +2430,6 @@ window.addEventListener("DOMContentLoaded", () => {
   themeToggleBtn.addEventListener("click", () => {
     setTheme(document.body.classList.contains("dark-theme") ? "light" : "dark");
   });
+  document.getElementById("user-info-list").classList.add("hide");
+
 });

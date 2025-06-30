@@ -176,6 +176,49 @@
       console.error("Firebase initialization error:", error);
     }
 
+    // THEME ADAPTION LOGIC
+function detectAndApplyChatbotTheme() {
+  // Try to detect site prefers dark mode (system or website class)
+  let prefersDark = false;
+  // 1. Check <html> or <body> has class 'dark', 'theme-dark', or 'night'
+  const darkClasses = ['dark', 'theme-dark', 'night', 'dark-mode', 'mode-dark'];
+  for (let cls of darkClasses) {
+    if (document.body.classList.contains(cls) || document.documentElement.classList.contains(cls)) {
+      prefersDark = true; break;
+    }
+  }
+  // 2. Check CSS media query
+  if (!prefersDark && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+    prefersDark = true;
+  }
+  // 3. (Optional) Detect background color is dark
+  if (!prefersDark) {
+    const bg = getComputedStyle(document.body).backgroundColor;
+    if (bg) {
+      // Parse rgb(a) and check if background is dark enough
+      const rgb = bg.match(/\d+/g);
+      if (rgb && rgb.length >= 3) {
+        // Use simple YIQ formula
+        const yiq = ((+rgb[0]) * 299 + (+rgb[1]) * 587 + (+rgb[2]) * 114) / 1000;
+        if (yiq < 150) prefersDark = true;
+      }
+    }
+  }
+
+  // 4. Apply theme class to the chatbot only
+  const chatbotRoot = document.getElementById('chat-container');
+  if (!chatbotRoot) return;
+  chatbotRoot.classList.toggle('chatbot-dark', prefersDark);
+}
+
+// Run once on load
+setTimeout(detectAndApplyChatbotTheme, 300);
+// Re-run on theme switch (if site changes theme dynamically)
+const observer = new MutationObserver(detectAndApplyChatbotTheme);
+observer.observe(document.body, { attributes: true, attributeFilter: ['class'] });
+// (Optional) Rerun on system theme change
+window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', detectAndApplyChatbotTheme);
+
 
     if (!document.getElementById('chatbot-fullscreen-image-overlay')) {
   const overlay = document.createElement('div');
