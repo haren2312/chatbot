@@ -1136,9 +1136,9 @@ function renderUserInfoPanel() {
       <div class="modern-user-details" style="flex:1;">
         <span class="modern-user-name">${escapeHtml(user.name)}</span>
         <span class="modern-user-email">${escapeHtml(user.email || "")}</span>
-        <div style="font-size:0.8em;color:${statusColor};font-weight:600;margin-top:2px;">
+        <div style="font-size:0.8em;color:${statusColor};font-weight:600;margin-top:2px;display:flex;">
           ${statusText.charAt(0).toUpperCase() + statusText.slice(1)}
-          <button class="modern-edit-btn" onclick="openEditModal('${selectedSessionId}')">✏️</button>
+          <button class="modern-edit-btn" onclick="openEditModal('${selectedSessionId}')">Edit</button>
         </div>
         
       </div>
@@ -1913,9 +1913,9 @@ if (msg.type === "image" && msg.message) {
   row.innerHTML += `
     <div class="message-row ${isRight ? "self" : senderType}" style="position:relative;width: 400px;">
       ${!isRight ? avatarHtml : ""}
-      <div class="message-bubble image-bubble" data-msg-id="${msg._id}" style="position:relative;display:inline-block;background:none;box-shadow:none;">
+      <div class="message-bubble image-bubble" data-msg-id="${msg._id}" style="position:relative;display:inline-block;background:white;box-shadow:none; padding: 5px !important;">
         <img src="${escapeHtml(msg.message)}" alt="image" class="chat-img"
-           style="display:block;max-width:130px;max-height:100px;border-radius:12px;box-shadow:0 2px 8px #2563eb12;cursor:zoom-in;" />
+           style="display:block;max-width:130px;max-height:100px;border-radius:0px;box-shadow:0 2px 8px #2563eb12;cursor:zoom-in;" />
         <span class="msg-menu" title="More" data-msg-id="${msg._id}">⋮</span>
         <div class="msg-actions" data-msg-id="${msg._id}" style="display:none;">
           <button class="reply-btn" data-msg-id="${msg._id}" title="Reply">Reply</button>
