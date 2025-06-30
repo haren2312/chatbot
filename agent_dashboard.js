@@ -1143,14 +1143,14 @@ function renderUserInfoPanel() {
         <span class="modern-user-email">${escapeHtml(user.email || "")}</span>
         <div style="font-size:0.8em;color:${statusColor};font-weight:600;margin-top:2px;display:flex;">
           ${statusText.charAt(0).toUpperCase() + statusText.slice(1)}
-          <button class="modern-edit-btn" onclick="openEditModal('${selectedSessionId}')"></button>
+          <button class="modern-edit-btn" onclick="openEditModal('${selectedSessionId}')">✏️</button>
         </div>
         
       </div>
     </div>
     <!-- Extra user info like in the Jira-style panel -->
-    <div>
-      <p style="border-bottom: 1px solid lightgray; padding: 4px 0 15px 0px; text-align: center; width: 230px;font-weight: 700; color:rgb(138, 138, 138);font-size: 1.3rem;">Users Information</p><br>
+    <div style="border-bottom: 1px solid lightgray;">
+      <p style="text-align: center;  margin:10px 0px 15px 0; width: 250px;font-weight: 700; color:rgb(138, 138, 138);font-size: 1.3rem;">Users Information</p>
     </div>
     <div class="modern-user-extra">
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:7px;">
@@ -1553,7 +1553,7 @@ if (msg.reply) {
       </div>`;
   } else {
     replyHtml = `
-      <div class="msg-reply-ref" style="margin-bottom: 2px; padding: 4px 8px; background: #f5f7fa; border-radius: 6px; font-size: 0.92em; color: #666;">
+      <div class="msg-reply-ref" style="margin-bottom: 2px; padding: 4px 8px; background: #a2a2a2; border-radius: 6px; font-size: 0.92em; color: #666;">
         <b>${msg.reply.sender}:</b> ${escapeHtml(msg.reply.content)}
       </div>`;
   }
@@ -1576,7 +1576,7 @@ if (msg.type === "image" && msg.message) {
   if (isRight) {
     bubbleStyle = "background:#fff;color:#2563eb;";
   } else {
-    bubbleStyle = "background:linear-gradient(98deg, #2563eb 90%, #1877f2 100%);color:#fff;";
+    bubbleStyle = "background: #2563eb;";
   }
 }
 
@@ -1888,13 +1888,13 @@ function renderSingleMessage(msg, msgId, chatBox, messagesMap) {
 if (msg.reply) {
   if (msg.reply.content && msg.reply.content.startsWith("data:image")) {
     replyHtml = `
-      <div class="msg-reply-ref" style="margin-bottom: 2px; padding: 4px 8px; background: #f5f7fa; border-radius: 6px; font-size: 0.92em; color: #666;">
+      <div class="msg-reply-ref">
         <b>${msg.reply.sender} replied to image:</b><br>
         <img src="${escapeHtml(msg.reply.content)}" alt="image" style="max-width:60px;max-height:45px;border-radius:4px;margin-top:2px;">
       </div>`;
   } else {
     replyHtml = `
-      <div class="msg-reply-ref" style="margin-bottom: 2px; padding: 4px 8px; background: #f5f7fa; border-radius: 6px; font-size: 0.92em; color: #666;">
+      <div class="msg-reply-ref">
         <b>${msg.reply.sender}:</b> ${escapeHtml(msg.reply.content)}
       </div>`;
   }
@@ -1917,7 +1917,7 @@ if (msg.type === "image" && msg.message) {
   if (isRight) {
     bubbleStyle = "background:#fff;color:#2563eb;";
   } else {
-    bubbleStyle = "background:linear-gradient(98deg, #2563eb 90%, #1877f2 100%);color:#fff;";
+    bubbleStyle = "background: #2563eb;";
   }
 }
 
@@ -1931,9 +1931,9 @@ if (msg.type === "image" && msg.message) {
   row.innerHTML += `
     <div class="message-row ${isRight ? "self" : senderType}" style="position:relative;width: 400px;">
       ${!isRight ? avatarHtml : ""}
-      <div class="message-bubble image-bubble" data-msg-id="${msg._id}" style="position:relative;display:inline-block;background:white;box-shadow:none; padding: 5px !important;">
+      <div class="message-bubble image-bubble" data-msg-id="${msg._id}" style="position:relative;display:inline-block;box-shadow:none; padding: 5px !important;">
         <img src="${escapeHtml(msg.message)}" alt="image" class="chat-img"
-           style="display:block;max-width:130px;max-height:100px;border-radius:0px;box-shadow:0 2px 8px #2563eb12;cursor:zoom-in;" />
+           style="display:block;max-width:130px;max-height:100px;border-radius:10px;box-shadow:0 2px 8px #2563eb12;cursor:zoom-in;" />
         <span class="msg-menu" title="More" data-msg-id="${msg._id}">⋮</span>
         <div class="msg-actions" data-msg-id="${msg._id}" style="display:none;">
           <button class="reply-btn" data-msg-id="${msg._id}" title="Reply">Reply</button>
