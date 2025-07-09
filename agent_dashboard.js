@@ -104,26 +104,37 @@ function chatRef(sessionId, msgId = null) {
 
 
 
-
-function statusRef(sessionId) {
-  return db.ref(`status/${selectedWebsiteKey}/${sessionId}`);
-}
-
-
-function statusRef(sessionId) {
-  return db.ref(`status/${selectedWebsiteKey}/${sessionId}`);
-}
-
-
-
-
-
-// Make sure to detach previous listeners before attaching new ones!
 function detachAllWebsiteListeners() {
   db.ref("chats").off();
   db.ref("users").off();
   db.ref("status").off();
 }
+function detachChatListeners() {
+  if (currentChatListeners && typeof currentChatListeners === 'object') {
+    const chatRefObj = db.ref(`chats/${selectedWebsiteKey}/${selectedSessionId}`);
+    if (currentChatListeners.added) chatRefObj.off("child_added", currentChatListeners.added);
+    if (currentChatListeners.changed) chatRefObj.off("child_changed", currentChatListeners.changed);
+    if (currentChatListeners.removed) chatRefObj.off("child_removed", currentChatListeners.removed);
+  }
+  currentChatListeners = {};
+}
+
+
+
+
+
+function statusRef(sessionId) {
+  return db.ref(`status/${selectedWebsiteKey}/${sessionId}`);
+}
+
+
+function statusRef(sessionId) {
+  return db.ref(`status/${selectedWebsiteKey}/${sessionId}`);
+}
+
+
+
+
 
 // --- Website tab switching ---
 document.querySelectorAll('.website-tab').forEach(btn => {
@@ -167,16 +178,6 @@ if (!document.getElementById('chat-preview-fullscreen-overlay')) {
 
 
 
-// ADD THIS FUNCTION NEAR THE TOP OF YOUR FILE
-function detachChatListeners() {
-  if (currentChatListeners && typeof currentChatListeners === 'object') {
-    const chatRefObj = db.ref(`chats/${selectedWebsiteKey}/${selectedSessionId}`);
-    if (currentChatListeners.added) chatRefObj.off("child_added", currentChatListeners.added);
-    if (currentChatListeners.changed) chatRefObj.off("child_changed", currentChatListeners.changed);
-    if (currentChatListeners.removed) chatRefObj.off("child_removed", currentChatListeners.removed);
-  }
-  currentChatListeners = {};
-}
 
 
 
@@ -1038,7 +1039,7 @@ db.ref(chatSessionPath(sessionId))
 
 // Add a status indicator (dot) based on presence
 function getStatusDotHtml(userId) {
-  const userStatus = window.userPresence?.[selectedSessionId];
+  const userStatus = window.userPresence?.[userId];
   const state = userStatus?.state || "offline";
   // Define colors for different states
   const color = state === "online" ? "#03d500"   // Green for online
@@ -1684,7 +1685,10 @@ function showChatImageFullscreen(src) {
 
 
 
+  setTimeout(() => {
   chatBox.scrollTop = chatBox.scrollHeight;
+}, 0);
+
   chatBox.querySelectorAll('.msg-menu').forEach(menu => {
     menu.onclick = function (e) {
       e.stopPropagation();
@@ -2033,8 +2037,12 @@ if (msg.type === "image" && msg.message) {
 
   // --- Append and scroll ---
 chatBox.appendChild(row);
-attachMessageHandlers(row, chatBox); // <-- Add this line!
-chatBox.scrollTop = chatBox.scrollHeight;
+attachMessageHandlers(row, chatBox);
+setTimeout(() => {
+  chatBox.scrollTop = chatBox.scrollHeight;
+}, 0);
+
+
 
 }
 

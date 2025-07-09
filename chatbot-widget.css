@@ -150,14 +150,13 @@ h3 {
   font-size: 15px;
   cursor: pointer;
   transition: background 0.3s;
-  margin-bottom: 10px;
   background: #2563eb;
 }
 
 .location-btn {
   color: rgb(255, 255, 255);
   border: solid white 0px;
-  padding: 10px 10px 5px 10px;
+  padding: 10px;
   border-radius: 8px;
   font-size: 15px;
   cursor: pointer;
@@ -168,7 +167,7 @@ h3 {
 .skip-location-btn {
   color: rgb(255, 255, 255);
   border: solid white 0px;
-  padding: 10px 10px 5px 10px;
+  padding: 10px;
   border-radius: 8px;
   font-size: 15px;
   cursor: pointer;
@@ -271,7 +270,7 @@ input[type="email"]::placeholder {
   background: #ffffff;
   align-items: center;
   justify-content: center;
-  font-size: 22px;
+  font-size: 23px;
 }
 
 .prompt-title {
@@ -289,7 +288,7 @@ input[type="email"]::placeholder {
 .prompt-content {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 5px;
 }
 
 .prompt-label {

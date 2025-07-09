@@ -66,7 +66,7 @@
         <label class="prompt-label">Please share your location for personalized service:</label>
         <button id="location-btn" class="location-btn" >Share Location</button>
         <button id="skip-location-btn" class="skip-location-btn" style="background: #6b7280;">Skip for Now</button>
-        <p id="location-status"></p>
+        <p id="location-status" style="display:none;" ></p>
       </div>
     </div>
 
