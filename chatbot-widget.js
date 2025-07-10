@@ -117,7 +117,8 @@
 
           
           <button id="send-btn" class="text-bnt" onclick="sendMsg()" title="Send Message" ><svg class="chat-svg" xmlns="http://www.w3.org/2000/svg" height="20" width="20" viewBox="0 0 20 20"><clipPath id="a"><path fill="currentColor" d="M14.84.054a.864.864 0 011.107 1.107l-5.189 14.27a.864.864 0 01-1.423.316L6.15 12.56a.864.864 0 01-.056-1.16l7.03-8.522L4.6 9.908a.864.864 0 01-1.16-.056L.252 6.666A.864.864 0 01.57 5.243z"/></clipPath><g clip-path="url(#a)" transform="rotate(45 6.516 4.341)"><path d="M0 0h16v16H0z"/></g></svg></button>
-          <div id="emoji-picker" style="width: 300px;display:none;position:absolute;bottom:100px;left:30px;z-index:1000;background:#fff;padding:1px 5px;border:1px solid #ddd;border-radius:10px;box-shadow: inset rgb(0 0 0 / 12%) 0px 0px 20px;"></div>
+          <div id="emoji-picker"></div>
+
         </div>
         </div>
       </div>
@@ -839,28 +840,57 @@
 
 
     // EMOJI PICKER
-    document.getElementById("emoji-btn").onclick = function () {
-      const picker = document.getElementById("emoji-picker");
-      picker.style.display = picker.style.display === 'block' ? 'none' : 'block';
-    };
-    document.getElementById("emoji-picker").onclick = function (e) {
-      const input = document.getElementById("input");
-      if (e.target.tagName === 'SPAN') {
-        const start = input.selectionStart;
-        const end = input.selectionEnd;
-        input.value = input.value.substring(0, start) + e.target.textContent + input.value.substring(end);
-        input.focus();
-        input.selectionStart = input.selectionEnd = start + e.target.textContent.length;
-        document.getElementById("emoji-picker").style.display = 'none';
-      }
-    };
+    const emojiBtn = document.getElementById("emoji-btn");
+const emojiPicker = document.getElementById("emoji-picker");
+
+emojiBtn.onclick = function (e) {
+  e.stopPropagation();
+  // Position picker so it's always above emoji button
+  const rect = emojiBtn.getBoundingClientRect();
+  emojiPicker.style.display = emojiPicker.style.display === 'block' ? 'none' : 'block';
+
+  if (emojiPicker.style.display === 'block') {
+    // Desktop: right-align with button group, mobile: use CSS
+    if (window.innerWidth > 600) {
+      emojiPicker.style.left = 'auto';
+      emojiPicker.style.bottom = '52px'; // matches input row height, tweak if needed
+    } else {
+      // On mobile let CSS media query handle left/right/bottom
+      emojiPicker.style.left = '';
+      emojiPicker.style.right = '';
+      emojiPicker.style.bottom = '';
+    }
+  }
+};
+
+
+
+document.getElementById("emoji-picker").onclick = function (e) {
+  const input = document.getElementById("input");
+  if (e.target.tagName === 'SPAN') {
+    const start = input.selectionStart;
+    const end = input.selectionEnd;
+    input.value = input.value.substring(0, start) + e.target.textContent + input.value.substring(end);
+    input.focus();
+    input.selectionStart = input.selectionEnd = start + e.target.textContent.length;
+    document.getElementById("emoji-picker").style.display = 'none';
+  }
+};
+
     const emojis = ["😀", "😂", "😍", "🥰", "😎", "😭", "😡", "😱", "👍", "🙏", "🎉", "🎂", "🔥", "🤔", "🤖", "❤️"];
     document.getElementById("emoji-picker").innerHTML = emojis.map(e => `<span style="cursor:pointer;font-size:20px;padding:2px;">${e}</span>`).join('');
-    document.addEventListener('click', function (e) {
-      if (!document.getElementById("emoji-btn").contains(e.target) && !document.getElementById("emoji-picker").contains(e.target)) {
-        document.getElementById("emoji-picker").style.display = 'none';
-      }
-    });
+
+    
+    // Close picker ONLY if click is outside both btn and picker
+document.addEventListener('mousedown', function (e) {
+  if (
+    !emojiBtn.contains(e.target) &&
+    !emojiPicker.contains(e.target)
+  ) {
+    emojiPicker.style.display = 'none';
+  }
+});
+
 
     // TOGGLE BUTTON
 const chatContainer = document.getElementById('chat-container');
