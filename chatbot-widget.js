@@ -1,12 +1,12 @@
 (function () {
   // ---- CONFIGURATION ----
   const IMAGES = {
-    logo: '/code/chatbot/images/logo.jpg',
-    chatIcon: '/code/chatbot/images/chat-icon.png',
-    closeIcon: '/code/chatbot/images/close-icon.png',
-    crispMsg: '/code/chatbot/images/crsip-msg.png'
+    logo: 'images/logo.jpg',
+    chatIcon: 'images/chat-icon.png',
+    closeIcon: 'images/close-icon.png',
+    crispMsg: 'images/crsip-msg.png'
   };
-  const CSS_URL = '/code/chatbot/chatbot-widget.css';
+  const CSS_URL = 'chatbot-widget.css';
 
   // ---- INJECT CSS ----
   var style = document.createElement('link');
